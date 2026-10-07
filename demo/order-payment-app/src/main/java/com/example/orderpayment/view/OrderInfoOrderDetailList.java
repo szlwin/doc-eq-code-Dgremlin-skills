@@ -3,6 +3,7 @@ package com.example.orderpayment.view;
 import java.math.BigDecimal;
 import com.example.orderpayment.enums.OrderStatus;
 
+/** DEC OrderInfo.orderDetailList. */
 public class OrderInfoOrderDetailList {
     private Integer id;
     private Integer orderId;

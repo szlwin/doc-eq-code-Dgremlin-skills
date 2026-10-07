@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<enum-config>
+  <!-- dec-id: ENUM-ORDER-STATUS -->
+  <enum name="OrderStatus" desc="订单状态">
+    <!-- dec-id: ENUM-VALUE-ORDER-STATUS-WAIT-PAY -->
+    <enum-value value="1" name="WAIT_PAY" desc="待支付"/>
+    <!-- dec-id: ENUM-VALUE-ORDER-STATUS-PAYING -->
+    <enum-value value="2" name="PAYING" desc="支付中"/>
+    <!-- dec-id: ENUM-VALUE-ORDER-STATUS-SUCCESS -->
+    <enum-value value="3" name="PAY_SUCCESS" desc="支付成功"/>
+    <!-- dec-id: ENUM-VALUE-ORDER-STATUS-ERROR -->
+    <enum-value value="4" name="PAY_ERROR" desc="支付失败"/>
+  </enum>
+  <!-- dec-id: ENUM-ORDER-TYPE -->
+  <enum name="OrderType" desc="订单类型">
+    <!-- dec-id: ENUM-VALUE-ORDER-TYPE-NORMAL -->
+    <enum-value value="1" name="NORMAL" desc="普通订单"/>
+    <!-- dec-id: ENUM-VALUE-ORDER-TYPE-PREORDER -->
+    <enum-value value="2" name="PREORDER" desc="预售订单"/>
+  </enum>
+  <!-- dec-id: ENUM-PAYMENT-STATUS -->
+  <enum name="PaymentStatus" desc="支付状态">
+    <!-- dec-id: ENUM-VALUE-PAYMENT-STATUS-INIT -->
+    <enum-value value="0" name="INIT" desc="初始化"/>
+    <!-- dec-id: ENUM-VALUE-PAYMENT-STATUS-PROCESSING -->
+    <enum-value value="1" name="PROCESSING" desc="处理中"/>
+  </enum>
+  <!-- dec-id: ENUM-PAY-RESULT-CODE -->
+  <enum name="PayResultCode" desc="支付结果">
+    <!-- dec-id: ENUM-VALUE-PAY-RESULT-SUCCESS -->
+    <enum-value value="SUCCESS" name="SUCCESS" desc="成功"/>
+    <!-- dec-id: ENUM-VALUE-PAY-RESULT-ERROR -->
+    <enum-value value="ERROR" name="ERROR" desc="失败"/>
+  </enum>
+</enum-config>

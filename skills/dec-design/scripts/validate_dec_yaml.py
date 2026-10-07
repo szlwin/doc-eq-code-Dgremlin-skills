@@ -18,6 +18,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, 
 import yaml
 
 from yaml_to_xml import ConversionError, convert_document, infer_kind, load_yaml
+from dec_common import extract_info_refs, parse_change_assignments
 
 RULE_TYPES = {
     "check", "checkPattern", "checkData", "checkDataPattern",
@@ -28,7 +29,6 @@ KEY_TYPES = {"increment", "set"}
 API_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 API_PARAM_LOCATIONS = {"path", "query", "header", "body"}
 API_VALIDATION_TYPES = {"notNull", "notEmpty", "min", "max", "minLength", "maxLength", "pattern", "regex", "enum", "expression"}
-INFO_REF_RE = re.compile(r"(?<![#\w-])([A-Za-z_][\w-]*\.[A-Za-z_][\w-]*)")
 DESIGN_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$")
 URL_PATH_PARAM_RE = re.compile(r"\{([A-Za-z_][\w-]*)\}")
 API_REF_RE = re.compile(r"^[A-Za-z_][\w-]*\.[A-Za-z_][\w-]*$")
@@ -87,48 +87,6 @@ def extract_property_refs(properties: Any, prefix: str = "") -> Set[str]:
         if isinstance(raw, Mapping) and raw.get("relation"):
             result.update(extract_property_refs(raw.get("properties", {}), path))
     return result
-
-
-def extract_info_refs(expression: str) -> Set[str]:
-    return set(INFO_REF_RE.findall(expression or ""))
-
-
-def parse_change_assignments(change_data: str) -> List[Tuple[str, Any]]:
-    """Parse common DEC changeData assignments into (view property path, value).
-
-    Supported examples:
-      status : 1;
-      every(orderDetailList, status : 1);
-    Unrecognised expressions are intentionally ignored here; grammar validation remains
-    the Runtime/Compiler's responsibility.
-    """
-    text = str(change_data or "")
-    out: List[Tuple[str, Any]] = []
-
-    def scalar(raw: str) -> Any:
-        v = raw.strip().strip('\"\'')
-        if v.lower() == "null": return None
-        if v.lower() == "true": return True
-        if v.lower() == "false": return False
-        if re.fullmatch(r"[-+]?\d+", v):
-            try: return int(v)
-            except ValueError: pass
-        if re.fullmatch(r"[-+]?(?:\d+\.\d*|\d*\.\d+)", v):
-            try: return float(v)
-            except ValueError: pass
-        return v
-
-    consumed: List[Tuple[int, int]] = []
-    for m in re.finditer(r"every\(\s*([A-Za-z_][\w-]*)\s*,\s*([A-Za-z_][\w-]*)\s*:\s*([^;)]+)\)", text):
-        out.append((f"{m.group(1)}.{m.group(2)}", scalar(m.group(3))))
-        consumed.append((m.start(), m.end()))
-    masked = list(text)
-    for a,b in consumed:
-        for i in range(a,b): masked[i] = ' '
-    rest = ''.join(masked)
-    for m in re.finditer(r"(?:^|;)\s*([A-Za-z_][\w-]*)\s*:\s*([^;]+)", rest, flags=re.MULTILINE):
-        out.append((m.group(1), scalar(m.group(2))))
-    return out
 
 
 def _data_property_enum(data_defs: Mapping[str, Tuple[Path, Mapping[str, Any]]], data_name: str, property_name: str) -> Set[str]:

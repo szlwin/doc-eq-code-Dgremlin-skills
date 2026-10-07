@@ -3,8 +3,11 @@ package com.example.order.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** DEC ENUM-ORDER-TYPE from enum-common.yaml. */
 public enum OrderType {
+    /** DEC ENUM-VALUE-ORDER-TYPE-NORMAL. */
     NORMAL("1"),
+    /** DEC ENUM-VALUE-ORDER-TYPE-PREORDER. */
     PREORDER("2");
 
     private final String value;

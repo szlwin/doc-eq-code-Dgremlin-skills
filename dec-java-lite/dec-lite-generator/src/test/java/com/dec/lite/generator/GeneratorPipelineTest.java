@@ -83,16 +83,29 @@ class GeneratorPipelineTest {
         Path output = Files.createTempDirectory("dec-generator-output-").resolve("project");
         GeneratorPipeline.GenerationResult result = new GeneratorPipeline().generate(project, output, "com.example.generated");
 
-        assertEquals(10, result.files().size());
+        assertEquals(11, result.files().size());
+        String index = Files.readString(output.resolve("DEC-DESIGN-INDEX.md"));
+        assertTrue(index.contains("| `DATA-ORDER` | `data.yaml` | data |"));
+        assertTrue(index.contains("[OrderDao.java](src/main/java/com/example/generated/dao/OrderDao.java)"));
+        assertTrue(index.contains("| `VIEW-ORDER-INFO` | `view.yaml` | view |"));
+        assertTrue(index.contains("| `API-ORDER-SUBMIT` | `api.yaml` | api |"));
         assertTrue(Files.exists(output.resolve(".dec-generated")));
         assertTrue(Files.exists(output.resolve("pom.xml")));
         assertTrue(Files.exists(output.resolve("src/main/java/com/example/generated/controller/SubmitOrderController.java")));
         String controller = Files.readString(output.resolve("src/main/java/com/example/generated/controller/SubmitOrderController.java"));
         assertTrue(controller.contains("@RequestMapping(path = \"/orders\", method = RequestMethod.POST)"));
         assertTrue(controller.contains("return service.submitOrder(request);"));
+        assertFalse(controller.contains("import org.springframework.web.bind.annotation.RequestHeader;"));
+        assertFalse(controller.contains("import org.springframework.web.bind.annotation.PathVariable;"));
+        assertFalse(controller.contains(".view.*;"));
         String service = Files.readString(output.resolve("src/main/java/com/example/generated/service/SubmitOrderService.java"));
         assertTrue(service.contains("DESIGN_GAP API-ORDER-SUBMIT"));
+        assertTrue(service.contains("DEC API-ORDER-SUBMIT from api.yaml"));
         assertFalse(service.contains("return new OrderInfo()"));
+        String dao = Files.readString(output.resolve("src/main/java/com/example/generated/dao/OrderDao.java"));
+        assertTrue(dao.contains("DEC DATA-ORDER from data.yaml"));
+        assertTrue(dao.contains("public void insert(Order value)"));
+        assertTrue(dao.contains("public void update(Order value)"));
 
         Map<Path, String> first = snapshot(output);
         new GeneratorPipeline().generate(project, output, "com.example.generated");

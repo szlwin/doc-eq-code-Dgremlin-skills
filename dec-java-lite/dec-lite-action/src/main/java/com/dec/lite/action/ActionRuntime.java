@@ -42,9 +42,11 @@ public final class ActionRuntime {
                 ruleResult = ruleViews.invoke(action, execution, mutations);
                 if (ruleResult.status() != RecognitionResult.Status.TRUE) {
                     trace.add(new ActionTraceEvent(action.name(), "invoke", ActionStatus.FAILED, ruleResult.status().name()));
-                    if (context.transactionOwner()) try { context.transaction().rollback(); } catch (RuntimeException ignored) { }
+                    RuntimeException rollbackFailure = rollback(context, action, trace);
                     RuntimeErrorCode code = ruleResult.errors().stream().anyMatch(error -> error.startsWith("ACCESS_DENIED")) ? RuntimeErrorCode.ACCESS_DENIED : RuntimeErrorCode.ACTION;
-                    return ActionResult.failed("RuleView Action failed: " + action.name() + " (" + ruleResult.status() + "): " + String.join("; ", ruleResult.errors()), mutations, ruleResult.errors(), trace, code);
+                    List<String> diagnostics = new ArrayList<>(ruleResult.errors());
+                    if (rollbackFailure != null) diagnostics.add("rollback failed: " + rollbackFailure);
+                    return ActionResult.failed("RuleView Action failed: " + action.name() + " (" + ruleResult.status() + "): " + String.join("; ", diagnostics), mutations, diagnostics, trace, code);
                 }
             } else {
                 CustomAction custom = customActions.require(action);
@@ -67,12 +69,27 @@ public final class ActionRuntime {
             if (context.transactionOwner()) context.transaction().commit();
             return result;
         } catch (RuntimeException exception) {
-            if (context.transactionOwner()) try { context.transaction().rollback(); } catch (RuntimeException ignored) { }
+            RuntimeException rollbackFailure = rollback(context, action, trace);
             trace.add(new ActionTraceEvent(action.name(), "invoke", ActionStatus.FAILED, exception.getMessage()));
             RuntimeErrorCode code = exception instanceof ProduceExecutionException ? RuntimeErrorCode.PRODUCE :
                     exception instanceof SecurityException ? RuntimeErrorCode.ACCESS_DENIED : RuntimeErrorCode.ACTION;
+            List<String> diagnostics = new ArrayList<>();
+            diagnostics.add(exception.toString());
+            if (rollbackFailure != null) diagnostics.add("rollback failed: " + rollbackFailure);
             return ActionResult.failed(exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage(),
-                    mutations, List.of(exception.toString()), trace, code);
+                    mutations, diagnostics, trace, code);
+        }
+    }
+
+    private static RuntimeException rollback(ActionExecutionContext context, ActionDefinition action,
+                                             List<ActionTraceEvent> trace) {
+        if (!context.transactionOwner()) return null;
+        try {
+            context.transaction().rollback();
+            return null;
+        } catch (RuntimeException failure) {
+            trace.add(new ActionTraceEvent(action.name(), "rollback-failed", ActionStatus.FAILED, failure.toString()));
+            return failure;
         }
     }
 

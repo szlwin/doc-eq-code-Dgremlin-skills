@@ -1,5 +1,7 @@
 # dec-implementation
 
+运行脚本需要 Python 3.10 或更新版本，并先安装 `requirements.txt` 中的依赖。
+
 `dec-implementation` 是独立 DEC 实现 Skill：消费已批准 canonical YAML，把需要项目代码承载的 Design ID 实现到真实仓库，并维护 **Design ID → Runtime/Code → Test** Binding。
 
 它不依赖任何研发流程 Skill。可以单独消费已有 DEC YAML，也可以与 `dec-design` 组合使用。

@@ -95,6 +95,7 @@ public final class GeneratorPipeline {
                 writeTemplate(target, "dao.java.ftl", model,
                         javaPath(context.basePackage(), "dao/" + model.get("className") + "Dao.java"), generated);
             }
+            writeDesignIndex(target, project, context, generated);
             writeManifest(target, generated);
         } catch (IOException | TemplateException e) {
             throw new GenerationException("cannot generate Java project in " + target, e);
@@ -163,6 +164,7 @@ public final class GeneratorPipeline {
         model.put("package", basePackage + ".entity");
         model.put("className", className(name));
         model.put("designId", requiredText(definition, "id", "data"));
+        model.put("designSource", definition.get("designSource"));
         model.put("fields", fieldsFromProperties(definition.get("properties"), enumTypes, basePackage + ".enums",
                 dataEnumRefs.getOrDefault(name, Map.of())));
         return model;
@@ -181,10 +183,12 @@ public final class GeneratorPipeline {
             if (!constants.add(constant)) throw new GenerationException("duplicate enum constant " + constant + " in " + name);
             Object rawValue = value.get("value");
             if (rawValue == null) throw new GenerationException("enum value " + enumName + " has no value");
-            values.add(Map.of("name", constant, "value", javaString(String.valueOf(rawValue))));
+            values.add(Map.of("name", constant, "value", javaString(String.valueOf(rawValue)),
+                    "designId", requiredText(value, "id", "enum value")));
         }
         return new LinkedHashMap<>(Map.of("package", basePackage + ".enums", "className", className(name),
-                "designId", requiredText(definition, "id", "enum"), "values", values));
+                "designId", requiredText(definition, "id", "enum"),
+                "designSource", definition.get("designSource"), "values", values));
     }
 
     private Map<String, Object> viewModel(Map<String, Object> definition, String basePackage,
@@ -197,6 +201,7 @@ public final class GeneratorPipeline {
         model.put("package", basePackage + ".view");
         model.put("className", className(name));
         model.put("designId", requiredText(definition, "id", "view"));
+        model.put("designSource", definition.get("designSource"));
         model.put("fields", viewFields(definition.get("properties"), definition.get("targetMain"), dataByName,
                 enumTypes, viewTypes, dataEnumRefs, basePackage, className(name), projectionModels));
         return model;
@@ -211,6 +216,7 @@ public final class GeneratorPipeline {
         model.put("servicePackage", basePackage + ".service");
         model.put("className", className);
         model.put("designId", requiredText(definition, "id", "api"));
+        model.put("designSource", definition.get("designSource"));
         model.put("methodName", methodName(name));
         model.put("url", requiredText(definition, "url", "api"));
         model.put("httpMethod", requiredText(definition, "method", "api"));
@@ -241,6 +247,7 @@ public final class GeneratorPipeline {
                         controllerParam.put("imports", importsForApiParam(param, basePackage, enumTypes));
                         controllerParam.put("type", type);
                         controllerParam.put("name", javaIdentifier(paramName));
+                        if (param.get("id") instanceof String id) controllerParam.put("designId", id);
                         controllerParams.add(controllerParam);
                         Map<String, Object> serviceParam = new LinkedHashMap<>();
                         serviceParam.put("type", type);
@@ -286,6 +293,7 @@ public final class GeneratorPipeline {
             request.put("package", basePackage + ".dto");
             request.put("className", requestClass);
             request.put("designId", definition.get("id"));
+            request.put("designSource", definition.get("designSource"));
             request.put("fields", bodyFields);
             request.put("expressions", expressionValidations);
             request.put("imports", importsForFields(bodyFields, !expressionValidations.isEmpty()));
@@ -580,6 +588,7 @@ public final class GeneratorPipeline {
         Map<String, Object> field = new LinkedHashMap<>();
         field.put("name", javaIdentifier(canonicalName));
         field.put("canonicalName", canonicalName);
+        if (param.get("id") instanceof String id) field.put("designId", id);
         field.put("enumField", param.get("relEnum") instanceof String);
         field.put("type", type);
         field.put("annotations", annotations);
@@ -627,11 +636,11 @@ public final class GeneratorPipeline {
                 "org.springframework.web.bind.annotation.RequestMapping",
                 "org.springframework.web.bind.annotation.RequestMethod",
                 "org.springframework.web.bind.annotation.RestController",
-                "org.springframework.web.bind.annotation.PathVariable",
-                "org.springframework.web.bind.annotation.RequestParam",
-                "org.springframework.web.bind.annotation.RequestHeader",
-                "org.springframework.web.bind.annotation.RequestBody",
                 "org.springframework.validation.annotation.Validated"));
+        for (String annotation : List.of("PathVariable", "RequestParam", "RequestHeader", "RequestBody")) {
+            if (params.stream().anyMatch(param -> String.valueOf(param.get("annotation")).contains("@" + annotation)))
+                imports.add("org.springframework.web.bind.annotation." + annotation);
+        }
         if (params.stream().anyMatch(param -> String.valueOf(param.get("annotation")).contains("@Valid"))) imports.add("jakarta.validation.Valid");
         if (params.stream().anyMatch(param -> String.valueOf(param.get("annotation")).matches(".*@(NotNull|NotEmpty|Min|Max|Size|Pattern).*$"))) {
             imports.add("jakarta.validation.constraints.*");
@@ -700,10 +709,99 @@ public final class GeneratorPipeline {
         for (DecDocument document : project.getDocuments()) {
             if (document.kind() != kind) continue;
             Object raw = document.root().get(key);
-            if (raw instanceof Collection<?> collection) for (Object item : collection) result.add(castMap(item));
+            if (raw instanceof Collection<?> collection) for (Object item : collection) {
+                Map<String, Object> definition = new LinkedHashMap<>(castMap(item));
+                definition.put("designSource", document.source().getFileName().toString());
+                result.add(definition);
+            }
         }
         result.sort(Comparator.comparing(item -> String.valueOf(item.get("id"))));
         return result;
+    }
+
+    private static void writeDesignIndex(Path target, DecProject project, Context context,
+                                         List<String> generated) throws IOException {
+        Map<String, List<String>> code = new LinkedHashMap<>();
+        for (Map<String, Object> model : context.entities()) {
+            String id = String.valueOf(model.get("designId"));
+            String name = String.valueOf(model.get("className"));
+            for (String file : List.of("entity/" + name + ".java", "dao/" + name + "Dao.java",
+                    "mapper/" + name + "Mapper.java")) addDesignCode(code, id, javaPath(context.basePackage(), file));
+        }
+        for (Map<String, Object> model : context.enums())
+            addDesignCode(code, String.valueOf(model.get("designId")), javaPath(context.basePackage(),
+                    "enums/" + model.get("className") + ".java"));
+        for (Map<String, Object> model : context.views()) {
+            String id = String.valueOf(model.get("designId"));
+            if (id.startsWith("VIEW-")) addDesignCode(code, id,
+                    javaPath(context.basePackage(), "view/" + model.get("className") + ".java"));
+        }
+        for (Map<String, Object> model : context.apis()) {
+            String id = String.valueOf(model.get("designId"));
+            String name = String.valueOf(model.get("className"));
+            addDesignCode(code, id, javaPath(context.basePackage(), "controller/" + name + "Controller.java"));
+            addDesignCode(code, id, javaPath(context.basePackage(), "service/" + name + "Service.java"));
+            for (Map<String, Object> param : topLevelEntries(project, DecKind.API, "apis")) {
+                if (!id.equals(param.get("id"))) continue;
+                Object request = param.get("request");
+                if (!(request instanceof Map<?, ?> requestMap)) continue;
+                Object rawParams = requestMap.get("params");
+                if (!(rawParams instanceof Collection<?> params)) continue;
+                for (Object raw : params) {
+                    Map<String, Object> field = castMap(raw);
+                    if (!(field.get("id") instanceof String fieldId)) continue;
+                    String file = "body".equals(field.get("in"))
+                            ? "dto/" + name + "Request.java" : "controller/" + name + "Controller.java";
+                    addDesignCode(code, fieldId, javaPath(context.basePackage(), file));
+                }
+            }
+        }
+        for (Map<String, Object> model : context.enums()) {
+            String file = javaPath(context.basePackage(), "enums/" + model.get("className") + ".java");
+            for (Object value : (Collection<?>) model.get("values")) {
+                Map<String, Object> item = castMap(value);
+                addDesignCode(code, String.valueOf(item.get("designId")), file);
+            }
+        }
+        Map<String, String> sources = new java.util.TreeMap<>();
+        Map<String, String> kinds = new LinkedHashMap<>();
+        for (DecDocument document : project.getDocuments()) {
+            collectDesignIds(document.root(), document.source().getFileName().toString(),
+                    document.kind().name().toLowerCase(Locale.ROOT), sources, kinds);
+        }
+        StringBuilder markdown = new StringBuilder("# DEC Design ID → Code Index\n\n");
+        markdown.append("Source YAML is authoritative. Search its listed filename and Design ID to compare the design with generated Java. ")
+                .append("Runtime-managed nodes are compiled from design files and have no generated Java class.\n\n")
+                .append("| Design ID | YAML file | Kind | Generated Java |\n| --- | --- | --- | --- |\n");
+        for (Map.Entry<String, String> entry : sources.entrySet()) {
+            List<String> files = code.get(entry.getKey());
+            String links = files == null || files.isEmpty() ? "DEC Runtime / application binding" : files.stream()
+                    .map(file -> "[" + Path.of(file).getFileName() + "](" + file + ")")
+                    .collect(Collectors.joining(", "));
+            markdown.append("| `").append(entry.getKey()).append("` | `").append(entry.getValue())
+                    .append("` | ").append(kinds.get(entry.getKey())).append(" | ").append(links).append(" |\n");
+        }
+        String relative = "DEC-DESIGN-INDEX.md";
+        Files.writeString(target.resolve(relative), markdown.toString(), StandardCharsets.UTF_8);
+        generated.add(relative);
+    }
+
+    private static void addDesignCode(Map<String, List<String>> locations, String id, String file) {
+        locations.computeIfAbsent(id, ignored -> new ArrayList<>()).add(file);
+    }
+
+    private static void collectDesignIds(Object node, String source, String kind, Map<String, String> sources,
+                                         Map<String, String> kinds) {
+        if (node instanceof Map<?, ?> raw) {
+            Map<String, Object> map = castMap(raw);
+            if (map.get("id") instanceof String id) {
+                sources.put(id, source);
+                kinds.put(id, kind);
+            }
+            for (Object value : map.values()) collectDesignIds(value, source, kind, sources, kinds);
+        } else if (node instanceof Collection<?> values) {
+            for (Object value : values) collectDesignIds(value, source, kind, sources, kinds);
+        }
     }
 
     private static Map<String, String> dataSources(DecProject project) {

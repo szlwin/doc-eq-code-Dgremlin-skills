@@ -1,5 +1,7 @@
 # 完整示例说明
 
+本目录是 `dec-design` 自带的独立示例快照，用于 Skill 的转换与渲染测试；它不依赖仓库中的 Demo，且不应被当作用户项目的设计源。`generated-xml/` 和 `generated-html/` 可由本目录的 canonical YAML 重新生成，但保留在包中供离线对照和 XML 导入测试使用。
+
 本目录提供一套可跨文件校验的订单支付 DEC canonical YAML：
 
 ```text

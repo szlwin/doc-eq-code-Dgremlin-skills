@@ -13,7 +13,9 @@
 | 生成 Spring 项目的 `mvn test` | 通过 |
 | XML/YAML 完整 mix、API/Enum digest 与编译对等 | 通过 |
 | 成功、失败、Back、三类 Query、权限、并发、热替换、性能、安全测试 | 通过，详情见各测试报告与性能 CSV |
-| Demo 设计与实现衔接 | 10 份 YAML、93 个 Design ID、XML digest 对等、38 页 HTML、31 个生成文件；完整结果见仓库 `demo/INTEGRATION.md` |
+| Demo 设计与实现衔接 | 当时为 10 份 YAML、93 个 Design ID、38 页 HTML、31 个生成文件 |
+
+当前 Demo 已扩展为 10 份 YAML、107 个 Design ID、38 页 HTML、41 个 manifest 管理的生成文件；最新衔接和验证状态以仓库 [`demo/INTEGRATION.md`](../../demo/INTEGRATION.md) 为准。上表是 2026-10-07 的历史验收记录。
 
 `mysql-it` profile 在缺少 `DEC_MYSQL_JDBC_URL` 时会失败，避免被跳过的集成测试误报为成功。发布时应使用同一源码提交运行以下命令：
 
@@ -21,6 +23,7 @@
 ./mvnw clean verify
 DEC_MYSQL_JDBC_URL='jdbc:mysql://host:port/dec_test' DEC_MYSQL_USER=... DEC_MYSQL_PASSWORD=... ./mvnw -Pmysql-it verify
 ./mvnw -Prelease-artifacts package
+./mvnw install -DskipTests
 ./mvnw -f examples/order-service/generated/pom.xml test
 ```
 

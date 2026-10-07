@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigDecimal;
 import com.example.order.enums.OrderStatus;
 
+/** DEC DATA-ORDER-DETAIL from data-order.yaml. */
 public class OrderDetail {
     private Integer id;
     private Integer orderId;

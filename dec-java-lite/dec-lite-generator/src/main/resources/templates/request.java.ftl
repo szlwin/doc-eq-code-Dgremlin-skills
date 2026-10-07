@@ -5,8 +5,11 @@ import jakarta.validation.constraints.*;
 import ${import};
 </#list>
 
+/** DEC ${designId} from ${designSource}. */
 public class ${className} {
 <#list fields as field>
+<#if field.designId??>    /** DEC ${field.designId}. */
+</#if>
 <#list field.annotations as annotation>
     ${annotation}
 </#list>

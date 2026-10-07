@@ -4,6 +4,7 @@ import com.example.orderpayment.enums.PaymentStatus;
 import com.example.orderpayment.enums.PayResultCode;
 import java.util.List;
 
+/** DEC OrderInfo.payInfo. */
 public class OrderInfoPayInfo {
     private Integer id;
     private Integer orderId;

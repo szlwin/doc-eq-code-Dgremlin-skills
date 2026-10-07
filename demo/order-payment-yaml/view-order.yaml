@@ -144,3 +144,9 @@ views:
               desc: 支付金额
           desc: 支付明细列表
       desc: 支付信息
+    remark:
+      ref: remark
+      desc: 订单备注
+    type:
+      ref: orderType
+      desc: 订单类型

@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import com.example.orderpayment.enums.OrderStatus;
 import java.time.LocalDate;
 import java.util.List;
+import com.example.orderpayment.enums.OrderType;
 
+/** DEC VIEW-ORDER-INFO from view-order.yaml. */
 public class OrderInfo {
     private Integer id;
     private Integer userId;
@@ -17,6 +19,8 @@ public class OrderInfo {
     private OrderInfoUser user;
     private List<OrderInfoOrderDetailList> orderDetailList;
     private OrderInfoPayInfo payInfo;
+    private String remark;
+    private OrderType type;
 
     public Integer getId() {
         return id;
@@ -94,5 +98,19 @@ public class OrderInfo {
 
     public void setPayInfo(OrderInfoPayInfo payInfo) {
         this.payInfo = payInfo;
+    }
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+    public OrderType getType() {
+        return type;
+    }
+
+    public void setType(OrderType type) {
+        this.type = type;
     }
 }

@@ -3,6 +3,7 @@ package com.example.orderpayment.entity;
 import java.math.BigDecimal;
 import java.math.BigDecimal;
 
+/** DEC DATA-PAY-DETAIL from data-order.yaml. */
 public class PayDetail {
     private Integer id;
     private Integer payId;

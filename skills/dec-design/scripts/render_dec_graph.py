@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Sequence, Set, Tuple
 
 import yaml
+from dec_common import extract_info_refs, parse_change_assignments
 
-INFO_REF_RE = re.compile(r"(?<![A-Za-z0-9_.])([A-Za-z_][A-Za-z0-9_-]*\.[A-Za-z_][A-Za-z0-9_-]*)")
 
 
 def as_list(value: Any) -> List[Any]:
@@ -69,10 +69,6 @@ def load_docs(paths: Iterable[Path]) -> List[Tuple[Path, Mapping[str, Any]]]:
         if isinstance(raw, Mapping):
             docs.append((p, raw))
     return docs
-
-
-def extract_info_refs(expression: str) -> Set[str]:
-    return set(INFO_REF_RE.findall(expression or ""))
 
 
 def build_catalog(docs: Sequence[Tuple[Path, Mapping[str, Any]]]) -> Dict[str, Any]:
@@ -135,30 +131,6 @@ def build_catalog(docs: Sequence[Tuple[Path, Mapping[str, Any]]]) -> Dict[str, A
     return cat
 
 
-
-
-def parse_change_assignments(change_data: str) -> List[Tuple[str, Any]]:
-    text = str(change_data or "")
-    out: List[Tuple[str, Any]] = []
-    def scalar(raw: str) -> Any:
-        v = raw.strip().strip('"\'')
-        if v.lower() == "null": return None
-        if re.fullmatch(r"[-+]?\d+", v):
-            try: return int(v)
-            except ValueError: pass
-        if re.fullmatch(r"[-+]?(?:\d+\.\d*|\d*\.\d+)", v):
-            try: return float(v)
-            except ValueError: pass
-        return v
-    consumed=[]
-    for m in re.finditer(r"every\(\s*([A-Za-z_][\w-]*)\s*,\s*([A-Za-z_][\w-]*)\s*:\s*([^;)]+)\)", text):
-        out.append((f"{m.group(1)}.{m.group(2)}", scalar(m.group(3)))); consumed.append((m.start(),m.end()))
-    masked=list(text)
-    for a,b in consumed:
-        for i in range(a,b): masked[i]=' '
-    for m in re.finditer(r"(?:^|;)\s*([A-Za-z_][\w-]*)\s*:\s*([^;]+)", ''.join(masked), flags=re.MULTILINE):
-        out.append((m.group(1),scalar(m.group(2))))
-    return out
 
 
 def _data_property_enums(cat: Mapping[str,Any], data_name: str, property_name: str) -> Set[str]:

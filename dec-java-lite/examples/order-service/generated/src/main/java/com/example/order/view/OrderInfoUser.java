@@ -1,6 +1,7 @@
 package com.example.order.view;
 
 
+/** DEC OrderInfo.user. */
 public class OrderInfoUser {
     private Integer id;
     private String name;

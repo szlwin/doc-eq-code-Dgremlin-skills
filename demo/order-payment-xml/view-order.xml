@@ -51,6 +51,8 @@
           <property name="payAmount" ref-property="payAmount" desc="支付金额"/>
         </property>
       </property>
+      <property name="remark" ref-property="remark" desc="订单备注"/>
+      <property name="type" ref-property="orderType" desc="订单类型"/>
     </property-info>
   </view>
 </orm-view-mapping>

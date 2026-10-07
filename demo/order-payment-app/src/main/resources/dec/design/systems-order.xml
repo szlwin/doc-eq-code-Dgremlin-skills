@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<systems>
+  <!-- dec-id: SYS-USER -->
+  <system name="user">
+    <data-info>
+      <data-ref name="user"/>
+    </data-info>
+    <view-info>
+      <view-ref name="UserInfo"/>
+    </view-info>
+    <rule-file-info>
+      <rule-file path="classpath:dec/generated/rule/rule-user.xml"/>
+    </rule-file-info>
+    <information-info>
+      <!-- dec-id: INFO-USER-ACTIVATED -->
+      <information name="activated" view-ref="UserInfo" rule-ref="isActivated"/>
+      <!-- dec-id: INFO-USER-CERTIFIED -->
+      <information name="certified" view-ref="UserInfo" rule-ref="isCertified"/>
+      <!-- dec-id: INFO-USER-EFFECTIVE -->
+      <information name="effective" expression="user.activated&#10;and&#10;user.certified&#10;"/>
+    </information-info>
+  </system>
+  <!-- dec-id: SYS-ORDER -->
+  <system name="order">
+    <data-info>
+      <data-ref name="order"/>
+      <data-ref name="orderDetail"/>
+    </data-info>
+    <view-info>
+      <view-ref name="OrderInfo"/>
+    </view-info>
+    <rule-file-info>
+      <rule-file path="classpath:dec/generated/rule/rule-order.xml"/>
+    </rule-file-info>
+    <information-info>
+      <!-- dec-id: INFO-ORDER-ORDERED -->
+      <information name="ordered" view-ref="OrderInfo" rule-data="status = 1&#10;and&#10;every(orderDetailList, status = 1)&#10;">
+        <change-data><![CDATA[status : 1;
+every(orderDetailList, status : 1);]]></change-data>
+      </information>
+      <!-- dec-id: INFO-ORDER-WAIT-PAY -->
+      <information name="waitPay" view-ref="OrderInfo" rule-ref="isWaitPay"/>
+      <!-- dec-id: INFO-ORDER-PAYABLE -->
+      <information name="payable" expression="order.ordered&#10;or&#10;order.waitPay&#10;"/>
+      <!-- dec-id: INFO-ORDER-PAYING -->
+      <information name="paying" view-ref="OrderInfo" rule-data="status = 2&#10;and&#10;every(orderDetailList, status = 2)&#10;">
+        <change-data><![CDATA[status : 2;
+every(orderDetailList, status : 2);]]></change-data>
+      </information>
+      <!-- dec-id: INFO-ORDER-PAY-SUCCESS-STATUS -->
+      <information name="paySuccessStatus" view-ref="OrderInfo" rule-data="status = 3&#10;and&#10;every(orderDetailList, status = 3)&#10;">
+        <change-data><![CDATA[status : 3;
+every(orderDetailList, status : 3);]]></change-data>
+      </information>
+      <!-- dec-id: INFO-ORDER-PAY-ERROR-STATUS -->
+      <information name="payErrorStatus" view-ref="OrderInfo" rule-data="status = 4&#10;and&#10;every(orderDetailList, status = 4)&#10;">
+        <change-data><![CDATA[status : 4;
+every(orderDetailList, status : 4);]]></change-data>
+      </information>
+    </information-info>
+    <model-access-info>
+      <model-access model-ref="OrderInfo">
+        <read path="*">
+          <ref view="OrderInfo" property="order"/>
+        </read>
+        <write path="status">
+          <ref view="OrderInfo" property="order"/>
+        </write>
+        <write path="orderDetailList">
+          <ref view="OrderInfo" property="order"/>
+        </write>
+      </model-access>
+    </model-access-info>
+  </system>
+  <!-- dec-id: SYS-PAYMENT -->
+  <system name="payment">
+    <data-info>
+      <data-ref name="pay"/>
+      <data-ref name="payDetail"/>
+    </data-info>
+    <view-info>
+      <view-ref name="OrderInfo"/>
+    </view-info>
+    <rule-file-info>
+      <rule-file path="classpath:dec/generated/rule/rule-payment.xml"/>
+    </rule-file-info>
+    <information-info>
+      <!-- dec-id: INFO-PAYMENT-INFO -->
+      <information name="paymentInfo" view-ref="OrderInfo" rule-ref="hasPaymentInfo"/>
+      <!-- dec-id: INFO-PAYMENT-HAS-RESULT -->
+      <information name="hasResult" view-ref="OrderInfo" rule-ref="hasPayResult"/>
+      <!-- dec-id: INFO-PAYMENT-SUCCESS -->
+      <information name="success" view-ref="OrderInfo" rule-ref="isPaySuccess"/>
+      <!-- dec-id: INFO-PAYMENT-ERROR -->
+      <information name="error" view-ref="OrderInfo" rule-ref="isPayError"/>
+      <!-- dec-id: INFO-PAYMENT-COMPLETED -->
+      <information name="completed" expression="payment.success&#10;or&#10;payment.error&#10;"/>
+    </information-info>
+    <model-access-info>
+      <model-access model-ref="OrderInfo">
+        <read path="*">
+          <ref view="OrderInfo" property="order"/>
+        </read>
+        <write path="payInfo">
+          <ref view="OrderInfo" property="order"/>
+        </write>
+      </model-access>
+    </model-access-info>
+  </system>
+  <!-- dec-id: SYS-COMMON -->
+  <system name="common">
+    <information-info>
+      <!-- dec-id: INFO-COMMON-PAY-SUCCESS -->
+      <information name="paySuccess" expression="payment.success&#10;and&#10;order.paySuccessStatus&#10;"/>
+      <!-- dec-id: INFO-COMMON-PAY-ERROR -->
+      <information name="payError" expression="payment.error&#10;and&#10;order.payErrorStatus&#10;"/>
+    </information-info>
+  </system>
+</systems>

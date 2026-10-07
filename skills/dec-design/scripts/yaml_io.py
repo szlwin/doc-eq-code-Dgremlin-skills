@@ -16,25 +16,12 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-import os
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 import yaml
-
-
-class LiteralDumper(yaml.SafeDumper):
-    pass
-
-
-def _str_representer(dumper: yaml.Dumper, value: str):
-    style = "|" if "\n" in value else None
-    return dumper.represent_scalar("tag:yaml.org,2002:str", value, style=style)
-
-
-LiteralDumper.add_representer(str, _str_representer)
+from dec_common import atomic_write_yaml as _atomic_write, dump_yaml as _dump_yaml
 
 
 def _yaml_files(path: Path) -> List[Path]:
@@ -63,31 +50,6 @@ def _load_json_source(spec: str) -> Any:
         return json.load(sys.stdin)
     with Path(spec).open("r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def _dump_yaml(value: Any) -> str:
-    return yaml.dump(
-        value,
-        Dumper=LiteralDumper,
-        allow_unicode=True,
-        sort_keys=False,
-        default_flow_style=False,
-        width=120,
-    )
-
-
-def _atomic_write(path: Path, text: str) -> None:
-    if path.suffix.lower() not in {".yaml", ".yml"}:
-        raise ValueError(f"YAML output must end with .yaml or .yml: {path}")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
-            f.write(text)
-        os.replace(tmp, path)
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
 
 
 def _deep_merge(base: Any, patch: Any) -> Any:

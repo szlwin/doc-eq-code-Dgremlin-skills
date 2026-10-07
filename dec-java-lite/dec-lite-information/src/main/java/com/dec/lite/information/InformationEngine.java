@@ -8,12 +8,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.IdentityHashMap;
+import java.util.WeakHashMap;
 
 /** P3 Information evaluation, materialization and reverse-DAG invalidation API. */
 public final class InformationEngine {
     private final InformationEngineContext runtime;
-    private final Map<ModelContext, Map<InformationKey, Cached>> cache = java.util.Collections.synchronizedMap(new IdentityHashMap<>());
+    // ModelContext uses identity equality; weak keys let finished sessions be collected.
+    // Public cache operations are synchronized on this engine.
+    private final Map<ModelContext, Map<InformationKey, Cached>> cache = new WeakHashMap<>();
 
     public InformationEngine(InformationCompilation compilation) {
         this(new InformationEngineContext(compilation, new RuleViewRegistry()));
@@ -85,8 +87,6 @@ public final class InformationEngine {
     private RecognitionResult withDependency(InformationKey key, RecognitionResult result) {
         return new RecognitionResult(result.status(), result.evidence(), compilation().dependencies().getOrDefault(key, Set.of()).stream().sorted().toList(), result.errors(), result.modelVersion(), result.trace());
     }
-
-    private void invalidateAll() { cache.clear(); }
 
     private static void applyChanges(String source, ModelContext context, MutationSet mutations) {
         for (String statement : source.split(";")) {

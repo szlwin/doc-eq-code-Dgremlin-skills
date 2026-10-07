@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import com.example.orderpayment.dto.SubmitOrderRequest;
 import com.example.orderpayment.view.OrderInfo;
 
+/** DEC API-ORDER-SUBMIT from api-order.yaml; override this seam with an application binding. */
 @Service
 public class SubmitOrderService {
     public OrderInfo submitOrder(SubmitOrderRequest request, Long orderId) {

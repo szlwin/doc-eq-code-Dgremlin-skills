@@ -3,10 +3,15 @@ package com.example.order.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** DEC ENUM-ORDER-STATUS from enum-common.yaml. */
 public enum OrderStatus {
+    /** DEC ENUM-VALUE-ORDER-STATUS-WAIT-PAY. */
     WAIT_PAY("1"),
+    /** DEC ENUM-VALUE-ORDER-STATUS-PAYING. */
     PAYING("2"),
+    /** DEC ENUM-VALUE-ORDER-STATUS-SUCCESS. */
     PAY_SUCCESS("3"),
+    /** DEC ENUM-VALUE-ORDER-STATUS-ERROR. */
     PAY_ERROR("4");
 
     private final String value;

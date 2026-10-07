@@ -13,7 +13,7 @@ description: 根据已批准的 DEC canonical YAML 独立实现或修改真实�
 
 1. `references/dec-design-consumer-contract.md`；
 2. `references/input-contract.md`；
-3. 当前项目/同版本 DEC canonical YAML 规范索引与本次节点对应 kind 分片；
+3. 若项目提供同版本 DEC canonical YAML 规范，按本次节点读取对应 kind 分片；没有独立的 `dec-design` 安装或项目规范时，使用本包 `references/dec-design-consumer-contract.md` 与 `references/input-contract.md` 作为最小消费契约，只消费已通过同版本校验的 canonical YAML；无法确认的语义报告 `DESIGN_GAP`；
 4. 通过 `scripts/yaml_io.py read <canonical-yaml>` 读取本次 Design IDs 对应 YAML；禁止直接打开/解析 YAML；
 5. `references/implementation-workflow.md`；
 6. `references/implementation-binding.md`。
@@ -25,7 +25,7 @@ description: 根据已批准的 DEC canonical YAML 独立实现或修改真实�
 - API / RuleView.apiRef：`references/api-implementation.md`；
 - RuleView / Action / Produce / Change：`references/rule-action-implementation.md`。
 
-如果 `dec-design` Skill 未安装，也可以独立消费项目中的同版本 canonical YAML/spec；本包只要求输入满足 `input-contract.md`，YAML 内容仍必须通过 `scripts/yaml_io.py` 读取，不要求任何特定编排器、项目布局或研发流程 Skill。
+如果 `dec-design` Skill 未安装，本包仍可按上述最小消费契约独立实现已校验的 canonical YAML；YAML 内容必须通过 `scripts/yaml_io.py` 读取，不要求任何特定编排器、项目布局或研发流程 Skill。
 
 ## 0.5 YAML / XML 强制脚本 I/O
 
@@ -55,6 +55,7 @@ XML 是派生格式。YAML 与 XML 不一致时先从 YAML 重生 XML。
 1. 不得改设计迁就代码；无法实现时返回 `DESIGN_GAP`。
 2. 不得把 YAML 未声明的业务规则藏入代码。
 3. 每个代码承载的设计节点必须可追踪到稳定 Design ID。
+   生成代码应在类或字段附近标明 Design ID 与 canonical YAML 来源；生成器应输出 Design ID → 生成文件索引。手写业务实现仍由 Implementation Binding 定位，不能只依赖类名相似或注释猜测。
 4. 实现策略固定：`REUSE → COMPATIBLE_EXTEND → MODIFY → CREATE`。
 5. Runtime-managed 节点不制造空壳代码。
 6. CodeGraph/GitNexus/graphify 只是定位索引，不是设计权威。
@@ -95,6 +96,7 @@ XML 是派生格式。YAML 与 XML 不一致时先从 YAML 重生 XML。
 
 - 真实代码变更；
 - `implementation-binding.yaml`；
+- 生成代码的 Design ID 来源注释与索引（项目使用代码生成器时）；
 - 测试/Compiler/场景验证结果；
 - `DESIGN_GAP` 或 Runtime capability gap；
 - 设计符合性 Review 结论。
@@ -134,6 +136,8 @@ Runtime 已实现该设计事实
 ### Step 6：最小实现
 
 只实现 YAML 规定语义；不得增加隐藏状态/fallback/权限/条件。Custom Action / DataSource adapter 显式注册；Runtime-managed RuleView/Information 不复制业务判断。
+
+业务状态优先使用设计对应的 View/Entity；已有 DAO/Repository 必须进入实际读写链路。Runtime 所需动态 Map 应收敛在单独适配边界，不得成为应用层的主业务模型。
 
 ### Step 7：真实验证
 

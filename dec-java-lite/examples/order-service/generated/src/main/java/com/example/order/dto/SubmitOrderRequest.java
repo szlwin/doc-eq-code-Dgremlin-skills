@@ -5,7 +5,9 @@ import com.example.order.enums.OrderStatus;
 import com.example.order.enums.OrderType;
 import java.util.Objects;
 
+/** DEC API-ORDER-SUBMIT from api-order.yaml. */
 public class SubmitOrderRequest {
+    /** DEC API-PARAM-REMARK. */
     @Size(max = 500)
     @Pattern(regexp = "^[A-Za-z0-9 _.,-]{0,500}$")
     private String remark;
@@ -17,6 +19,7 @@ public class SubmitOrderRequest {
     public void setRemark(String remark) {
         this.remark = remark;
     }
+    /** DEC API-PARAM-STATUS. */
     @NotNull
     private OrderStatus status;
 
@@ -27,6 +30,7 @@ public class SubmitOrderRequest {
     public void setStatus(OrderStatus status) {
         this.status = status;
     }
+    /** DEC API-PARAM-TYPE. */
     @NotNull
     private OrderType type;
 

@@ -1,6 +1,7 @@
 package com.example.order.view;
 
 
+/** DEC VIEW-USER-INFO from view-order.yaml. */
 public class UserInfo {
     private Integer id;
     private String name;

@@ -6,6 +6,7 @@ import ${import};
 </#list>
 </#list>
 
+/** DEC ${designId} from ${designSource}. */
 public class ${className} {
 <#list fields as field>
     private ${field.type} ${field.name};

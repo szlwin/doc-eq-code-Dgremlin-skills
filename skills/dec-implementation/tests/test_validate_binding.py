@@ -24,6 +24,7 @@ class BindingValidatorTest(unittest.TestCase):
                     "--binding", str(t / "binding.yaml")]
             complete = subprocess.run(base + ["--require-complete"], text=True, capture_output=True)
             self.assertEqual(0, complete.returncode, complete.stdout + complete.stderr)
+            self.assertIn("WARN DATA-X: binding remains PLANNED", complete.stdout)
             ready = subprocess.run(base + ["--require-ready"], text=True, capture_output=True)
             self.assertNotEqual(0, ready.returncode)
             self.assertIn("release readiness requires VERIFIED", ready.stdout + ready.stderr)

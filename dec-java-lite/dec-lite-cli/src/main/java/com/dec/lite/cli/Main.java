@@ -44,8 +44,15 @@ public class Main {
             printUsage();
             return 2;
         }
-        Path yaml = optionPath(args, "--yaml");
-        Path xml = optionPath(args, "--xml");
+        Path yaml;
+        Path xml;
+        try {
+            yaml = optionPath(args, "--yaml");
+            xml = optionPath(args, "--xml");
+        } catch (OptionException error) {
+            System.err.println("ERROR " + error.getMessage());
+            return 2;
+        }
         if ((yaml == null) == (xml == null)) {
             System.err.println("ERROR specify exactly one of --yaml or --xml <file-or-directory>");
             return 2;
@@ -96,8 +103,8 @@ public class Main {
                     if (split < 1) throw new IllegalArgumentException("--where requires property=value");
                     query = query.where(filter.substring(0, split), filter.substring(split + 1));
                 }
-                query = query.page(Integer.parseInt(optionValue(args, "--offset", "0")), Integer.parseInt(optionValue(args, "--size", "50")))
-                        .candidateLimit(Integer.parseInt(optionValue(args, "--candidate-limit", "1000")));
+                query = query.page(integerOption(args, "--offset", 0), integerOption(args, "--size", 50))
+                        .candidateLimit(integerOption(args, "--candidate-limit", 1000));
                 var plan = new QueryCompiler(project, graph, information).compile(query);
                 System.out.println(new SqlTranslator(new MySqlDialect()).explain(plan));
                 return 0;
@@ -115,29 +122,45 @@ public class Main {
                 for (String file : result.files()) System.out.println("file=" + file);
             }
             return 0;
-        } catch (DecParseException | GenerationException | InformationCompilationException | ActionExecutionException | DirectoryCompilationException | DirectoryExecutionException | QueryCompilationException | IllegalArgumentException e) {
+        } catch (OptionException e) {
+            System.err.println("ERROR " + e.getMessage());
+            return 2;
+        } catch (RuntimeException e) {
             System.err.println("ERROR " + e.getMessage());
             return 1;
         }
     }
 
     private static Path optionPath(String[] args, String option) {
-        for (int i = 1; i < args.length - 1; i++) {
-            if (option.equals(args[i])) return Path.of(args[i + 1]);
+        for (int i = 1; i < args.length; i++) {
+            if (option.equals(args[i])) return Path.of(requiredValue(args, i, option));
         }
         return null;
     }
 
     private static String optionValue(String[] args, String option, String fallback) {
-        for (int i = 1; i < args.length - 1; i++) {
-            if (option.equals(args[i])) return args[i + 1];
+        for (int i = 1; i < args.length; i++) {
+            if (option.equals(args[i])) return requiredValue(args, i, option);
         }
         return fallback;
     }
     private static java.util.List<String> optionValues(String[] args, String option) {
         java.util.List<String> result = new java.util.ArrayList<>();
-        for (int i = 1; i < args.length - 1; i++) if (option.equals(args[i])) result.add(args[i + 1]);
+        for (int i = 1; i < args.length; i++) if (option.equals(args[i])) result.add(requiredValue(args, i, option));
         return result;
+    }
+    private static String requiredValue(String[] args, int index, String option) {
+        if (index + 1 >= args.length || args[index + 1].startsWith("--"))
+            throw new OptionException(option + " requires a value");
+        return args[index + 1];
+    }
+    private static int integerOption(String[] args, String option, int fallback) {
+        String value = optionValue(args, option, String.valueOf(fallback));
+        try { return Integer.parseInt(value); }
+        catch (NumberFormatException error) { throw new OptionException(option + " requires an integer, got: " + value); }
+    }
+    private static final class OptionException extends RuntimeException {
+        private OptionException(String message) { super(message); }
     }
 
     private static void printSummary(DecProject project) {

@@ -5,6 +5,7 @@ import com.example.order.enums.OrderStatus;
 import java.time.LocalDate;
 import java.util.List;
 
+/** DEC VIEW-ORDER-INFO from view-order.yaml. */
 public class OrderInfo {
     private Integer id;
     private Integer userId;

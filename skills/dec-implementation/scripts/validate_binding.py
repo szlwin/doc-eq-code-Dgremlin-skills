@@ -129,6 +129,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 runtime = bool(item.get("runtimeManaged"))
                 implementations = item.get("implementation") or []
                 status = item.get("status")
+                if status in {"PLANNED", "BLOCKED"} and not args.require_ready:
+                    result["warnings"].append(f"{design_id}: binding remains {status}")
                 if args.require_ready and status != "VERIFIED":
                     result["errors"].append(f"{design_id}: release readiness requires VERIFIED, found {status}")
                 if status in {"IMPLEMENTED", "VERIFIED"} and not runtime and not implementations:

@@ -1,5 +1,7 @@
 # dec-design
 
+运行脚本需要 Python 3.10 或更新版本，并先安装 `requirements.txt` 中的依赖。
+
 `dec-design` 是规范驱动的 DEC 设计 Skill：把确认后的需求/业务模型/Flow 编写为 **canonical YAML**，完成字段/引用/业务语义校验，再生成兼容 XML。
 
 ## 先读什么

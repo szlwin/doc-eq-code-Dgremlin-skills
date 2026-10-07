@@ -42,7 +42,9 @@ public final class RuntimeCatalog {
         InformationCompilation information = new InformationParser().parse(project);
         CustomActionRegistry customs = customActionFactory.apply(project);
         if (customs == null) throw new IllegalArgumentException("Custom Action factory returned null");
-        DirectoryGraph graph = new DirectoryGraphCompiler().compileReady(project, information, customs);
+        var actions = new BusinessActionParser().parse(project);
+        var views = new RuleViewCompiler().compile(project);
+        DirectoryGraph graph = new DirectoryGraphCompiler().compileReady(project, information, customs, actions, views);
         RuleViewRegistry registry = ruleViewFactory.apply(project);
         if (registry == null) throw new IllegalArgumentException("RuleView factory returned null");
         for (InformationDefinition definition : information.definitions().values()) {
@@ -50,8 +52,7 @@ public final class RuntimeCatalog {
                 throw new RuntimeFailure(RuntimeErrorCode.COMPILATION, definition.designId(), definition.source(),
                         "RuleView evaluator is not registered: " + definition.key(), null);
         }
-        var views = new RuleViewCompiler().compile(project);
-        for (ActionDefinition action : new BusinessActionParser().parse(project)) if (action.isRuleView()) {
+        for (ActionDefinition action : actions) if (action.isRuleView()) {
             var key = views.keySet().stream().filter(k -> k.system().equals(action.systemRef()) && k.ruleRef().equals(action.ruleRef())).findFirst().orElseThrow();
             if (!registry.contains(key.system(), key.viewRef(), key.ruleRef()))
                 throw new RuntimeFailure(RuntimeErrorCode.COMPILATION, action.id(), action.source(),

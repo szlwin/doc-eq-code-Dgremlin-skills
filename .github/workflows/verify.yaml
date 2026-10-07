@@ -26,16 +26,22 @@ jobs:
         python-version: '3.11'
     - name: Install DEC skill validators
       run: python -m pip install -r skills/dec-design/requirements.txt -r skills/dec-implementation/requirements.txt
+    - name: Verify skill source manifest and script tests
+      run: |-
+        python skills/dec-design/scripts/check_manifest.py
+        python -m unittest discover -s skills/dec-design/tests -p 'test_*.py'
+        python -m unittest discover -s skills/dec-implementation/tests -p 'test_*.py'
     - name: Validate canonical demo and binding
       run: |-
         python skills/dec-design/scripts/validate_dec_yaml.py demo/order-payment-yaml
-        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete
+        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete --require-tests
     - name: Check derived XML and HTML drift
       run: |-
         python skills/dec-design/scripts/yaml_to_xml.py demo/order-payment-yaml -o /tmp/dec-demo-xml --emit-id-comments
         python skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml -o /tmp/dec-demo-html/order-payment.html
-        diff -qr demo/order-payment-xml /tmp/dec-demo-xml
-        diff -qr demo/order-payment-html /tmp/dec-demo-html
+        diff -qr --exclude=.DS_Store demo/order-payment-xml /tmp/dec-demo-xml
+        diff -qr --exclude=.DS_Store demo/order-payment-html /tmp/dec-demo-html
+        diff -qr --exclude=.DS_Store demo/order-payment-xml demo/order-payment-app/src/main/resources/dec/design
     - name: Verify reactor, MySQL behavior and release artifacts
       env:
         DEC_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/dec_test?allowPublicKeyRetrieval=true&useSSL=false

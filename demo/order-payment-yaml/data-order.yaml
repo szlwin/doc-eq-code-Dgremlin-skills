@@ -55,6 +55,12 @@ datas:
     createDate:
       type: date
       desc: 创建时间
+    remark:
+      type: string
+      desc: 订单备注
+    orderType:
+      type: int
+      desc: 订单类型
   tables:
   - name: order_info
     dataSource: data1
@@ -73,6 +79,10 @@ datas:
       o_date:
         ref: createDate
         type: timestamp
+      o_remark: remark
+      o_type:
+        ref: orderType
+        relEnum: OrderType
   system: order
   desc: 订单主数据
 - id: DATA-ORDER-DETAIL

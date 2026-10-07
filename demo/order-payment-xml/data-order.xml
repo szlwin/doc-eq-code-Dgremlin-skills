@@ -28,6 +28,8 @@
       <property name="orderStatus" type="int" desc="订单状态"/>
       <property name="payId" type="int" desc="支付单ID"/>
       <property name="createDate" type="date" desc="创建时间"/>
+      <property name="remark" type="string" desc="订单备注"/>
+      <property name="orderType" type="int" desc="订单类型"/>
     </property-info>
     <table-info>
       <table name="order_info" data-source="data1" key="o_id" key-type="increment">
@@ -39,6 +41,8 @@
         <column name="o_status" ref-property="orderStatus" rel-enum="OrderStatus"/>
         <column name="o_pay_id" ref-property="payId"/>
         <column name="o_date" ref-property="createDate" type="timestamp"/>
+        <column name="o_remark" ref-property="remark"/>
+        <column name="o_type" ref-property="orderType" rel-enum="OrderType"/>
       </table>
     </table-info>
   </data>

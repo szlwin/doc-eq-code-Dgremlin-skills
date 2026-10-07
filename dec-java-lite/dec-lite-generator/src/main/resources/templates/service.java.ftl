@@ -11,6 +11,7 @@ import ${package?keep_before_last(".")}.view.${responseType};
 import ${import};
 </#list>
 
+/** DEC ${designId} from ${designSource}; override this seam with an application binding. */
 @Service
 public class ${className}Service {
     public <#if responseType == "void">void<#else>${responseType}</#if> ${methodName}(<#list serviceParams as param>${param.type} ${param.name}<#if param_has_next>, </#if></#list>) {

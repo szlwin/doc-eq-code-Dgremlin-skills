@@ -82,21 +82,15 @@ public final class BusinessActionParser {
         return result;
     }
     private static String text(Map<String, Object> value, String key, String context) {
-        String result = optional(value, key); if (result == null) throw new ActionExecutionException(context + " requires " + key); return result;
+        return com.dec.lite.model.DecFields.requiredText(value, key, context, ActionExecutionException::new);
     }
     private static String optional(Map<String, Object> value, String... keys) {
         for (String key : keys) if (value.get(key) instanceof String text && !text.isBlank()) return text;
         return null;
     }
-    private static List<?> list(Object value, String context) { if (!(value instanceof List<?> list)) throw new ActionExecutionException(context + " must be a list"); return list; }
+    private static List<?> list(Object value, String context) { return com.dec.lite.model.DecFields.list(value, context, ActionExecutionException::new); }
     private static List<?> listOrEmpty(Object value) { return value instanceof List<?> list ? list : List.of(); }
     private static Map<String, Object> map(Object value, String context) {
-        if (!(value instanceof Map<?, ?> raw)) throw new ActionExecutionException(context + " must be a mapping");
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : raw.entrySet()) {
-            if (!(entry.getKey() instanceof String key)) throw new ActionExecutionException(context + " keys must be strings");
-            result.put(key, entry.getValue());
-        }
-        return result;
+        return com.dec.lite.model.DecFields.map(value, context, ActionExecutionException::new);
     }
 }

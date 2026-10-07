@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from xml.dom import Node, minidom
 
-import yaml
+from dec_common import dump_yaml as _dump_yaml
 
 
 class ConversionError(ValueError):
@@ -37,18 +37,6 @@ SUPPORTED_ROOTS = {
     "systems": "systems",
     "business-config": "business",
 }
-
-
-class LiteralDumper(yaml.SafeDumper):
-    pass
-
-
-def _str_representer(dumper: yaml.Dumper, value: str):
-    style = "|" if "\n" in value else None
-    return dumper.represent_scalar("tag:yaml.org,2002:str", value, style=style)
-
-
-LiteralDumper.add_representer(str, _str_representer)
 
 
 def _elements(parent: minidom.Element, name: Optional[str] = None) -> List[minidom.Element]:
@@ -868,14 +856,7 @@ def load_xml(path: Path) -> minidom.Document:
 
 
 def dump_yaml(data: Mapping[str, Any]) -> str:
-    return yaml.dump(
-        dict(data),
-        Dumper=LiteralDumper,
-        allow_unicode=True,
-        sort_keys=False,
-        default_flow_style=False,
-        width=120,
-    )
+    return _dump_yaml(dict(data))
 
 
 def convert_file(src: Path, dst: Optional[Path], *, check: bool, stdout: bool, id_mode: str) -> None:

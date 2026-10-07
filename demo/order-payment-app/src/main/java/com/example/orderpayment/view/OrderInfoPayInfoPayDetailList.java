@@ -2,6 +2,7 @@ package com.example.orderpayment.view;
 
 import java.math.BigDecimal;
 
+/** DEC OrderInfoPayInfo.payDetailList. */
 public class OrderInfoPayInfoPayDetailList {
     private Integer id;
     private Integer payId;

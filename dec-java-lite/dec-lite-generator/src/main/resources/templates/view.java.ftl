@@ -10,6 +10,7 @@ package ${package};
 import ${import};
 </#list>
 
+/** DEC ${designId}<#if designSource??> from ${designSource}</#if>. */
 public class ${className} {
 <#list fields as field>
     private ${field.type} ${field.name};

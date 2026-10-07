@@ -21,15 +21,14 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Sequence, Tuple
 from xml.dom import minidom
 
 import yaml
+from dec_common import atomic_write_yaml as _atomic_write, dump_yaml as _dump_yaml
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -43,18 +42,6 @@ class SyncError(ValueError):
     pass
 
 
-class LiteralDumper(yaml.SafeDumper):
-    pass
-
-
-def _str_representer(dumper: yaml.Dumper, value: str):
-    style = "|" if "\n" in value else None
-    return dumper.represent_scalar("tag:yaml.org,2002:str", value, style=style)
-
-
-LiteralDumper.add_representer(str, _str_representer)
-
-
 def _load_yaml(path: Path) -> Dict[str, Any]:
     try:
         with path.open("r", encoding="utf-8") as fh:
@@ -64,29 +51,6 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
     if not isinstance(value, Mapping):
         raise SyncError(f"{path}: YAML root must be mapping")
     return dict(value)
-
-
-def _dump_yaml(value: Mapping[str, Any]) -> str:
-    return yaml.dump(
-        dict(value),
-        Dumper=LiteralDumper,
-        allow_unicode=True,
-        sort_keys=False,
-        default_flow_style=False,
-        width=120,
-    )
-
-
-def _atomic_write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(text)
-        os.replace(tmp, path)
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
 
 
 def _path_join(base: str, part: str) -> str:

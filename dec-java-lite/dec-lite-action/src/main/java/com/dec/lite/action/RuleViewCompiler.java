@@ -71,17 +71,11 @@ public final class RuleViewCompiler {
         return owners;
     }
     private static String stem(String value) { int dot = value.lastIndexOf('.'); return dot < 0 ? value : value.substring(0, dot); }
-    private static String text(Map<String, Object> map, String key, String context) { String result = optional(map, key); if (result == null) throw new ActionExecutionException(context + " requires " + key); return result; }
+    private static String text(Map<String, Object> map, String key, String context) { return com.dec.lite.model.DecFields.requiredText(map, key, context, ActionExecutionException::new); }
     private static String optional(Map<String, Object> map, String key) { return map.get(key) instanceof String text && !text.isBlank() ? text : null; }
-    private static List<?> list(Object value, String context) { if (!(value instanceof List<?> list)) throw new ActionExecutionException(context + " must be a list"); return list; }
+    private static List<?> list(Object value, String context) { return com.dec.lite.model.DecFields.list(value, context, ActionExecutionException::new); }
     private static List<?> listOrEmpty(Object value) { return value instanceof List<?> list ? list : List.of(); }
     private static Map<String, Object> map(Object value, String context) {
-        if (!(value instanceof Map<?, ?> raw)) throw new ActionExecutionException(context + " must be a mapping");
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : raw.entrySet()) {
-            if (!(entry.getKey() instanceof String key)) throw new ActionExecutionException(context + " keys must be strings");
-            result.put(key, entry.getValue());
-        }
-        return result;
+        return com.dec.lite.model.DecFields.map(value, context, ActionExecutionException::new);
     }
 }

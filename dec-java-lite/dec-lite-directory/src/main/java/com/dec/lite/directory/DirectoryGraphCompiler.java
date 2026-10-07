@@ -1,6 +1,7 @@
 package com.dec.lite.directory;
 
 import com.dec.lite.action.ActionDefinition;
+import com.dec.lite.action.CompiledRuleView;
 import com.dec.lite.action.BusinessActionParser;
 import com.dec.lite.action.RuleViewCompiler;
 import com.dec.lite.action.CustomActionRegistry;
@@ -25,18 +26,30 @@ public final class DirectoryGraphCompiler {
     /** Strict readiness gate for a concrete runtime instance. */
     public DirectoryGraph compileReady(DecProject project, InformationCompilation information,
                                        CustomActionRegistry customActions) {
-        DirectoryGraph graph = compile(project, information);
-        customActions.validate(new BusinessActionParser().parse(project));
+        List<ActionDefinition> actions = new BusinessActionParser().parse(project);
+        Map<RuleViewKey, CompiledRuleView> ruleViews = new RuleViewCompiler().compile(project);
+        return compileReady(project, information, customActions, actions, ruleViews);
+    }
+
+    public DirectoryGraph compileReady(DecProject project, InformationCompilation information,
+                                       CustomActionRegistry customActions, List<ActionDefinition> actions,
+                                       Map<RuleViewKey, CompiledRuleView> ruleViews) {
+        DirectoryGraph graph = compile(project, information, actions, ruleViews);
+        customActions.validate(actions);
         return graph;
     }
 
     public DirectoryGraph compile(DecProject project, InformationCompilation information) {
+        return compile(project, information, new BusinessActionParser().parse(project),
+                new RuleViewCompiler().compile(project));
+    }
+
+    private DirectoryGraph compile(DecProject project, InformationCompilation information,
+                                   List<ActionDefinition> allActions, Map<RuleViewKey, CompiledRuleView> ruleViews) {
         Map<String, DirectoryDefinition> directories = new LinkedHashMap<>();
         List<ExecutionEdge> execution = new ArrayList<>();
         List<CaseEdge> cases = new ArrayList<>();
         List<BackEdge> back = new ArrayList<>();
-        List<ActionDefinition> allActions = new BusinessActionParser().parse(project);
-        Map<RuleViewKey, com.dec.lite.action.CompiledRuleView> ruleViews = new RuleViewCompiler().compile(project);
         for (DecDocument document : project.getDocuments()) {
             if (document.kind() != DecKind.BUSINESS) continue;
             Map<String, Object> business = map(document.root().get("business"), "business");
@@ -138,14 +151,11 @@ public final class DirectoryGraphCompiler {
     }
     private static void require(Map<String, DirectoryDefinition> definitions, String name) { if (!definitions.containsKey(name)) throw new DirectoryCompilationException("unknown Directory: " + name); }
     private static InformationKey key(Object raw, String context) { if (!(raw instanceof String text)) throw new DirectoryCompilationException(context + " is required"); return InformationKey.parse(text); }
-    private static String text(Map<String, Object> map, String field, String context) { String value = optional(map, field); if (value == null) throw new DirectoryCompilationException(context + " requires " + field); return value; }
+    private static String text(Map<String, Object> map, String field, String context) { return com.dec.lite.model.DecFields.requiredText(map, field, context, DirectoryCompilationException::new); }
     private static String optional(Map<String, Object> map, String field) { return map.get(field) instanceof String value && !value.isBlank() ? value : null; }
-    private static List<?> list(Object raw, String context) { if (!(raw instanceof List<?> list)) throw new DirectoryCompilationException(context + " must be a list"); return list; }
+    private static List<?> list(Object raw, String context) { return com.dec.lite.model.DecFields.list(raw, context, DirectoryCompilationException::new); }
     private static List<?> listOrEmpty(Object raw) { return raw instanceof List<?> list ? list : List.of(); }
     private static Map<String, Object> map(Object raw, String context) {
-        if (!(raw instanceof Map<?, ?> value)) throw new DirectoryCompilationException(context + " must be a mapping");
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<?, ?> entry : value.entrySet()) { if (!(entry.getKey() instanceof String key)) throw new DirectoryCompilationException(context + " keys must be strings"); result.put(key, entry.getValue()); }
-        return result;
+        return com.dec.lite.model.DecFields.map(raw, context, DirectoryCompilationException::new);
     }
 }

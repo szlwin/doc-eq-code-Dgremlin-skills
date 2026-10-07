@@ -3,8 +3,10 @@ package ${package};
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** DEC ${designId} from ${designSource}. */
 public enum ${className} {
 <#list values as value>
+    /** DEC ${value.designId}. */
     ${value.name}(${value.value})<#if value_has_next>,<#else>;</#if>
 </#list>
 

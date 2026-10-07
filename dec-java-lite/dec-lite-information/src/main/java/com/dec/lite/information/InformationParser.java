@@ -105,7 +105,7 @@ public final class InformationParser {
     }
     private static String normalized(String value) { return value == null ? "" : value.stripTrailing(); }
 
-    @SuppressWarnings("unchecked") private static Map<String, Object> map(Object value, String context) { if (!(value instanceof Map<?, ?> raw)) throw new InformationCompilationException(context + " must be a mapping"); Map<String, Object> result = new LinkedHashMap<>(); for (Map.Entry<?, ?> entry : raw.entrySet()) { if (!(entry.getKey() instanceof String key)) throw new InformationCompilationException(context + " keys must be strings"); result.put(key, entry.getValue()); } return result; }
-    private static String text(Map<String, Object> value, String key, String context) { String text = optionalText(value.get(key)); if (text == null) throw new InformationCompilationException(context + " requires " + key); return text; }
+    private static Map<String, Object> map(Object value, String context) { return com.dec.lite.model.DecFields.map(value, context, InformationCompilationException::new); }
+    private static String text(Map<String, Object> value, String key, String context) { return com.dec.lite.model.DecFields.requiredText(value, key, context, InformationCompilationException::new); }
     private static String optionalText(Object value) { return value instanceof String text && !text.isBlank() ? text : null; }
 }

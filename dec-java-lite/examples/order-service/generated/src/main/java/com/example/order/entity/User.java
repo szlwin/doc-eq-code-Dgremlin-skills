@@ -1,6 +1,7 @@
 package com.example.order.entity;
 
 
+/** DEC DATA-USER from data-order.yaml. */
 public class User {
     private Integer id;
     private String name;

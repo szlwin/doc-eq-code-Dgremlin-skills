@@ -3,6 +3,7 @@ package com.example.orderpayment.entity;
 import com.example.orderpayment.enums.PaymentStatus;
 import com.example.orderpayment.enums.PayResultCode;
 
+/** DEC DATA-PAY from data-order.yaml. */
 public class Pay {
     private Integer id;
     private Integer orderId;

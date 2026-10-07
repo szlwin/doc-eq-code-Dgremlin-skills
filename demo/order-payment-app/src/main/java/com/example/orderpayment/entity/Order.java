@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.math.BigDecimal;
 import com.example.orderpayment.enums.OrderStatus;
 import java.time.LocalDate;
+import com.example.orderpayment.enums.OrderType;
 
+/** DEC DATA-ORDER from data-order.yaml. */
 public class Order {
     private Integer id;
     private Integer userId;
@@ -14,6 +16,8 @@ public class Order {
     private OrderStatus orderStatus;
     private Integer payId;
     private LocalDate createDate;
+    private String remark;
+    private OrderType orderType;
 
     public Integer getId() {
         return id;
@@ -70,5 +74,19 @@ public class Order {
 
     public void setCreateDate(LocalDate createDate) {
         this.createDate = createDate;
+    }
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+    public OrderType getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(OrderType orderType) {
+        this.orderType = orderType;
     }
 }

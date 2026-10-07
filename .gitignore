@@ -1,4 +1,5 @@
 .DS_Store
+.idea/
 **/target/
 demo/order-payment-html-recovery/
 **/__pycache__/

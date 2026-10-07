@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import com.example.order.enums.OrderStatus;
 import java.time.LocalDate;
 
+/** DEC DATA-ORDER from data-order.yaml. */
 public class Order {
     private Integer id;
     private Integer userId;

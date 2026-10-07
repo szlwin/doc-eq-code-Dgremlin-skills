@@ -77,6 +77,23 @@ class ActionRuntimeTest {
     }
 
     @Test
+    void reportsRollbackFailureAlongsideActionFailure() throws Exception {
+        DecProject project = new DecYamlParser().parse(resourceDirectory());
+        ActionDefinition sms = new BusinessActionParser().parse(project).stream()
+                .filter(action -> action.name().equals("smsNotify")).findFirst().orElseThrow();
+        InformationEngine engine = new InformationEngine(new InformationParser().parse(project));
+        ActionTransaction broken = new ActionTransaction() {
+            @Override public void rollback() { throw new IllegalStateException("connection lost"); }
+        };
+        ActionExecutionContext context = new ActionExecutionContext(engine, model(), Map.of(),
+                java.time.Instant.MAX, broken);
+        ActionResult result = new ActionRuntime(new RuleViewRegistry(), new CustomActionRegistry()).execute(sms, context);
+        assertEquals(ActionStatus.FAILED, result.status());
+        assertTrue(result.diagnostics().stream().anyMatch(message -> message.contains("rollback failed: java.lang.IllegalStateException: connection lost")));
+        assertTrue(result.trace().stream().anyMatch(event -> event.operation().equals("rollback-failed")));
+    }
+
+    @Test
     void failFastRejectsMissingProduceAndUnauthorizedMutation() throws Exception {
         DecProject project = new DecYamlParser().parse(resourceDirectory());
         InformationCompilation compilation = new InformationParser().parse(project);

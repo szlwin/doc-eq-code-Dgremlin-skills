@@ -6,6 +6,7 @@ DEC `dec/v1` 的 Java 21 实现，包含 YAML/XML 前端、Information/Action/Di
 
 ```sh
 ./mvnw clean verify
+./mvnw install -DskipTests
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar inspect --yaml fixtures/mix
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar inspect --xml fixtures/mix-xml
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
@@ -15,6 +16,7 @@ java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
 ```
 
 `inspect` 输出稳定 Design ID 与语义 digest。`information`、`action`、`directory`、`query` 命令也接受 `--yaml` 或 `--xml`。生成目录带 `.dec-generated` 和 manifest；不要手工修改生成文件，`GeneratorPipelineTest` 会检查漂移。
+独立生成工程依赖本机 Maven 仓库中的 `com.dec` 构件，因此先执行 reactor `install`，再测试生成工程。
 
 真实 MySQL 验证需先设置 `DEC_MYSQL_JDBC_URL`、`DEC_MYSQL_USER`、`DEC_MYSQL_PASSWORD`，再运行 `./mvnw -Pmysql-it verify`。发布源代码与 Javadoc 包使用 `./mvnw -Prelease-artifacts package`。
 

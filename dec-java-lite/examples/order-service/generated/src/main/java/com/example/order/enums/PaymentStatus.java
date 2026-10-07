@@ -3,8 +3,11 @@ package com.example.order.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** DEC ENUM-PAYMENT-STATUS from enum-common.yaml. */
 public enum PaymentStatus {
+    /** DEC ENUM-VALUE-PAYMENT-STATUS-INIT. */
     INIT("0"),
+    /** DEC ENUM-VALUE-PAYMENT-STATUS-PROCESSING. */
     PROCESSING("1");
 
     private final String value;

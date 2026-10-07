@@ -46,6 +46,48 @@ apis:
       required: true
       desc: 订单类型
       relEnum: OrderType
+    - id: API-PARAM-USER-ID
+      name: userId
+      in: body
+      type: int
+      required: true
+      validations:
+      - type: min
+        value: 1
+    - id: API-PARAM-PRODUCT-ID
+      name: productId
+      in: body
+      type: int
+      required: true
+      validations:
+      - type: min
+        value: 1
+    - id: API-PARAM-PRODUCT-NAME
+      name: productName
+      in: body
+      type: string
+      required: true
+      validations:
+      - type: minLength
+        value: 1
+      - type: maxLength
+        value: 120
+    - id: API-PARAM-PRODUCT-PRICE
+      name: productPrice
+      in: body
+      type: decimal
+      required: true
+      validations:
+      - type: min
+        value: 1
+    - id: API-PARAM-PRODUCT-COUNT
+      name: productCount
+      in: body
+      type: int
+      required: true
+      validations:
+      - type: min
+        value: 1
     validations:
     - type: expression
       expression: status = 1 and type = 1
@@ -63,4 +105,126 @@ apis:
       type: int
       required: true
       desc: 当前订单状态
+      relEnum: OrderStatus
+- id: API-ORDER-START-PAYMENT
+  name: startPayment
+  desc: 发起支付
+  system: order
+  url: /api/orders/{orderId}/payment
+  method: POST
+  request:
+    params:
+    - name: orderId
+      in: path
+      type: long
+      required: true
+      validations:
+      - type: min
+        value: 1
+      - type: max
+        value: 999999999
+      id: API-PARAM-STARTPAYMENT-ORDER-ID
+  response:
+    type: object
+    modelRef: OrderInfo
+    fields:
+    - name: id
+      type: long
+      required: true
+    - name: status
+      type: int
+      required: true
+      relEnum: OrderStatus
+- id: API-ORDER-RECEIVE-PAYMENT-RESULT
+  name: receivePaymentResult
+  desc: 接收支付结果
+  system: order
+  url: /api/orders/{orderId}/payment/result
+  method: POST
+  request:
+    params:
+    - name: orderId
+      in: path
+      type: long
+      required: true
+      validations:
+      - type: min
+        value: 1
+      - type: max
+        value: 999999999
+      id: API-PARAM-RECEIVEPAYMENTRESULT-ORDER-ID
+    - id: API-PARAM-PAY-RESULT-CODE
+      name: resultCode
+      in: body
+      type: string
+      required: true
+      relEnum: PayResultCode
+  response:
+    type: object
+    modelRef: OrderInfo
+    fields:
+    - name: id
+      type: long
+      required: true
+    - name: status
+      type: int
+      required: true
+      relEnum: OrderStatus
+- id: API-ORDER-BACK-TO-PAYING
+  name: backToPaying
+  desc: 支付结果回退到支付中
+  system: order
+  url: /api/orders/{orderId}/payment/back
+  method: POST
+  request:
+    params:
+    - name: orderId
+      in: path
+      type: long
+      required: true
+      validations:
+      - type: min
+        value: 1
+      - type: max
+        value: 999999999
+      id: API-PARAM-BACKTOPAYING-ORDER-ID
+  response:
+    type: object
+    modelRef: OrderInfo
+    fields:
+    - name: id
+      type: long
+      required: true
+    - name: status
+      type: int
+      required: true
+      relEnum: OrderStatus
+- id: API-ORDER-GET
+  name: getOrder
+  desc: 查询订单和支付状态
+  system: order
+  url: /api/orders/{orderId}
+  method: GET
+  request:
+    params:
+    - name: orderId
+      in: path
+      type: long
+      required: true
+      validations:
+      - type: min
+        value: 1
+      - type: max
+        value: 999999999
+      id: API-PARAM-GETORDER-ORDER-ID
+  response:
+    type: object
+    modelRef: OrderInfo
+    fields:
+    - name: id
+      type: long
+      required: true
+    - name: status
+      type: int
+      required: true
       relEnum: OrderStatus

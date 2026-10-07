@@ -25,10 +25,107 @@
       <parameter name="status" in="body" type="int" required="true" desc="订单状态" rel-enum="OrderStatus"/>
       <!-- dec-id: API-PARAM-TYPE -->
       <parameter name="type" in="body" type="int" required="true" desc="订单类型" rel-enum="OrderType"/>
+      <!-- dec-id: API-PARAM-USER-ID -->
+      <parameter name="userId" in="body" type="int" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-PRODUCT-ID -->
+      <parameter name="productId" in="body" type="int" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-PRODUCT-NAME -->
+      <parameter name="productName" in="body" type="string" required="true">
+        <validation-info>
+          <validation type="minLength" value="1"/>
+          <validation type="maxLength" value="120"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-PRODUCT-PRICE -->
+      <parameter name="productPrice" in="body" type="decimal" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-PRODUCT-COUNT -->
+      <parameter name="productCount" in="body" type="int" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+        </validation-info>
+      </parameter>
     </request>
     <response type="object" desc="提交后的订单摘要" model-ref="OrderInfo">
       <field name="id" type="long" required="true" desc="订单 ID"/>
       <field name="status" type="int" required="true" desc="当前订单状态" rel-enum="OrderStatus"/>
+    </response>
+  </api>
+  <!-- dec-id: API-ORDER-START-PAYMENT -->
+  <api name="startPayment" desc="发起支付" system="order" url="/api/orders/{orderId}/payment" method="POST">
+    <request>
+      <!-- dec-id: API-PARAM-STARTPAYMENT-ORDER-ID -->
+      <parameter name="orderId" in="path" type="long" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+          <validation type="max" value="999999999"/>
+        </validation-info>
+      </parameter>
+    </request>
+    <response type="object" model-ref="OrderInfo">
+      <field name="id" type="long" required="true"/>
+      <field name="status" type="int" required="true" rel-enum="OrderStatus"/>
+    </response>
+  </api>
+  <!-- dec-id: API-ORDER-RECEIVE-PAYMENT-RESULT -->
+  <api name="receivePaymentResult" desc="接收支付结果" system="order" url="/api/orders/{orderId}/payment/result" method="POST">
+    <request>
+      <!-- dec-id: API-PARAM-RECEIVEPAYMENTRESULT-ORDER-ID -->
+      <parameter name="orderId" in="path" type="long" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+          <validation type="max" value="999999999"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-PAY-RESULT-CODE -->
+      <parameter name="resultCode" in="body" type="string" required="true" rel-enum="PayResultCode"/>
+    </request>
+    <response type="object" model-ref="OrderInfo">
+      <field name="id" type="long" required="true"/>
+      <field name="status" type="int" required="true" rel-enum="OrderStatus"/>
+    </response>
+  </api>
+  <!-- dec-id: API-ORDER-BACK-TO-PAYING -->
+  <api name="backToPaying" desc="支付结果回退到支付中" system="order" url="/api/orders/{orderId}/payment/back" method="POST">
+    <request>
+      <!-- dec-id: API-PARAM-BACKTOPAYING-ORDER-ID -->
+      <parameter name="orderId" in="path" type="long" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+          <validation type="max" value="999999999"/>
+        </validation-info>
+      </parameter>
+    </request>
+    <response type="object" model-ref="OrderInfo">
+      <field name="id" type="long" required="true"/>
+      <field name="status" type="int" required="true" rel-enum="OrderStatus"/>
+    </response>
+  </api>
+  <!-- dec-id: API-ORDER-GET -->
+  <api name="getOrder" desc="查询订单和支付状态" system="order" url="/api/orders/{orderId}" method="GET">
+    <request>
+      <!-- dec-id: API-PARAM-GETORDER-ORDER-ID -->
+      <parameter name="orderId" in="path" type="long" required="true">
+        <validation-info>
+          <validation type="min" value="1"/>
+          <validation type="max" value="999999999"/>
+        </validation-info>
+      </parameter>
+    </request>
+    <response type="object" model-ref="OrderInfo">
+      <field name="id" type="long" required="true"/>
+      <field name="status" type="int" required="true" rel-enum="OrderStatus"/>
     </response>
   </api>
 </api-config>

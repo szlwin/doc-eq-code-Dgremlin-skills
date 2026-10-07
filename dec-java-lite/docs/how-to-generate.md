@@ -4,6 +4,7 @@
 
 ```sh
 ./mvnw clean package
+./mvnw install -DskipTests
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar inspect --yaml fixtures/mix
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
   --yaml fixtures/mix --output examples/order-service/generated \
