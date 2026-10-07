@@ -1,0 +1,146 @@
+kind: view
+version: dec/v1
+views:
+- id: VIEW-USER-INFO
+  name: UserInfo
+  system: user
+  targetMain: user
+  properties:
+    id:
+      ref: id
+      desc: ID
+    name:
+      ref: name
+      desc: 名称
+    active:
+      ref: active
+      desc: 激活状态
+    certified:
+      ref: certified
+      desc: 认证状态
+- id: VIEW-ORDER-INFO
+  name: OrderInfo
+  system: order
+  targetMain: order
+  properties:
+    id:
+      ref: id
+      desc: ID
+    userId:
+      ref: userId
+      desc: 用户ID
+    productCount:
+      ref: productCount
+      desc: 商品数量
+    totalPrice:
+      ref: totalPrice
+      desc: 商品总价
+    totalAmount:
+      ref: totalAmount
+      desc: 订单总金额
+    status:
+      ref: orderStatus
+      desc: 状态
+    payId:
+      ref: payId
+      desc: 支付单ID
+    dateTime:
+      ref: createDate
+      desc: 创建时间
+    user:
+      relation: one-to-one
+      data: user
+      key: id
+      relKey: userId
+      properties:
+        id:
+          ref: id
+          desc: ID
+        name:
+          ref: name
+          desc: 名称
+        active:
+          ref: active
+          desc: 激活状态
+        certified:
+          ref: certified
+          desc: 认证状态
+      desc: 订单所属用户
+    orderDetailList:
+      relation: one-to-many
+      data: orderDetail
+      key: orderId
+      relKey: id
+      properties:
+        id:
+          ref: id
+          desc: ID
+        orderId:
+          ref: orderId
+          desc: 订单ID
+        userId:
+          ref: userId
+          desc: 用户ID
+        productId:
+          ref: productId
+          desc: 商品ID
+        productName:
+          ref: productName
+          desc: 商品名称
+        productPrice:
+          ref: productPrice
+          desc: 商品价格
+        productAmount:
+          ref: productAmount
+          desc: 商品金额
+        status:
+          ref: status
+          desc: 状态
+      desc: 订单明细列表
+    payInfo:
+      relation: one-to-one
+      data: pay
+      key: orderId
+      relKey: id
+      properties:
+        id:
+          ref: id
+          desc: ID
+        orderId:
+          ref: orderId
+          desc: 订单ID
+        userId:
+          ref: userId
+          desc: 用户ID
+        status:
+          ref: status
+          desc: 状态
+        resultCode:
+          ref: resultCode
+          desc: 支付结果码
+        payDetailList:
+          relation: one-to-many
+          data: payDetail
+          key: payId
+          relKey: id
+          properties:
+            id:
+              ref: id
+              desc: ID
+            payId:
+              ref: payId
+              desc: 支付单ID
+            productId:
+              ref: productId
+              desc: 商品ID
+            productName:
+              ref: productName
+              desc: 商品名称
+            payPrice:
+              ref: payPrice
+              desc: 支付价格
+            payAmount:
+              ref: payAmount
+              desc: 支付金额
+          desc: 支付明细列表
+      desc: 支付信息

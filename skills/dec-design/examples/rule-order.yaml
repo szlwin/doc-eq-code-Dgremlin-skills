@@ -1,0 +1,60 @@
+kind: rule
+version: dec/v1
+ruleViews:
+- id: RV-SAVE-ORDER
+  name: save-Order
+  desc: 保存并提交订单的业务规则视图
+  viewRef: OrderInfo
+  apiRef: order.submitOrder
+  rules:
+  - id: RULE-INSERT-ORDER
+    name: insertOrder
+    type: insert
+    property: OrderInfo
+  - id: RULE-INSERT-DETAIL
+    name: insertOrderDetail
+    type: insert
+    property: orderDetailList
+  code: SAVE_ORDER
+  dataSource: data1
+- id: RV-ORDER-IS-WAIT-PAY
+  name: isWaitPay
+  desc: 判断订单是否等待支付
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-ORDER-IS-WAIT-PAY
+    name: isWaitPay
+    type: checkPattern
+    pattern: status = 1
+  code: ISWAITPAY
+  dataSource: data1
+- id: RV-CONFIRM-PAY-SUCCESS
+  name: confirmPaySuccess
+  desc: 确认支付成功并更新订单状态
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-CONFIRM-PAY-SUCCESS
+    name: setPaySuccess
+    type: dsl
+    process: 'status : 3;
+
+      every(orderDetailList, status : 3);
+
+      '
+  code: CONFIRMPAYSUCCESS
+  dataSource: data1
+- id: RV-CONFIRM-PAY-ERROR
+  name: confirmPayError
+  desc: 确认支付失败并更新订单状态
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-CONFIRM-PAY-ERROR
+    name: setPayError
+    type: dsl
+    process: 'status : 4;
+
+      every(orderDetailList, status : 4);
+
+      '
+  code: CONFIRMPAYERROR
+  dataSource: data1

@@ -1,0 +1,5 @@
+.DS_Store
+**/target/
+demo/order-payment-html-recovery/
+**/__pycache__/
+*.pyc

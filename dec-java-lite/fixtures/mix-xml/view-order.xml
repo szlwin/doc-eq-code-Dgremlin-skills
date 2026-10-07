@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-view-mapping>
+  <!-- dec-id: VIEW-USER-INFO -->
+  <view name="UserInfo" system="user" target-main="user">
+    <property-info>
+      <property name="id" ref-property="id" desc="ID"/>
+      <property name="name" ref-property="name" desc="名称"/>
+      <property name="active" ref-property="active" desc="激活状态"/>
+      <property name="certified" ref-property="certified" desc="认证状态"/>
+    </property-info>
+  </view>
+  <!-- dec-id: VIEW-ORDER-INFO -->
+  <view name="OrderInfo" system="order" target-main="order">
+    <property-info>
+      <property name="id" ref-property="id" desc="ID"/>
+      <property name="userId" ref-property="userId" desc="用户ID"/>
+      <property name="productCount" ref-property="productCount" desc="商品数量"/>
+      <property name="totalPrice" ref-property="totalPrice" desc="商品总价"/>
+      <property name="totalAmount" ref-property="totalAmount" desc="订单总金额"/>
+      <property name="status" ref-property="orderStatus" desc="状态"/>
+      <property name="payId" ref-property="payId" desc="支付单ID"/>
+      <property name="dateTime" ref-property="createDate" desc="创建时间"/>
+      <property name="user" relation="one-to-one" data="user" key="id" rel-key="userId" desc="订单所属用户">
+        <property name="id" ref-property="id" desc="ID"/>
+        <property name="name" ref-property="name" desc="名称"/>
+        <property name="active" ref-property="active" desc="激活状态"/>
+        <property name="certified" ref-property="certified" desc="认证状态"/>
+      </property>
+      <property name="orderDetailList" relation="one-to-many" data="orderDetail" key="orderId" rel-key="id" desc="订单明细列表">
+        <property name="id" ref-property="id" desc="ID"/>
+        <property name="orderId" ref-property="orderId" desc="订单ID"/>
+        <property name="userId" ref-property="userId" desc="用户ID"/>
+        <property name="productId" ref-property="productId" desc="商品ID"/>
+        <property name="productName" ref-property="productName" desc="商品名称"/>
+        <property name="productPrice" ref-property="productPrice" desc="商品价格"/>
+        <property name="productAmount" ref-property="productAmount" desc="商品金额"/>
+        <property name="status" ref-property="status" desc="状态"/>
+      </property>
+      <property name="payInfo" relation="one-to-one" data="pay" key="orderId" rel-key="id" desc="支付信息">
+        <property name="id" ref-property="id" desc="ID"/>
+        <property name="orderId" ref-property="orderId" desc="订单ID"/>
+        <property name="userId" ref-property="userId" desc="用户ID"/>
+        <property name="status" ref-property="status" desc="状态"/>
+        <property name="resultCode" ref-property="resultCode" desc="支付结果码"/>
+        <property name="payDetailList" relation="one-to-many" data="payDetail" key="payId" rel-key="id" desc="支付明细列表">
+          <property name="id" ref-property="id" desc="ID"/>
+          <property name="payId" ref-property="payId" desc="支付单ID"/>
+          <property name="productId" ref-property="productId" desc="商品ID"/>
+          <property name="productName" ref-property="productName" desc="商品名称"/>
+          <property name="payPrice" ref-property="payPrice" desc="支付价格"/>
+          <property name="payAmount" ref-property="payAmount" desc="支付金额"/>
+        </property>
+      </property>
+    </property-info>
+  </view>
+</orm-view-mapping>

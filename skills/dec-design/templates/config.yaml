@@ -1,0 +1,31 @@
+kind: config
+version: dec/v1
+dataSourceInfo:
+  default: <dataSourceName>
+  dataSources:
+  - name: <dataSourceName>
+    type: <registeredDataSourceType>
+  - name: redis1
+    type: Redis
+  - name: mongo1
+    type: MongoDB
+  - name: paymentService
+    type: HTTP
+connectionInfo:
+  default: <connectionName>
+  connections:
+  - name: <connectionName>
+    dataSources:
+    - <dataSourceName>
+dataFiles:
+- path: classpath:dec/data/
+viewFiles:
+- path: classpath:dec/view/
+ruleFiles:
+- path: classpath:dec/rule/
+systemFiles:
+- path: classpath:dec/system/
+businessFiles:
+- path: classpath:dec/business/
+enumFiles:
+- path: classpath:dec/generated/enum/

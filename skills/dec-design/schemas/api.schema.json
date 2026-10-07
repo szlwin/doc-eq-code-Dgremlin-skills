@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEC API YAML",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "api"
+    },
+    "version": {
+      "type": "string"
+    },
+    "apis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "desc": {
+            "type": "string"
+          },
+          "system": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method": {
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "HEAD",
+              "OPTIONS"
+            ]
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "params": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "in": {
+                      "enum": [
+                        "path",
+                        "query",
+                        "header",
+                        "body"
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "desc": {
+                      "type": "string"
+                    },
+                    "default": {},
+                    "validations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "notNull",
+                              "notEmpty",
+                              "min",
+                              "max",
+                              "minLength",
+                              "maxLength",
+                              "pattern",
+                              "regex",
+                              "enum",
+                              "expression"
+                            ]
+                          },
+                          "value": {},
+                          "values": {
+                            "type": "array",
+                            "minItems": 1
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "expression": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "type"
+                        ]
+                      }
+                    },
+                    "relEnum": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "in",
+                    "type"
+                  ]
+                }
+              },
+              "validations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "enum": [
+                        "notNull",
+                        "notEmpty",
+                        "min",
+                        "max",
+                        "minLength",
+                        "maxLength",
+                        "pattern",
+                        "regex",
+                        "enum",
+                        "expression"
+                      ]
+                    },
+                    "value": {},
+                    "values": {
+                      "type": "array",
+                      "minItems": 1
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "expression": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "type"
+                  ]
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "desc": {
+                "type": "string"
+              },
+              "modelRef": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "type": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "desc": {
+                      "type": "string"
+                    },
+                    "relEnum": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "validations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "notNull",
+                              "notEmpty",
+                              "min",
+                              "max",
+                              "minLength",
+                              "maxLength",
+                              "pattern",
+                              "regex",
+                              "enum",
+                              "expression"
+                            ]
+                          },
+                          "value": {},
+                          "values": {
+                            "type": "array",
+                            "minItems": 1
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "expression": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "type"
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "type"
+                  ]
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "type"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "system",
+          "url",
+          "method"
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "apis"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,35 @@
+version: dec-binding/v1
+bindings:
+  - designId: ACT-START-PAY
+    strategy: MODIFY
+    status: IMPLEMENTED
+    implementation:
+      - module: payment-service
+        file: src/main/java/com/acme/payment/PaymentApplicationService.java
+        class: com.acme.payment.PaymentApplicationService
+        method: startPay
+        symbol: com.acme.payment.PaymentApplicationService#startPay
+    tests:
+      - module: payment-service
+        file: src/test/java/com/acme/payment/PaymentApplicationServiceTest.java
+        symbol: com.acme.payment.PaymentApplicationServiceTest#startPay
+
+  - designId: INFO-ORDER-PAYABLE
+    strategy: REUSE
+    status: VERIFIED
+    runtimeManaged: true
+    runtimeCapability: Information expression evaluation
+    tests:
+      - module: order-service
+        file: src/test/java/com/acme/order/OrderDesignContractTest.java
+        symbol: OrderDesignContractTest
+
+  - designId: ENUM-ORDER-STATUS
+    strategy: REUSE
+    status: VERIFIED
+    runtimeManaged: true
+    runtimeCapability: Shared DEC enum registry and rel-enum validation
+    tests:
+      - module: order-service
+        file: src/test/java/com/acme/order/EnumContractTest.java
+        symbol: EnumContractTest

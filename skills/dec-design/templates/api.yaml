@@ -1,0 +1,67 @@
+kind: api
+version: dec/v1
+apis:
+  - id: API-<SYSTEM>-<NAME>
+    name: <apiName>
+    desc: <api description>
+    system: <systemName>
+    url: /api/<resource>/{id}
+    method: POST
+    request:
+      params:
+        - id: API-PARAM-<NAME>
+          name: id
+          in: path
+          type: long
+          required: true
+          desc: <parameter description>
+          validations:
+            - type: notNull
+            - type: min
+              value: 1
+            - type: max
+              value: 999999999
+        - id: API-PARAM-REMARK
+          name: remark
+          in: body
+          type: string
+          required: false
+          desc: <string parameter description>
+          validations:
+            - type: minLength
+              value: 1
+            - type: maxLength
+              value: 500
+            - type: regex
+              value: "^[\\p{L}\\p{N} _.,-]{1,500}$"
+        - id: API-PARAM-STATUS
+          name: status
+          in: body
+          type: int
+          required: true
+          desc: 订单状态
+          relEnum: OrderStatus
+        - id: API-PARAM-TYPE
+          name: type
+          in: body
+          type: int
+          required: true
+          desc: 订单类型
+          relEnum: OrderType
+      validations:
+        - type: expression
+          expression: status = 1 and type = 1
+          message: status 与 type 组合不满足接口约束
+    response:
+      type: object
+      desc: <response description>
+      fields:
+        - name: id
+          type: long
+          required: true
+          desc: <field description>
+        - name: status
+          type: int
+          required: true
+          desc: <status description>
+          relEnum: OrderStatus

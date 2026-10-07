@@ -1,0 +1,25 @@
+kind: rule
+version: dec/v1
+ruleViews:
+- id: RV-USER-IS-ACTIVATED
+  name: isActivated
+  desc: 判断用户是否已激活
+  viewRef: UserInfo
+  rules:
+  - id: RULE-USER-IS-ACTIVATED
+    name: isActivated
+    type: checkPattern
+    pattern: active = 1
+  code: ISACTIVATED
+  dataSource: data1
+- id: RV-USER-IS-CERTIFIED
+  name: isCertified
+  desc: 判断用户是否已认证
+  viewRef: UserInfo
+  rules:
+  - id: RULE-USER-IS-CERTIFIED
+    name: isCertified
+    type: checkPattern
+    pattern: certified = 1
+  code: ISCERTIFIED
+  dataSource: data1

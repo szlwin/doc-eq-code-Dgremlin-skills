@@ -1,0 +1,24 @@
+kind: data
+version: dec/v1
+datas:
+  - id: DATA-<DOMAIN>
+    name: <dataName>
+    system: <systemName>
+    properties:
+      id:
+        type: int
+        desc: 主键
+      <propertyName>: <logicalType>
+      <enumProperty>: int
+    tables:
+      - name: <externalMappingName>
+        dataSource: <dataSourceName>
+        key: <sourceKeyName>
+        keyType: increment
+        columns:
+          <sourceKeyName>: id
+          <sourceField>:
+            ref: <propertyName>
+          <enumSourceField>:
+            ref: <enumProperty>
+            relEnum: <EnumName>

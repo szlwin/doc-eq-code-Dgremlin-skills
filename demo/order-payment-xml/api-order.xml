@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api-config>
+  <!-- dec-id: API-ORDER-SUBMIT -->
+  <api name="submitOrder" desc="提交订单" system="order" url="/api/orders/{orderId}/submit" method="POST">
+    <request>
+      <validation-info>
+        <validation type="expression" expression="status = 1 and type = 1" message="status 与 type 组合不满足接口约束"/>
+      </validation-info>
+      <!-- dec-id: API-PARAM-ORDER-ID -->
+      <parameter name="orderId" in="path" type="long" required="true" desc="订单 ID">
+        <validation-info>
+          <validation type="notNull"/>
+          <validation type="min" value="1"/>
+          <validation type="max" value="999999999"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-REMARK -->
+      <parameter name="remark" in="body" type="string" required="false" desc="订单备注">
+        <validation-info>
+          <validation type="maxLength" value="500"/>
+          <validation type="regex" value="^[A-Za-z0-9 _.,-]{0,500}$"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-STATUS -->
+      <parameter name="status" in="body" type="int" required="true" desc="订单状态" rel-enum="OrderStatus"/>
+      <!-- dec-id: API-PARAM-TYPE -->
+      <parameter name="type" in="body" type="int" required="true" desc="订单类型" rel-enum="OrderType"/>
+    </request>
+    <response type="object" desc="提交后的订单摘要" model-ref="OrderInfo">
+      <field name="id" type="long" required="true" desc="订单 ID"/>
+      <field name="status" type="int" required="true" desc="当前订单状态" rel-enum="OrderStatus"/>
+    </response>
+  </api>
+</api-config>

@@ -1,0 +1,429 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEC Business YAML",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "business"
+    },
+    "version": {
+      "type": "string"
+    },
+    "business": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "directories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "informationRef": {
+                "type": "string"
+              },
+              "modelRef": {
+                "type": "string"
+              },
+              "isRoot": {
+                "type": "boolean"
+              },
+              "subDirectories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "rel": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "informationRef": {
+                      "type": "string"
+                    },
+                    "mutualExclusion": {
+                      "type": "string"
+                    },
+                    "anyOne": {
+                      "type": "boolean"
+                    },
+                    "back": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "notes": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "systemRef": {
+                                "type": "string"
+                              },
+                              "ruleRef": {
+                                "type": "string"
+                              },
+                              "produces": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "description": {
+                                      "type": "string"
+                                    },
+                                    "notes": {
+                                      "type": "string"
+                                    },
+                                    "ref": {
+                                      "type": "string"
+                                    },
+                                    "informationRef": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "ref"
+                                  ]
+                                }
+                              },
+                              "rules": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "description": {
+                                      "type": "string"
+                                    },
+                                    "notes": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "enum": [
+                                        "check",
+                                        "checkPattern",
+                                        "checkData",
+                                        "checkDataPattern",
+                                        "insert",
+                                        "update",
+                                        "delete",
+                                        "get",
+                                        "query",
+                                        "dsl",
+                                        "grammer"
+                                      ]
+                                    },
+                                    "property": {
+                                      "type": "string"
+                                    },
+                                    "pattern": {
+                                      "type": "string"
+                                    },
+                                    "cmd": {
+                                      "type": "string"
+                                    },
+                                    "sql": {
+                                      "type": "string"
+                                    },
+                                    "process": {
+                                      "type": "string"
+                                    },
+                                    "grammer": {
+                                      "type": "string"
+                                    },
+                                    "error": {
+                                      "type": "object",
+                                      "properties": {
+                                        "code": {
+                                          "type": "string"
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        },
+                                        "level": {
+                                          "type": [
+                                            "string",
+                                            "number"
+                                          ]
+                                        }
+                                      },
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "code",
+                                        "message"
+                                      ]
+                                    },
+                                    "customer": {
+                                      "type": "object",
+                                      "additionalProperties": true
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "name",
+                                    "type"
+                                  ]
+                                }
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "name"
+                            ]
+                          }
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "name"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "rel"
+                  ]
+                }
+              },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "informationRef": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "informationRef"
+                  ]
+                }
+              },
+              "actions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "systemRef": {
+                      "type": "string"
+                    },
+                    "ruleRef": {
+                      "type": "string"
+                    },
+                    "produces": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "type": "string"
+                          },
+                          "ref": {
+                            "type": "string"
+                          },
+                          "informationRef": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "ref"
+                        ]
+                      }
+                    },
+                    "rules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "check",
+                              "checkPattern",
+                              "checkData",
+                              "checkDataPattern",
+                              "insert",
+                              "update",
+                              "delete",
+                              "get",
+                              "query",
+                              "dsl",
+                              "grammer"
+                            ]
+                          },
+                          "property": {
+                            "type": "string"
+                          },
+                          "pattern": {
+                            "type": "string"
+                          },
+                          "cmd": {
+                            "type": "string"
+                          },
+                          "sql": {
+                            "type": "string"
+                          },
+                          "process": {
+                            "type": "string"
+                          },
+                          "grammer": {
+                            "type": "string"
+                          },
+                          "error": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "level": {
+                                "type": [
+                                  "string",
+                                  "number"
+                                ]
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "code",
+                              "message"
+                            ]
+                          },
+                          "customer": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "name",
+                          "type"
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "change": {
+                "type": "object",
+                "properties": {
+                  "informationRef": {
+                    "type": "string"
+                  },
+                  "process": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "informationRef",
+              "modelRef"
+            ]
+          },
+          "minItems": 1
+        },
+        "desc": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "directories"
+      ]
+    }
+  },
+  "required": [
+    "business"
+  ],
+  "additionalProperties": false
+}

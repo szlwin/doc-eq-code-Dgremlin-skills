@@ -1,0 +1,21 @@
+kind: rule
+version: dec/v1
+ruleViews:
+  - id: RV-<NAME>
+    name: <ruleViewName>
+    code: <RULE_VIEW_CODE>
+    desc: <rule view description>
+    viewRef: <ViewName>
+    dataSource: <defaultDataSourceName>
+    # apiRef: <systemName>.<apiName>   # optional
+    rules:
+      - id: RULE-<NAME>
+        name: <ruleName>
+        type: check
+        property: <propertyPath>
+        pattern: <pattern>
+      - id: RULE-<OVERRIDE-NAME>
+        name: <overrideRuleName>
+        type: get
+        property: <propertyPath>
+        dataSource: <overrideDataSourceName>  # optional rule-specific override

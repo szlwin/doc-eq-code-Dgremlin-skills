@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-rule-mapping>
+  <!-- dec-id: RV-PAY -->
+  <rule-view-info name="pay" code="PAY" desc="发起支付" view-ref="OrderInfo" dataSource="paymentService">
+    <!-- dec-id: RULE-INSERT-PAY -->
+    <rule name="insertPay" type="insert" property="payInfo"/>
+  </rule-view-info>
+  <!-- dec-id: RV-HAS-PAYMENT-INFO -->
+  <rule-view-info name="hasPaymentInfo" code="HASPAYMENTINFO" desc="判断支付信息是否已产生" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-HAS-PAYMENT-INFO -->
+    <rule name="hasPaymentInfo" type="check" property="payInfo.id" pattern="NOTNULL" dataSource="redis1"/>
+  </rule-view-info>
+  <!-- dec-id: RV-RECEIVE-PAY-RESULT -->
+  <rule-view-info name="receivePayResult" code="RECEIVEPAYRESULT" desc="接收并保存支付结果" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-RECEIVE-PAY-RESULT -->
+    <rule name="updatePayResult" type="update" property="payInfo"/>
+  </rule-view-info>
+  <!-- dec-id: RV-HAS-PAY-RESULT -->
+  <rule-view-info name="hasPayResult" code="HASPAYRESULT" desc="判断支付结果是否存在" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-HAS-PAY-RESULT -->
+    <rule name="hasPayResult" type="check" property="payInfo.resultCode" pattern="NOTNULL"/>
+  </rule-view-info>
+  <!-- dec-id: RV-IS-PAY-SUCCESS -->
+  <rule-view-info name="isPaySuccess" code="ISPAYSUCCESS" desc="判断支付结果是否成功" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-IS-PAY-SUCCESS -->
+    <rule name="isPaySuccess" type="checkPattern" pattern="payInfo.resultCode = SUCCESS"/>
+  </rule-view-info>
+  <!-- dec-id: RV-IS-PAY-ERROR -->
+  <rule-view-info name="isPayError" code="ISPAYERROR" desc="判断支付结果是否失败" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-IS-PAY-ERROR -->
+    <rule name="isPayError" type="checkPattern" pattern="payInfo.resultCode = ERROR"/>
+  </rule-view-info>
+  <!-- dec-id: RV-RECORD-PAY-ERROR -->
+  <rule-view-info name="recordPyaError" code="RECORDPYAERROR" desc="记录支付错误" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-RECORD-PAY-ERROR -->
+    <rule name="recordPyaError" type="insert" property="payInfo" dataSource="mongo1"/>
+  </rule-view-info>
+  <!-- dec-id: RV-RESET-PAY-RESULT -->
+  <rule-view-info name="resetPayResult" code="RESETPAYRESULT" desc="回退时重置支付结果" view-ref="OrderInfo" dataSource="data1">
+    <!-- dec-id: RULE-RESET-PAY-RESULT -->
+    <rule name="resetPayResult" type="grammer">
+      <customer-process><![CDATA[payInfo.resultCode : null;]]></customer-process>
+    </rule>
+  </rule-view-info>
+</orm-rule-mapping>

@@ -1,0 +1,446 @@
+version: dec-binding/v1
+bindings:
+- designId: API-ORDER-SUBMIT
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/controller/SubmitOrderController.java
+    symbol: SubmitOrderController#submitOrder
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/service/SubmitOrderService.java
+    symbol: SubmitOrderService#submitOrder
+  notes: Transport scaffold compiles; Service raises DESIGN_GAP until DEC Runtime wiring is implemented.
+- designId: API-PARAM-ORDER-ID
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/controller/SubmitOrderController.java
+    symbol: SubmitOrderController#submitOrder
+  notes: Generated path validation exists; endpoint runtime wiring remains pending.
+- designId: API-PARAM-REMARK
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    symbol: SubmitOrderRequest
+  notes: Generated request validation exists; endpoint runtime wiring remains pending.
+- designId: API-PARAM-STATUS
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    symbol: SubmitOrderRequest
+  notes: Generated request validation exists; endpoint runtime wiring remains pending.
+- designId: API-PARAM-TYPE
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    symbol: SubmitOrderRequest
+  notes: Generated request validation exists; endpoint runtime wiring remains pending.
+- designId: BUS-ORDER-PAYMENT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: DIR-ORDERED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-SAVE-ORDER
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: PROD-ORDER
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: DIR-PAYING
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-START-PAY
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: PROD-PAYMENT-INFO
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: DIR-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-RESET-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-RECEIVE-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: PROD-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: DIR-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-CONFIRM-PAY-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: DIR-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-RECORD-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: PROD-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: ACT-SMS-NOTIFY
+  strategy: REUSE
+  status: PLANNED
+  notes: Custom Action requires a real SMS implementation and CustomActionRegistry registration.
+- designId: ACT-CONFIRM-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: DATA-USER
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/entity/User.java
+    symbol: User
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dao/UserDao.java
+    symbol: UserDao
+  notes: Generated data scaffold compiles; datasource and mapper execution remain pending.
+- designId: DATA-ORDER
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/entity/Order.java
+    symbol: Order
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dao/OrderDao.java
+    symbol: OrderDao
+  notes: Generated data scaffold compiles; datasource and mapper execution remain pending.
+- designId: DATA-ORDER-DETAIL
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/entity/OrderDetail.java
+    symbol: OrderDetail
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dao/OrderDetailDao.java
+    symbol: OrderDetailDao
+  notes: Generated data scaffold compiles; datasource and mapper execution remain pending.
+- designId: DATA-PAY
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/entity/Pay.java
+    symbol: Pay
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dao/PayDao.java
+    symbol: PayDao
+  notes: Generated data scaffold compiles; datasource and mapper execution remain pending.
+- designId: DATA-PAY-DETAIL
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/entity/PayDetail.java
+    symbol: PayDetail
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/dao/PayDetailDao.java
+    symbol: PayDetailDao
+  notes: Generated data scaffold compiles; datasource and mapper execution remain pending.
+- designId: ENUM-ORDER-STATUS
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/enums/OrderStatus.java
+    symbol: OrderStatus
+  notes: Generated enum compiles; business use and serialization remain to be verified in the application.
+- designId: ENUM-VALUE-ORDER-STATUS-WAIT-PAY
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-VALUE-ORDER-STATUS-PAYING
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-VALUE-ORDER-STATUS-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-VALUE-ORDER-STATUS-ERROR
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-ORDER-TYPE
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/enums/OrderType.java
+    symbol: OrderType
+  notes: Generated enum compiles; business use and serialization remain to be verified in the application.
+- designId: ENUM-VALUE-ORDER-TYPE-NORMAL
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-VALUE-ORDER-TYPE-PREORDER
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-PAYMENT-STATUS
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/enums/PaymentStatus.java
+    symbol: PaymentStatus
+  notes: Generated enum compiles; business use and serialization remain to be verified in the application.
+- designId: ENUM-VALUE-PAYMENT-STATUS-INIT
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-VALUE-PAYMENT-STATUS-PROCESSING
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-PAY-RESULT-CODE
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/enums/PayResultCode.java
+    symbol: PayResultCode
+  notes: Generated enum compiles; business use and serialization remain to be verified in the application.
+- designId: ENUM-VALUE-PAY-RESULT-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+- designId: ENUM-VALUE-PAY-RESULT-ERROR
+  strategy: REUSE
+  status: PLANNED
+- designId: RV-SAVE-ORDER
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-INSERT-ORDER
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-INSERT-DETAIL
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-ORDER-IS-WAIT-PAY
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-ORDER-IS-WAIT-PAY
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-CONFIRM-PAY-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-CONFIRM-PAY-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-CONFIRM-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-CONFIRM-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-PAY
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-INSERT-PAY
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-HAS-PAYMENT-INFO
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-HAS-PAYMENT-INFO
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-RECEIVE-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-RECEIVE-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-HAS-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-HAS-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-IS-PAY-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-IS-PAY-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-IS-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-IS-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-RECORD-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-RECORD-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-RESET-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-RESET-PAY-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-USER-IS-ACTIVATED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-USER-IS-ACTIVATED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RV-USER-IS-CERTIFIED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: RULE-USER-IS-CERTIFIED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: SYS-USER
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-USER-ACTIVATED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-USER-CERTIFIED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-USER-EFFECTIVE
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: SYS-ORDER
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-ORDER-ORDERED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-ORDER-WAIT-PAY
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-ORDER-PAYABLE
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-ORDER-PAYING
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-ORDER-PAY-SUCCESS-STATUS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-ORDER-PAY-ERROR-STATUS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: SYS-PAYMENT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-PAYMENT-INFO
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-PAYMENT-HAS-RESULT
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-PAYMENT-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-PAYMENT-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-PAYMENT-COMPLETED
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: SYS-COMMON
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-COMMON-PAY-SUCCESS
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: INFO-COMMON-PAY-ERROR
+  strategy: REUSE
+  status: PLANNED
+  notes: Canonical design and compiler coverage exist; application runtime binding and scenario verification remain pending.
+- designId: VIEW-USER-INFO
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/view/UserInfo.java
+    symbol: UserInfo
+  notes: Generated view model compiles; runtime assembly remains pending.
+- designId: VIEW-ORDER-INFO
+  strategy: CREATE
+  status: PLANNED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/view/OrderInfo.java
+    symbol: OrderInfo
+  notes: Generated view model compiles; runtime assembly remains pending.

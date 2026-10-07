@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEC Enum YAML",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "enum"
+    },
+    "version": {
+      "type": "string"
+    },
+    "enums": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "desc": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "value": {},
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "desc": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value",
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "name",
+          "values"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "enums"
+  ],
+  "additionalProperties": false
+}

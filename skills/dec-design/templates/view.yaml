@@ -1,0 +1,30 @@
+kind: view
+version: dec/v1
+
+views:
+  - id: VIEW-<NAME>
+    name: <ViewName>
+    system: <systemName>
+    targetMain: <mainDataName>
+    properties:
+      id:
+        ref: id
+        desc: 主键
+      <businessProperty>:
+        ref: <dataProperty>
+        desc: <业务字段说明>
+
+      # relation 示例
+      <childObject>:
+        relation: one-to-one # one-to-one | one-to-many
+        data: <childDataName>
+        key: <childDataKey>
+        relKey: <parentRelationProperty>
+        desc: <子对象说明>
+        properties:
+          id:
+            ref: id
+            desc: 主键
+          <businessProperty>:
+            ref: <childDataProperty>
+            desc: <字段说明>

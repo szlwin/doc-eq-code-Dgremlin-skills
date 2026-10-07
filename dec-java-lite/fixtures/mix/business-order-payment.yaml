@@ -1,0 +1,101 @@
+kind: business
+version: dec/v1
+business:
+  id: BUS-ORDER-PAYMENT
+  name: order-payment
+  desc: 订单创建、支付发起、支付结果处理的跨 System 业务流程
+  directories:
+  - id: DIR-ORDERED
+    name: ordered
+    informationRef: order.ordered
+    modelRef: OrderInfo
+    isRoot: true
+    actions:
+    - id: ACT-SAVE-ORDER
+      name: saveOrder
+      systemRef: order
+      ruleRef: save-Order
+      produces:
+      - id: PROD-ORDER
+        ref: OrderInfo
+        informationRef: order.ordered
+  - id: DIR-PAYING
+    name: paying
+    informationRef: order.paying
+    modelRef: OrderInfo
+    subDirectories:
+    - rel: ordered
+    dependencies:
+    - informationRef: order.payable
+    - informationRef: user.effective
+    actions:
+    - id: ACT-START-PAY
+      name: startPay
+      systemRef: payment
+      ruleRef: pay
+      produces:
+      - id: PROD-PAYMENT-INFO
+        ref: PaymentInfo
+        informationRef: payment.paymentInfo
+    change:
+      informationRef: order.paying
+  - id: DIR-PAY-RESULT
+    name: PayResult
+    type: result
+    informationRef: payment.hasResult
+    modelRef: OrderInfo
+    subDirectories:
+    - rel: paying
+      back:
+        name: returnPaying
+        actions:
+        - id: ACT-RESET-PAY-RESULT
+          name: resetPayResult
+          systemRef: payment
+          ruleRef: resetPayResult
+    - rel: success
+      role: case
+      informationRef: payment.success
+    - rel: error
+      role: case
+      informationRef: payment.error
+    actions:
+    - id: ACT-RECEIVE-PAY-RESULT
+      name: receivePayResult
+      systemRef: payment
+      ruleRef: receivePayResult
+      produces:
+      - id: PROD-PAY-RESULT
+        ref: PayResult
+        informationRef: payment.hasResult
+  - id: DIR-SUCCESS
+    name: success
+    informationRef: common.paySuccess
+    modelRef: OrderInfo
+    actions:
+    - id: ACT-CONFIRM-PAY-SUCCESS
+      name: confirmPaySuccess
+      systemRef: order
+      ruleRef: confirmPaySuccess
+    change:
+      informationRef: order.paySuccessStatus
+  - id: DIR-ERROR
+    name: error
+    informationRef: common.payError
+    modelRef: OrderInfo
+    actions:
+    - id: ACT-RECORD-PAY-ERROR
+      name: recordPyaError
+      systemRef: payment
+      ruleRef: recordPyaError
+      produces:
+      - id: PROD-PAY-ERROR
+        ref: PyaError
+    - id: ACT-SMS-NOTIFY
+      name: smsNotify
+    - id: ACT-CONFIRM-PAY-ERROR
+      name: confirmPayError
+      systemRef: order
+      ruleRef: confirmPayError
+    change:
+      informationRef: order.payErrorStatus

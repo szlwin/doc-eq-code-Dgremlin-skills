@@ -1,0 +1,183 @@
+kind: systems
+version: dec/v1
+
+systems:
+  - id: SYS-USER
+    name: user
+    desc: 用户账号与认证信息域
+    dataRefs: [user]
+    viewRefs: [UserInfo]
+    ruleFiles:
+      - classpath:dec/generated/rule/rule-user.xml
+    information:
+      - id: INFO-USER-ACTIVATED
+        name: activated
+        description: 用户账号已激活
+        viewRef: UserInfo
+        ruleRef: isActivated
+      - id: INFO-USER-CERTIFIED
+        name: certified
+        description: 用户身份已认证
+        viewRef: UserInfo
+        ruleRef: isCertified
+      - id: INFO-USER-EFFECTIVE
+        name: effective
+        description: 用户同时满足已激活和已认证，可参与后续业务
+        expression: |
+          user.activated
+          and
+          user.certified
+
+  - id: SYS-ORDER
+    name: order
+    desc: 订单及订单状态信息域
+    dataRefs: [order, orderDetail]
+    viewRefs: [OrderInfo]
+    ruleFiles:
+      - classpath:dec/generated/rule/rule-order.xml
+    information:
+      - id: INFO-ORDER-ORDERED
+        name: ordered
+        description: 订单及订单明细已经创建并处于已下单状态
+        viewRef: OrderInfo
+        ruleData: |
+          status = 1
+          and
+          every(orderDetailList, status = 1)
+        changeData: |
+          status : 1;
+          every(orderDetailList, status : 1);
+
+      - id: INFO-ORDER-WAIT-PAY
+        name: waitPay
+        description: 订单处于等待支付状态
+        viewRef: OrderInfo
+        ruleRef: isWaitPay
+
+      - id: INFO-ORDER-PAYABLE
+        name: payable
+        description: 订单满足可支付条件，依赖 ordered 或 waitPay
+        expression: |
+          order.ordered
+          or
+          order.waitPay
+
+      - id: INFO-ORDER-PAYING
+        name: paying
+        description: 订单已进入支付处理中状态
+        viewRef: OrderInfo
+        ruleData: |
+          status = 2
+          and
+          every(orderDetailList, status = 2)
+        changeData: |
+          status : 2;
+          every(orderDetailList, status : 2);
+
+      - id: INFO-ORDER-PAY-SUCCESS-STATUS
+        name: paySuccessStatus
+        description: 订单及明细已物化为支付成功状态
+        viewRef: OrderInfo
+        ruleData: |
+          status = 3
+          and
+          every(orderDetailList, status = 3)
+        changeData: |
+          status : 3;
+          every(orderDetailList, status : 3);
+
+      - id: INFO-ORDER-PAY-ERROR-STATUS
+        name: payErrorStatus
+        description: 订单及明细已物化为支付失败状态
+        viewRef: OrderInfo
+        ruleData: |
+          status = 4
+          and
+          every(orderDetailList, status = 4)
+        changeData: |
+          status : 4;
+          every(orderDetailList, status : 4);
+
+    modelAccess:
+      - modelRef: OrderInfo
+        read:
+          - path: "*"
+            ref:
+              view: OrderInfo
+              property: order
+        write:
+          - path: status
+            ref:
+              view: OrderInfo
+              property: order
+          - path: orderDetailList
+            ref:
+              view: OrderInfo
+              property: order
+
+  - id: SYS-PAYMENT
+    name: payment
+    desc: 支付发起、支付结果与支付状态信息域
+    dataRefs: [pay, payDetail]
+    viewRefs: [OrderInfo]
+    ruleFiles:
+      - classpath:dec/generated/rule/rule-payment.xml
+    information:
+      - id: INFO-PAYMENT-INFO
+        name: paymentInfo
+        description: 已产生支付单信息
+        viewRef: OrderInfo
+        ruleRef: hasPaymentInfo
+      - id: INFO-PAYMENT-HAS-RESULT
+        name: hasResult
+        description: 已收到并保存支付结果
+        viewRef: OrderInfo
+        ruleRef: hasPayResult
+      - id: INFO-PAYMENT-SUCCESS
+        name: success
+        description: 支付结果判定为成功
+        viewRef: OrderInfo
+        ruleRef: isPaySuccess
+      - id: INFO-PAYMENT-ERROR
+        name: error
+        description: 支付结果判定为失败
+        viewRef: OrderInfo
+        ruleRef: isPayError
+      - id: INFO-PAYMENT-COMPLETED
+        name: completed
+        description: 支付流程已经产生成功或失败的最终结果
+        expression: |
+          payment.success
+          or
+          payment.error
+    modelAccess:
+      - modelRef: OrderInfo
+        read:
+          - path: "*"
+            ref:
+              view: OrderInfo
+              property: order
+        write:
+          - path: payInfo
+            ref:
+              view: OrderInfo
+              property: order
+
+  - id: SYS-COMMON
+    name: common
+    desc: 跨 System 聚合业务信息
+    information:
+      - id: INFO-COMMON-PAY-SUCCESS
+        name: paySuccess
+        description: 支付系统成功且订单状态已同步为成功
+        expression: |
+          payment.success
+          and
+          order.paySuccessStatus
+      - id: INFO-COMMON-PAY-ERROR
+        name: payError
+        description: 支付系统失败且订单状态已同步为失败
+        expression: |
+          payment.error
+          and
+          order.payErrorStatus

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-rule-mapping>
+  <rule-view-info name="pay" code="PAY" desc="发起支付" view-ref="OrderInfo" dataSource="paymentService">
+    <rule name="insertPay" type="insert" property="payInfo"/>
+  </rule-view-info>
+  <rule-view-info name="hasPaymentInfo" code="HASPAYMENTINFO" desc="判断支付信息是否已产生" view-ref="OrderInfo" dataSource="data1">
+    <rule name="hasPaymentInfo" type="check" property="payInfo.id" pattern="NOTNULL" dataSource="redis1"/>
+  </rule-view-info>
+  <rule-view-info name="receivePayResult" code="RECEIVEPAYRESULT" desc="接收并保存支付结果" view-ref="OrderInfo" dataSource="data1">
+    <rule name="updatePayResult" type="update" property="payInfo"/>
+  </rule-view-info>
+  <rule-view-info name="hasPayResult" code="HASPAYRESULT" desc="判断支付结果是否存在" view-ref="OrderInfo" dataSource="data1">
+    <rule name="hasPayResult" type="check" property="payInfo.resultCode" pattern="NOTNULL"/>
+  </rule-view-info>
+  <rule-view-info name="isPaySuccess" code="ISPAYSUCCESS" desc="判断支付结果是否成功" view-ref="OrderInfo" dataSource="data1">
+    <rule name="isPaySuccess" type="checkPattern" pattern="payInfo.resultCode = SUCCESS"/>
+  </rule-view-info>
+  <rule-view-info name="isPayError" code="ISPAYERROR" desc="判断支付结果是否失败" view-ref="OrderInfo" dataSource="data1">
+    <rule name="isPayError" type="checkPattern" pattern="payInfo.resultCode = ERROR"/>
+  </rule-view-info>
+  <rule-view-info name="recordPyaError" code="RECORDPYAERROR" desc="记录支付错误" view-ref="OrderInfo" dataSource="data1">
+    <rule name="recordPyaError" type="insert" property="payInfo" dataSource="mongo1"/>
+  </rule-view-info>
+  <rule-view-info name="resetPayResult" code="RESETPAYRESULT" desc="回退时重置支付结果" view-ref="OrderInfo" dataSource="data1">
+    <rule name="resetPayResult" type="grammer">
+      <customer-process><![CDATA[payInfo.resultCode : null;]]></customer-process>
+    </rule>
+  </rule-view-info>
+</orm-rule-mapping>

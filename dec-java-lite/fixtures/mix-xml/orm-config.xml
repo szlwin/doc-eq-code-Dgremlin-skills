@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-config>
+  <orm-datasource-info default="data1">
+    <orm-datasource name="data1">
+      <name>MySQL</name>
+    </orm-datasource>
+    <orm-datasource name="redis1">
+      <name>Redis</name>
+    </orm-datasource>
+    <orm-datasource name="mongo1">
+      <name>MongoDB</name>
+    </orm-datasource>
+    <orm-datasource name="paymentService">
+      <name>HTTP</name>
+    </orm-datasource>
+  </orm-datasource-info>
+  <orm-data-file-info>
+    <orm-file path="classpath:dec/generated/data/"/>
+  </orm-data-file-info>
+  <orm-view-file-info>
+    <orm-file path="classpath:dec/generated/view/"/>
+  </orm-view-file-info>
+  <api-file-info>
+    <api-file path="classpath:dec/generated/api/"/>
+  </api-file-info>
+  <enum-file-info>
+    <enum-file path="classpath:dec/generated/enum/"/>
+  </enum-file-info>
+  <system-file-info>
+    <system-file path="classpath:dec/generated/system/systems.xml"/>
+  </system-file-info>
+  <business-file-info>
+    <business-file path="classpath:dec/generated/business/order-payment.xml"/>
+  </business-file-info>
+  <orm-connection-info default="con1">
+    <orm-connection name="con1">
+      <data-source-info>
+        <data-source ref="data1"/>
+      </data-source-info>
+    </orm-connection>
+  </orm-connection-info>
+</orm-config>

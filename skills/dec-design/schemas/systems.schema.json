@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEC Systems YAML",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "systems"
+    },
+    "version": {
+      "type": "string"
+    },
+    "systems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "desc": {
+            "type": "string"
+          },
+          "dataRefs": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name"
+                  ]
+                }
+              ]
+            }
+          },
+          "viewRefs": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name"
+                  ]
+                }
+              ]
+            }
+          },
+          "ruleFiles": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "path"
+                  ]
+                }
+              ]
+            }
+          },
+          "information": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "viewRef": {
+                  "type": "string"
+                },
+                "ruleRef": {
+                  "type": "string"
+                },
+                "ruleData": {
+                  "type": "string"
+                },
+                "expression": {
+                  "type": "string"
+                },
+                "changeData": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "name"
+              ]
+            }
+          },
+          "modelAccess": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "modelRef": {
+                  "type": "string"
+                },
+                "read": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "ref": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "view": {
+                                "type": "string"
+                              },
+                              "property": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "view",
+                              "property"
+                            ]
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "view": {
+                                  "type": "string"
+                                },
+                                "property": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false,
+                              "required": [
+                                "view",
+                                "property"
+                              ]
+                            },
+                            "minItems": 1
+                          }
+                        ]
+                      },
+                      "refs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "view": {
+                              "type": "string"
+                            },
+                            "property": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "view",
+                            "property"
+                          ]
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "path"
+                    ]
+                  }
+                },
+                "write": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "ref": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "view": {
+                                "type": "string"
+                              },
+                              "property": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "view",
+                              "property"
+                            ]
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "view": {
+                                  "type": "string"
+                                },
+                                "property": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false,
+                              "required": [
+                                "view",
+                                "property"
+                              ]
+                            },
+                            "minItems": 1
+                          }
+                        ]
+                      },
+                      "refs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "view": {
+                              "type": "string"
+                            },
+                            "property": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "view",
+                            "property"
+                          ]
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "path"
+                    ]
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "modelRef"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "systems"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DEC Implementation"
+  short_description: "消费规范化 DEC YAML，实现真实代码并维护 Design ID Binding"
+  default_prompt: "使用 $dec-implementation 根据已批准 DEC canonical YAML 实现代码。先读取 references/input-contract.md，确认输入不是 legacy 或 HTML recovery artifact。所有 YAML/XML 读写必须走 Skill 脚本：canonical YAML/Binding 用 scripts/yaml_io.py，派生 XML 仅读取/检查时用 scripts/xml_io.py；禁止直接打开或手工修改 YAML/XML。再读取 references/dec-design-consumer-contract.md 和同版本 dec-design 的 references/dec-yaml-spec.md 索引与当前 kind 的 references/yaml-spec/*.md 分片，涉及 DataSource、Enum/relEnum、API 或 RuleView 时分别追加读取对应 implementation reference，并核对 RuleView 默认 dataSource/Rule override、Enum 单一事实源和 API required/min/max/length/regex/enum/expression，再判断每个 Design ID 是 Runtime-managed 还是需要项目代码。按 REUSE→COMPATIBLE_EXTEND→MODIFY→CREATE 选择策略，不得为迁就代码改变业务语义。完成后更新 implementation-binding.yaml，运行 binding 校验和项目真实测试，并报告 DESIGN_GAP 或符合性偏差。"

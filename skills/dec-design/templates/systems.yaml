@@ -1,0 +1,50 @@
+kind: systems
+version: dec/v1
+
+systems:
+  - id: SYS-<NAME>
+    name: <systemName>
+    dataRefs:
+      - <dataName>
+    viewRefs:
+      - <ViewName>
+    ruleFiles:
+      - classpath:dec/rule/<system>-rule.xml
+
+    information:
+      # RuleView 型原子 Information
+      - id: INFO-<SYSTEM>-<INFO>
+        name: <informationName>
+        viewRef: <ViewName>
+        ruleRef: <ruleViewName>
+
+      # 数据表达式型原子 Information
+      - id: INFO-<SYSTEM>-<INFO2>
+        name: <informationName2>
+        viewRef: <ViewName>
+        ruleData: |
+          <business-model expression>
+        changeData: |
+          <materialization expression>
+
+      # 复合 Information
+      - id: INFO-<SYSTEM>-<INFO3>
+        name: <informationName3>
+        expression: |
+          <systemA.infoA>
+          and
+          <systemB.infoB>
+
+    # 共享模型访问控制；不需要时省略
+    modelAccess:
+      - modelRef: <ViewName>
+        read:
+          - path: "*"
+            ref:
+              view: <ViewName>
+              property: <exactTargetOrProperty>
+        write:
+          - path: <writePath>
+            ref:
+              view: <ViewName>
+              property: <exactTargetOrProperty>

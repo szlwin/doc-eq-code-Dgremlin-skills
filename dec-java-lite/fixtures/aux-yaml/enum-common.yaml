@@ -1,0 +1,59 @@
+kind: enum
+version: dec/v1
+enums:
+- id: ENUM-ORDER-STATUS
+  name: OrderStatus
+  desc: 订单状态
+  values:
+  - id: ENUM-VALUE-ORDER-STATUS-WAIT-PAY
+    value: 1
+    name: WAIT_PAY
+    desc: 待支付
+  - id: ENUM-VALUE-ORDER-STATUS-PAYING
+    value: 2
+    name: PAYING
+    desc: 支付中
+  - id: ENUM-VALUE-ORDER-STATUS-SUCCESS
+    value: 3
+    name: PAY_SUCCESS
+    desc: 支付成功
+  - id: ENUM-VALUE-ORDER-STATUS-ERROR
+    value: 4
+    name: PAY_ERROR
+    desc: 支付失败
+- id: ENUM-ORDER-TYPE
+  name: OrderType
+  desc: 订单类型
+  values:
+  - id: ENUM-VALUE-ORDER-TYPE-NORMAL
+    value: 1
+    name: NORMAL
+    desc: 普通订单
+  - id: ENUM-VALUE-ORDER-TYPE-PREORDER
+    value: 2
+    name: PREORDER
+    desc: 预售订单
+- id: ENUM-PAYMENT-STATUS
+  name: PaymentStatus
+  desc: 支付状态
+  values:
+  - id: ENUM-VALUE-PAYMENT-STATUS-INIT
+    value: 0
+    name: INIT
+    desc: 初始化
+  - id: ENUM-VALUE-PAYMENT-STATUS-PROCESSING
+    value: 1
+    name: PROCESSING
+    desc: 处理中
+- id: ENUM-PAY-RESULT-CODE
+  name: PayResultCode
+  desc: 支付结果
+  values:
+  - id: ENUM-VALUE-PAY-RESULT-SUCCESS
+    value: SUCCESS
+    name: SUCCESS
+    desc: 成功
+  - id: ENUM-VALUE-PAY-RESULT-ERROR
+    value: ERROR
+    name: ERROR
+    desc: 失败

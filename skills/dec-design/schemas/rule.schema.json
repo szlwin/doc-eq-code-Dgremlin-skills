@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEC Rule YAML",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "rule"
+    },
+    "version": {
+      "type": "string"
+    },
+    "ruleViews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "viewRef": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "check",
+                    "checkPattern",
+                    "checkData",
+                    "checkDataPattern",
+                    "insert",
+                    "update",
+                    "delete",
+                    "get",
+                    "query",
+                    "dsl",
+                    "grammer"
+                  ]
+                },
+                "property": {
+                  "type": "string"
+                },
+                "pattern": {
+                  "type": "string"
+                },
+                "cmd": {
+                  "type": "string"
+                },
+                "sql": {
+                  "type": "string"
+                },
+                "process": {
+                  "type": "string"
+                },
+                "grammer": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": [
+                        "string",
+                        "number"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                },
+                "customer": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "dataSource": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "type"
+              ]
+            },
+            "minItems": 1
+          },
+          "desc": {
+            "type": "string"
+          },
+          "apiRef": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][\\w-]*\\.[A-Za-z_][\\w-]*$"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dataSource": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "code",
+          "viewRef",
+          "rules"
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "ruleViews"
+  ],
+  "additionalProperties": false
+}

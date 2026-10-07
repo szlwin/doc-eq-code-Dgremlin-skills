@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-rule-mapping>
+  <rule-view-info name="save-Order" code="SAVE_ORDER" desc="保存并提交订单的业务规则视图" view-ref="OrderInfo" api-ref="order.submitOrder" dataSource="data1">
+    <rule name="insertOrder" type="insert" property="OrderInfo"/>
+    <rule name="insertOrderDetail" type="insert" property="orderDetailList"/>
+  </rule-view-info>
+  <rule-view-info name="isWaitPay" code="ISWAITPAY" desc="判断订单是否等待支付" view-ref="OrderInfo" dataSource="data1">
+    <rule name="isWaitPay" type="checkPattern" pattern="status = 1"/>
+  </rule-view-info>
+  <rule-view-info name="confirmPaySuccess" code="CONFIRMPAYSUCCESS" desc="确认支付成功并更新订单状态" view-ref="OrderInfo" dataSource="data1">
+    <rule name="setPaySuccess" type="grammer">
+      <customer-process><![CDATA[status : 3;
+every(orderDetailList, status : 3);]]></customer-process>
+    </rule>
+  </rule-view-info>
+  <rule-view-info name="confirmPayError" code="CONFIRMPAYERROR" desc="确认支付失败并更新订单状态" view-ref="OrderInfo" dataSource="data1">
+    <rule name="setPayError" type="grammer">
+      <customer-process><![CDATA[status : 4;
+every(orderDetailList, status : 4);]]></customer-process>
+    </rule>
+  </rule-view-info>
+</orm-rule-mapping>

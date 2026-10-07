@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<business-config name="order-payment" desc="订单创建、支付发起、支付结果处理的跨 System 业务流程">
+  <directory-info>
+    <directory name="ordered" information-ref="order.ordered" model-ref="OrderInfo" is-root="true">
+      <action-info>
+        <action name="saveOrder" system-ref="order" rule-ref="save-Order">
+          <produce-info>
+            <produce ref="OrderInfo" information-ref="order.ordered"/>
+          </produce-info>
+        </action>
+      </action-info>
+    </directory>
+    <directory name="paying" information-ref="order.paying" model-ref="OrderInfo">
+      <subdirectory-info>
+        <subdirectory rel="ordered"/>
+      </subdirectory-info>
+      <dependency-info>
+        <dependency information-ref="order.payable"/>
+        <dependency information-ref="user.effective"/>
+      </dependency-info>
+      <action-info>
+        <action name="startPay" system-ref="payment" rule-ref="pay">
+          <produce-info>
+            <produce ref="PaymentInfo" information-ref="payment.paymentInfo"/>
+          </produce-info>
+        </action>
+      </action-info>
+      <change-info information-ref="order.paying"/>
+    </directory>
+    <directory name="PayResult" type="result" information-ref="payment.hasResult" model-ref="OrderInfo">
+      <subdirectory-info>
+        <subdirectory rel="paying">
+          <back name="returnPaying">
+            <action-info>
+              <action name="resetPayResult" system-ref="payment" rule-ref="resetPayResult"/>
+            </action-info>
+          </back>
+        </subdirectory>
+        <subdirectory rel="success" role="case" information-ref="payment.success"/>
+        <subdirectory rel="error" role="case" information-ref="payment.error"/>
+      </subdirectory-info>
+      <action-info>
+        <action name="receivePayResult" system-ref="payment" rule-ref="receivePayResult">
+          <produce-info>
+            <produce ref="PayResult" information-ref="payment.hasResult"/>
+          </produce-info>
+        </action>
+      </action-info>
+    </directory>
+    <directory name="success" information-ref="common.paySuccess" model-ref="OrderInfo">
+      <action-info>
+        <action name="confirmPaySuccess" system-ref="order" rule-ref="confirmPaySuccess"/>
+      </action-info>
+      <change-info information-ref="order.paySuccessStatus"/>
+    </directory>
+    <directory name="error" information-ref="common.payError" model-ref="OrderInfo">
+      <action-info>
+        <action name="recordPyaError" system-ref="payment" rule-ref="recordPyaError">
+          <produce-info>
+            <produce ref="PyaError"/>
+          </produce-info>
+        </action>
+        <action name="smsNotify"/>
+        <action name="confirmPayError" system-ref="order" rule-ref="confirmPayError"/>
+      </action-info>
+      <change-info information-ref="order.payErrorStatus"/>
+    </directory>
+  </directory-info>
+</business-config>

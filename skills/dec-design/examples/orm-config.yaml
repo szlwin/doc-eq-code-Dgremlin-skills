@@ -1,0 +1,31 @@
+kind: config
+version: dec/v1
+dataSourceInfo:
+  default: data1
+  dataSources:
+  - name: data1
+    type: MySQL
+  - name: redis1
+    type: Redis
+  - name: mongo1
+    type: MongoDB
+  - name: paymentService
+    type: HTTP
+connectionInfo:
+  default: con1
+  connections:
+  - name: con1
+    dataSources:
+    - data1
+dataFiles:
+- path: classpath:dec/generated/data/
+viewFiles:
+- path: classpath:dec/generated/view/
+apiFiles:
+- path: classpath:dec/generated/api/
+systemFiles:
+- path: classpath:dec/generated/system/systems.xml
+businessFiles:
+- path: classpath:dec/generated/business/order-payment.xml
+enumFiles:
+- path: classpath:dec/generated/enum/

@@ -1,0 +1,66 @@
+kind: api
+version: dec/v1
+apis:
+- id: API-ORDER-SUBMIT
+  name: submitOrder
+  desc: 提交订单
+  system: order
+  url: /api/orders/{orderId}/submit
+  method: POST
+  request:
+    params:
+    - id: API-PARAM-ORDER-ID
+      name: orderId
+      in: path
+      type: long
+      required: true
+      desc: 订单 ID
+      validations:
+      - type: notNull
+      - type: min
+        value: 1
+      - type: max
+        value: 999999999
+    - id: API-PARAM-REMARK
+      name: remark
+      in: body
+      type: string
+      required: false
+      desc: 订单备注
+      validations:
+      - type: maxLength
+        value: 500
+      - type: regex
+        value: "^[A-Za-z0-9 _.,-]{0,500}$"
+    - id: API-PARAM-STATUS
+      name: status
+      in: body
+      type: int
+      required: true
+      desc: 订单状态
+      relEnum: OrderStatus
+    - id: API-PARAM-TYPE
+      name: type
+      in: body
+      type: int
+      required: true
+      desc: 订单类型
+      relEnum: OrderType
+    validations:
+    - type: expression
+      expression: status = 1 and type = 1
+      message: status 与 type 组合不满足接口约束
+  response:
+    type: object
+    desc: 提交后的订单摘要
+    modelRef: OrderInfo
+    fields:
+    - name: id
+      type: long
+      required: true
+      desc: 订单 ID
+    - name: status
+      type: int
+      required: true
+      desc: 当前订单状态
+      relEnum: OrderStatus

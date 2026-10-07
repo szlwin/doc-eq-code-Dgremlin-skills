@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-data-mapping>
+  <data name="user" system="user">
+    <property-info>
+      <property name="id" type="int" desc="用户ID"/>
+      <property name="name" type="string" desc="用户名称"/>
+      <property name="active" type="int" desc="激活状态"/>
+      <property name="certified" type="int" desc="认证状态"/>
+    </property-info>
+    <table-info>
+      <table name="user_info" data-source="data1" key="u_id" key-type="increment">
+        <column name="u_id" ref-property="id"/>
+        <column name="u_name" ref-property="name"/>
+        <column name="u_active" ref-property="active"/>
+        <column name="u_certified" ref-property="certified"/>
+      </table>
+    </table-info>
+  </data>
+  <data name="order" system="order">
+    <property-info>
+      <property name="id" type="int" desc="订单ID"/>
+      <property name="userId" type="int" desc="用户ID"/>
+      <property name="productCount" type="int" desc="商品数量"/>
+      <property name="totalPrice" type="decimal" desc="商品总价"/>
+      <property name="totalAmount" type="decimal" desc="订单总金额"/>
+      <property name="orderStatus" type="int" desc="订单状态"/>
+      <property name="payId" type="int" desc="支付单ID"/>
+      <property name="createDate" type="date" desc="创建时间"/>
+    </property-info>
+    <table-info>
+      <table name="order_info" data-source="data1" key="o_id" key-type="increment">
+        <column name="o_id" ref-property="id"/>
+        <column name="o_user_id" ref-property="userId"/>
+        <column name="o_product_count" ref-property="productCount"/>
+        <column name="o_total_price" ref-property="totalPrice"/>
+        <column name="o_total_amount" ref-property="totalAmount"/>
+        <column name="o_status" ref-property="orderStatus" rel-enum="OrderStatus"/>
+        <column name="o_pay_id" ref-property="payId"/>
+        <column name="o_date" ref-property="createDate" type="timestamp"/>
+      </table>
+    </table-info>
+  </data>
+  <data name="orderDetail" system="order">
+    <property-info>
+      <property name="id" type="int" desc="订单明细ID"/>
+      <property name="orderId" type="int" desc="订单ID"/>
+      <property name="userId" type="int" desc="用户ID"/>
+      <property name="productId" type="int" desc="商品ID"/>
+      <property name="productName" type="string" desc="商品名称"/>
+      <property name="productPrice" type="decimal" desc="商品价格"/>
+      <property name="productAmount" type="decimal" desc="商品金额"/>
+      <property name="status" type="int" desc="订单明细状态"/>
+    </property-info>
+    <table-info>
+      <table name="order_detail_info" data-source="data1" key="od_id" key-type="increment">
+        <column name="od_id" ref-property="id"/>
+        <column name="od_order_id" ref-property="orderId"/>
+        <column name="od_user_id" ref-property="userId"/>
+        <column name="od_product_id" ref-property="productId"/>
+        <column name="od_product_name" ref-property="productName"/>
+        <column name="od_product_price" ref-property="productPrice"/>
+        <column name="od_product_amount" ref-property="productAmount"/>
+        <column name="od_status" ref-property="status" rel-enum="OrderStatus"/>
+      </table>
+    </table-info>
+  </data>
+  <data name="pay" system="payment">
+    <property-info>
+      <property name="id" type="int" desc="支付单ID"/>
+      <property name="orderId" type="int" desc="订单ID"/>
+      <property name="userId" type="int" desc="用户ID"/>
+      <property name="status" type="int" desc="支付状态"/>
+      <property name="resultCode" type="string" desc="支付结果码"/>
+    </property-info>
+    <table-info>
+      <table name="pay_info" data-source="data1" key="p_id" key-type="increment">
+        <column name="p_id" ref-property="id"/>
+        <column name="p_order_id" ref-property="orderId"/>
+        <column name="p_user_id" ref-property="userId"/>
+        <column name="p_status" ref-property="status" rel-enum="PaymentStatus"/>
+        <column name="p_result_code" ref-property="resultCode" rel-enum="PayResultCode"/>
+      </table>
+    </table-info>
+  </data>
+  <data name="payDetail" system="payment">
+    <property-info>
+      <property name="id" type="int" desc="支付明细ID"/>
+      <property name="payId" type="int" desc="支付单ID"/>
+      <property name="productId" type="int" desc="商品ID"/>
+      <property name="productName" type="string" desc="商品名称"/>
+      <property name="payPrice" type="decimal" desc="支付价格"/>
+      <property name="payAmount" type="decimal" desc="支付金额"/>
+    </property-info>
+    <table-info>
+      <table name="pay_detail_info" data-source="data1" key="pd_id" key-type="increment">
+        <column name="pd_id" ref-property="id"/>
+        <column name="pd_pay_id" ref-property="payId"/>
+        <column name="pd_product_id" ref-property="productId"/>
+        <column name="pd_product_name" ref-property="productName"/>
+        <column name="pd_pay_price" ref-property="payPrice"/>
+        <column name="pd_pay_amount" ref-property="payAmount"/>
+      </table>
+    </table-info>
+  </data>
+</orm-data-mapping>

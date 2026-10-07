@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-rule-mapping>
+  <!-- dec-id: RV-USER-IS-ACTIVATED -->
+  <rule-view-info name="isActivated" code="ISACTIVATED" desc="判断用户是否已激活" view-ref="UserInfo" dataSource="data1">
+    <!-- dec-id: RULE-USER-IS-ACTIVATED -->
+    <rule name="isActivated" type="checkPattern" pattern="active = 1"/>
+  </rule-view-info>
+  <!-- dec-id: RV-USER-IS-CERTIFIED -->
+  <rule-view-info name="isCertified" code="ISCERTIFIED" desc="判断用户是否已认证" view-ref="UserInfo" dataSource="data1">
+    <!-- dec-id: RULE-USER-IS-CERTIFIED -->
+    <rule name="isCertified" type="checkPattern" pattern="certified = 1"/>
+  </rule-view-info>
+</orm-rule-mapping>

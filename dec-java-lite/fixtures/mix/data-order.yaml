@@ -1,0 +1,192 @@
+kind: data
+version: dec/v1
+datas:
+- id: DATA-USER
+  name: user
+  properties:
+    id:
+      type: int
+      desc: 用户ID
+    name:
+      type: string
+      desc: 用户名称
+    active:
+      type: int
+      desc: 激活状态
+    certified:
+      type: int
+      desc: 认证状态
+  tables:
+  - name: user_info
+    dataSource: data1
+    key: u_id
+    keyType: increment
+    columns:
+      u_id: id
+      u_name: name
+      u_active: active
+      u_certified: certified
+  system: user
+  desc: 用户基础数据
+- id: DATA-ORDER
+  name: order
+  properties:
+    id:
+      type: int
+      desc: 订单ID
+    userId:
+      type: int
+      desc: 用户ID
+    productCount:
+      type: int
+      desc: 商品数量
+    totalPrice:
+      type: decimal
+      desc: 商品总价
+    totalAmount:
+      type: decimal
+      desc: 订单总金额
+    orderStatus:
+      type: int
+      desc: 订单状态
+    payId:
+      type: int
+      desc: 支付单ID
+    createDate:
+      type: date
+      desc: 创建时间
+  tables:
+  - name: order_info
+    dataSource: data1
+    key: o_id
+    keyType: increment
+    columns:
+      o_id: id
+      o_user_id: userId
+      o_product_count: productCount
+      o_total_price: totalPrice
+      o_total_amount: totalAmount
+      o_status:
+        ref: orderStatus
+        relEnum: OrderStatus
+      o_pay_id: payId
+      o_date:
+        ref: createDate
+        type: timestamp
+  system: order
+  desc: 订单主数据
+- id: DATA-ORDER-DETAIL
+  name: orderDetail
+  properties:
+    id:
+      type: int
+      desc: 订单明细ID
+    orderId:
+      type: int
+      desc: 订单ID
+    userId:
+      type: int
+      desc: 用户ID
+    productId:
+      type: int
+      desc: 商品ID
+    productName:
+      type: string
+      desc: 商品名称
+    productPrice:
+      type: decimal
+      desc: 商品价格
+    productAmount:
+      type: decimal
+      desc: 商品金额
+    status:
+      type: int
+      desc: 订单明细状态
+  tables:
+  - name: order_detail_info
+    dataSource: data1
+    key: od_id
+    keyType: increment
+    columns:
+      od_id: id
+      od_order_id: orderId
+      od_user_id: userId
+      od_product_id: productId
+      od_product_name: productName
+      od_product_price: productPrice
+      od_product_amount: productAmount
+      od_status:
+        ref: status
+        relEnum: OrderStatus
+  system: order
+  desc: 订单明细数据
+- id: DATA-PAY
+  name: pay
+  properties:
+    id:
+      type: int
+      desc: 支付单ID
+    orderId:
+      type: int
+      desc: 订单ID
+    userId:
+      type: int
+      desc: 用户ID
+    status:
+      type: int
+      desc: 支付状态
+    resultCode:
+      type: string
+      desc: 支付结果码
+  tables:
+  - name: pay_info
+    dataSource: data1
+    key: p_id
+    keyType: increment
+    columns:
+      p_id: id
+      p_order_id: orderId
+      p_user_id: userId
+      p_status:
+        ref: status
+        relEnum: PaymentStatus
+      p_result_code:
+        ref: resultCode
+        relEnum: PayResultCode
+  system: payment
+  desc: 支付主数据
+- id: DATA-PAY-DETAIL
+  name: payDetail
+  properties:
+    id:
+      type: int
+      desc: 支付明细ID
+    payId:
+      type: int
+      desc: 支付单ID
+    productId:
+      type: int
+      desc: 商品ID
+    productName:
+      type: string
+      desc: 商品名称
+    payPrice:
+      type: decimal
+      desc: 支付价格
+    payAmount:
+      type: decimal
+      desc: 支付金额
+  tables:
+  - name: pay_detail_info
+    dataSource: data1
+    key: pd_id
+    keyType: increment
+    columns:
+      pd_id: id
+      pd_pay_id: payId
+      pd_product_id: productId
+      pd_product_name: productName
+      pd_pay_price: payPrice
+      pd_pay_amount: payAmount
+  system: payment
+  desc: 支付明细数据

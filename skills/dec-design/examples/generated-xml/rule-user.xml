@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-rule-mapping>
+  <rule-view-info name="isActivated" code="ISACTIVATED" desc="判断用户是否已激活" view-ref="UserInfo" dataSource="data1">
+    <rule name="isActivated" type="checkPattern" pattern="active = 1"/>
+  </rule-view-info>
+  <rule-view-info name="isCertified" code="ISCERTIFIED" desc="判断用户是否已认证" view-ref="UserInfo" dataSource="data1">
+    <rule name="isCertified" type="checkPattern" pattern="certified = 1"/>
+  </rule-view-info>
+</orm-rule-mapping>

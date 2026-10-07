@@ -1,0 +1,59 @@
+kind: business
+version: dec/v1
+
+business:
+  id: BUS-<NAME>
+  name: <businessName>
+  desc: <business description>
+  directories:
+    - id: DIR-ROOT
+      name: <rootDirectory>
+      informationRef: <system.information>
+      modelRef: <ViewName>
+      isRoot: true
+      actions:
+        - id: ACT-<NAME>
+          name: <actionName>
+          systemRef: <systemName>
+          ruleRef: <ruleViewName>
+          produces:
+            - id: PROD-<NAME>
+              ref: <producedDataOrModelNode>
+              # informationRef 仅当产出作为后续业务信息使用时填写
+              informationRef: <system.information>
+
+    - id: DIR-NEXT
+      name: <nextDirectory>
+      informationRef: <system.information>
+      modelRef: <ViewName>
+      # 当前 P3：前置/子目录执行完成后向当前目录执行
+      subDirectories:
+        - rel: <rootDirectory>
+      dependencies:
+        - informationRef: <system.information>
+      actions:
+        - id: ACT-CUSTOM
+          name: <customActionName> # 无 ruleRef => Custom Action
+      change:
+        informationRef: <system.materializableInformation>
+
+    # result/case 示例
+    - id: DIR-RESULT
+      name: <resultDirectory>
+      type: result
+      informationRef: <system.hasResult>
+      modelRef: <ViewName>
+      subDirectories:
+        - rel: <previousDirectory>
+          back:
+            name: <backName>
+            actions:
+              - name: <backActionName>
+                systemRef: <systemName>
+                ruleRef: <ruleViewName>
+        - rel: <successDirectory>
+          role: case
+          informationRef: <system.success>
+        - rel: <errorDirectory>
+          role: case
+          informationRef: <system.error>

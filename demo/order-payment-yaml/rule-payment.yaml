@@ -1,0 +1,96 @@
+kind: rule
+version: dec/v1
+ruleViews:
+- id: RV-PAY
+  name: pay
+  desc: 发起支付
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-INSERT-PAY
+    name: insertPay
+    type: insert
+    property: payInfo
+  code: PAY
+  dataSource: paymentService
+- id: RV-HAS-PAYMENT-INFO
+  name: hasPaymentInfo
+  desc: 判断支付信息是否已产生
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-HAS-PAYMENT-INFO
+    name: hasPaymentInfo
+    type: check
+    property: payInfo.id
+    pattern: NOTNULL
+    dataSource: redis1
+  code: HASPAYMENTINFO
+  dataSource: data1
+- id: RV-RECEIVE-PAY-RESULT
+  name: receivePayResult
+  desc: 接收并保存支付结果
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-RECEIVE-PAY-RESULT
+    name: updatePayResult
+    type: update
+    property: payInfo
+  code: RECEIVEPAYRESULT
+  dataSource: data1
+- id: RV-HAS-PAY-RESULT
+  name: hasPayResult
+  desc: 判断支付结果是否存在
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-HAS-PAY-RESULT
+    name: hasPayResult
+    type: check
+    property: payInfo.resultCode
+    pattern: NOTNULL
+  code: HASPAYRESULT
+  dataSource: data1
+- id: RV-IS-PAY-SUCCESS
+  name: isPaySuccess
+  desc: 判断支付结果是否成功
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-IS-PAY-SUCCESS
+    name: isPaySuccess
+    type: checkPattern
+    pattern: payInfo.resultCode = SUCCESS
+  code: ISPAYSUCCESS
+  dataSource: data1
+- id: RV-IS-PAY-ERROR
+  name: isPayError
+  desc: 判断支付结果是否失败
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-IS-PAY-ERROR
+    name: isPayError
+    type: checkPattern
+    pattern: payInfo.resultCode = ERROR
+  code: ISPAYERROR
+  dataSource: data1
+- id: RV-RECORD-PAY-ERROR
+  name: recordPyaError
+  desc: 记录支付错误
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-RECORD-PAY-ERROR
+    name: recordPyaError
+    type: insert
+    property: payInfo
+    dataSource: mongo1
+  code: RECORDPYAERROR
+  dataSource: data1
+- id: RV-RESET-PAY-RESULT
+  name: resetPayResult
+  desc: 回退时重置支付结果
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-RESET-PAY-RESULT
+    name: resetPayResult
+    type: dsl
+    process: |
+      payInfo.resultCode : null;
+  code: RESETPAYRESULT
+  dataSource: data1

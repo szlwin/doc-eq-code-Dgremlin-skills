@@ -1,0 +1,46 @@
+name: verify
+'on':
+  push: {}
+  pull_request: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: dec_ci_local
+          MYSQL_DATABASE: dec_test
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping -uroot -pdec_ci_local --silent" --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: maven
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install DEC skill validators
+      run: python -m pip install -r skills/dec-design/requirements.txt -r skills/dec-implementation/requirements.txt
+    - name: Validate canonical demo and binding
+      run: |-
+        python skills/dec-design/scripts/validate_dec_yaml.py demo/order-payment-yaml
+        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete
+    - name: Check derived XML and HTML drift
+      run: |-
+        python skills/dec-design/scripts/yaml_to_xml.py demo/order-payment-yaml -o /tmp/dec-demo-xml --emit-id-comments
+        python skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml -o /tmp/dec-demo-html/order-payment.html
+        diff -qr demo/order-payment-xml /tmp/dec-demo-xml
+        diff -qr demo/order-payment-html /tmp/dec-demo-html
+    - name: Verify reactor, MySQL behavior and release artifacts
+      env:
+        DEC_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/dec_test?allowPublicKeyRetrieval=true&useSSL=false
+        DEC_MYSQL_USER: root
+        DEC_MYSQL_PASSWORD: dec_ci_local
+      run: ./dec-java-lite/mvnw -B -f dec-java-lite/pom.xml clean verify -Prelease-artifacts,mysql-it
+    - name: Compile generated demo application
+      run: ./dec-java-lite/mvnw -B -f demo/order-payment-app/pom.xml test
