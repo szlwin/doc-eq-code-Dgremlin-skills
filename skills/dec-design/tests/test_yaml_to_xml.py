@@ -180,6 +180,18 @@ class ExtendedConverterTest(unittest.TestCase):
         })
         self.assertIn('rel-enum="OrderStatus"', data_xml)
 
+    def test_enum_value_must_be_integer(self):
+        with self.assertRaises(ConversionError):
+            convert_document({
+                "kind": "enum",
+                "enums": [{"name": "State", "values": [{"value": "OPEN", "name": "OPEN"}]}],
+            })
+        with self.assertRaises(ConversionError):
+            convert_document({
+                "kind": "enum",
+                "enums": [{"name": "State", "values": [{"value": 1.5, "name": "OPEN"}]}],
+            })
+
     def test_api_expression_and_rel_enum_mapping(self):
         xml = convert_document({
             "kind": "api",

@@ -15,7 +15,7 @@
     <enum-value value="1" name="PROCESSING" desc="处理中"/>
   </enum>
   <enum name="PayResultCode" desc="支付结果">
-    <enum-value value="SUCCESS" name="SUCCESS" desc="成功"/>
-    <enum-value value="ERROR" name="ERROR" desc="失败"/>
+    <enum-value value="1" name="SUCCESS" desc="成功"/>
+    <enum-value value="2" name="ERROR" desc="失败"/>
   </enum>
 </enum-config>

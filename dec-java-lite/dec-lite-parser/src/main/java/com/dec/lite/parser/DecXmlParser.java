@@ -38,9 +38,60 @@ public final class DecXmlParser {
         catch (IOException | RuntimeException failure) { throw new DecParseException(input, "cannot load DEC XML: " + failure.getMessage(), failure); }
     }
 
-    private static Element read(Path file) {
+    /** Load a generated UTF-8 manifest and its relative XML resources from directories or JARs. */
+    public DecProject parseClasspath(ClassLoader loader, String manifest) {
+        Objects.requireNonNull(loader, "loader");
+        if (manifest == null || !safeResource(manifest))
+            throw new IllegalArgumentException("A relative classpath manifest is required");
+        Path source = Path.of(manifest);
         try {
-            if (Files.size(file) > 8_000_000) throw new DecParseException(file, "XML document exceeds 8 MB limit");
+            var manifests = Collections.list(loader.getResources(manifest));
+            if (manifests.size() != 1)
+                throw new DecParseException(source, "expected exactly one classpath manifest, found " + manifests.size());
+            byte[] bytes;
+            try (var stream = manifests.get(0).openStream()) {
+                bytes = stream.readNBytes(1_000_001);
+            }
+            if (bytes.length > 1_000_000) throw new DecParseException(source, "manifest exceeds 1 MB limit");
+            String prefix = manifest.contains("/") ? manifest.substring(0, manifest.lastIndexOf('/') + 1) : "";
+            Set<String> seen = new HashSet<>();
+            DecProject project = new DecProject();
+            for (String line : new String(bytes, java.nio.charset.StandardCharsets.UTF_8).lines().toList()) {
+                String entry = line.trim();
+                if (entry.isEmpty()) continue;
+                if (!safeResource(entry) || !entry.endsWith(".xml") || !seen.add(entry))
+                    throw new DecParseException(source, "invalid or duplicate XML manifest entry: " + entry);
+                String resource = prefix + entry;
+                var resources = Collections.list(loader.getResources(resource));
+                if (resources.size() != 1)
+                    throw new DecParseException(Path.of(resource), "expected exactly one XML resource, found " + resources.size());
+                try (var stream = resources.get(0).openStream()) {
+                    DecYamlParser.addRoot(convert(read(stream, Path.of(resource))), Path.of(resource), project);
+                }
+            }
+            if (seen.isEmpty()) throw new DecParseException(source, "manifest contains no XML resources");
+            return project.freeze();
+        } catch (DecParseException failure) { throw failure; }
+        catch (IOException | RuntimeException failure) {
+            throw new DecParseException(source, "cannot load classpath DEC design: " + failure.getMessage(), failure);
+        }
+    }
+
+    private static boolean safeResource(String value) {
+        return !value.isBlank() && Arrays.stream(value.split("/", -1))
+                .allMatch(segment -> segment.matches("[A-Za-z0-9_$.-]+") && !segment.equals(".") && !segment.equals(".."));
+    }
+
+    private static Element read(Path file) {
+        try (var stream = Files.newInputStream(file)) {
+            return read(stream, file);
+        } catch (IOException failure) { throw new DecParseException(file, "cannot read XML", failure); }
+    }
+
+    private static Element read(java.io.InputStream stream, Path file) {
+        try {
+            byte[] bytes = stream.readNBytes(8_000_001);
+            if (bytes.length > 8_000_000) throw new DecParseException(file, "XML document exceeds 8 MB limit");
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -57,7 +108,7 @@ public final class DecXmlParser {
                 @Override public void error(org.xml.sax.SAXParseException error) throws SAXException { throw error; }
                 @Override public void fatalError(org.xml.sax.SAXParseException error) throws SAXException { throw error; }
             });
-            return builder.parse(file.toFile()).getDocumentElement();
+            return builder.parse(new java.io.ByteArrayInputStream(bytes)).getDocumentElement();
         } catch (ParserConfigurationException | SAXException | IOException failure) {
             String location = failure instanceof org.xml.sax.SAXParseException marked
                     ? " at line " + marked.getLineNumber() + ", column " + marked.getColumnNumber() : "";
@@ -276,7 +327,7 @@ public final class DecXmlParser {
             List<Map<String, Object>> items = new ArrayList<>();
             for (Element item : children(enumeration, "enum-value")) {
                 shape(item, "value name desc", ""); String raw = required(item, "value");
-                Map<String, Object> v = m("value", number(raw), "name", required(item, "name"));
+                Map<String, Object> v = m("value", integer(raw, "enum-value@value"), "name", required(item, "name"));
                 putAttr(v, "desc", item, "desc");
                 id(v, enumeration, item, "ENUM-VALUE-" + slug(name) + "-" + slug(raw)); items.add(v);
             }
@@ -501,6 +552,13 @@ public final class DecXmlParser {
         if (raw.matches("[-+]?\\d+")) try { return Long.parseLong(raw); } catch (NumberFormatException ignored) { return raw; }
         if (raw.matches("[-+]?(?:\\d+\\.\\d*|\\d*\\.\\d+)")) try { return Double.parseDouble(raw); } catch (NumberFormatException ignored) { return raw; }
         return raw;
+    }
+    private static Integer integer(String raw, String context) {
+        try {
+            return Integer.valueOf(raw);
+        } catch (NumberFormatException failure) {
+            throw new IllegalArgumentException(context + " must be an Integer", failure);
+        }
     }
     private static String camel(String raw) {
         String[] parts = raw.split("-"); StringBuilder result = new StringBuilder(parts[0]);

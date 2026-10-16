@@ -4,14 +4,8 @@ package ${package};
 import ${import};
 </#list>
 import ${servicePackage}.${className}Service;
-<#if requestClass?? && requestClass?has_content>
-import ${package?keep_before_last(".")}.dto.${requestClass};
-</#if>
-<#if responseType != "void">
-import ${package?keep_before_last(".")}.view.${responseType};
-</#if>
 
-/** DEC ${designId} from ${designSource}. */
+/** API resource ${resource}; each method retains its canonical design references. */
 @RestController
 @Validated
 public class ${className}Controller {
@@ -21,11 +15,15 @@ public class ${className}Controller {
         this.service = service;
     }
 
-    @RequestMapping(path = "${url}", method = RequestMethod.${httpMethod})
-    public <#if responseType == "void">void<#else>${responseType}</#if> ${methodName}(<#list controllerParams as param>
-            <#if param.designId??>/* DEC ${param.designId} */ </#if>${param.annotation} ${param.type} ${param.name}<#if param_has_next>,</#if></#list>
+<#list methods as api>
+    /** DEC ${api.designId}; YAML ${api.designSource}#${api.designPath}; XML ${api.designXml} api[name=${api.designName}]. */
+    @RequestMapping(path = "${api.url}", method = RequestMethod.${api.httpMethod})
+    public <#if api.responseType == "void">void<#else>${api.responseType}</#if> ${api.methodName}(<#list api.controllerParams as param>
+            <#if param.designId??>/* DEC ${param.designId}; YAML ${api.designSource}#${param.designPath}; XML ${api.designXml} parameter[name=${param.name}] */ </#if>${param.annotation} ${param.type} ${param.name}<#if param_has_next>,</#if></#list>
     ) {
-        <#if responseType == "void">service.${methodName}(<#list serviceCallArgs as arg>${arg}<#if arg_has_next>, </#if></#list>);
-        <#else>return service.${methodName}(<#list serviceCallArgs as arg>${arg}<#if arg_has_next>, </#if></#list>);</#if>
+        <#if api.responseType == "void">service.${api.methodName}(<#list api.serviceCallArgs as arg>${arg}<#if arg_has_next>, </#if></#list>);
+        <#else>return service.${api.methodName}(<#list api.serviceCallArgs as arg>${arg}<#if arg_has_next>, </#if></#list>);</#if>
     }
+
+</#list>
 }

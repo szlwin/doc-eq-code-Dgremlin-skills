@@ -31,7 +31,7 @@
 
 - 新增独立 `kind: api`，描述 API `name/desc/system/url/method/request/response`；
 - API parameter/response field 支持 `required`、长度、pattern、inline enum，以及公共枚举 `relEnum`；
-- API request 支持跨参数 `expression` 校验，例如 `status = 1 and type = 1`；
+- API request 支持纯传输层跨参数 `expression` 校验；业务状态组合应由 RuleView/Information/Business 表达；
 - 新增独立 `kind: enum`，作为 API 与 Data Column 的公共枚举事实源；
 - Data `<column>` 通过 canonical `relEnum` 映射 XML `rel-enum`；
 - RuleView 增加必填 `code`、说明 `desc`、默认 `dataSource`，并继续支持可选 `apiRef`；

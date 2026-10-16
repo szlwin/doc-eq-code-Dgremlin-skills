@@ -101,7 +101,7 @@
 python3 scripts/validate_dec_yaml.py <design-dir>
 python3 scripts/yaml_to_xml.py <design-dir> --check
 # 需要 HTML 文档时：
-python3 scripts/render_dec_graph.py <design-dir> -o <generated-html/business.html>
+python3 scripts/render_dec_graph.py <design-dir> -o <generated-html-dir>
 ```
 
 若项目提供 Compiler/Runtime 测试，还必须执行真实项目验证。

@@ -46,10 +46,6 @@ apis:
       required: true
       desc: 订单类型
       relEnum: OrderType
-    validations:
-    - type: expression
-      expression: status = 1 and type = 1
-      message: status 与 type 组合不满足接口约束
   response:
     type: object
     desc: 提交后的订单摘要

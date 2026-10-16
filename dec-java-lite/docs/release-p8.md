@@ -15,7 +15,7 @@
 | 成功、失败、Back、三类 Query、权限、并发、热替换、性能、安全测试 | 通过，详情见各测试报告与性能 CSV |
 | Demo 设计与实现衔接 | 当时为 10 份 YAML、93 个 Design ID、38 页 HTML、31 个生成文件 |
 
-当前 Demo 已扩展为 10 份 YAML、107 个 Design ID、38 页 HTML、41 个 manifest 管理的生成文件；最新衔接和验证状态以仓库 [`demo/INTEGRATION.md`](../../demo/INTEGRATION.md) 为准。上表是 2026-10-07 的历史验收记录。
+当前 Demo 已扩展为 10 份 YAML、111 个 Design ID、38 页 HTML、40 个 manifest 管理的生成文件，并包含 Information/Business 只读设计投影；最新衔接和验证状态以仓库 [`demo/INTEGRATION.md`](../../demo/INTEGRATION.md) 为准。上表是 2026-10-07 的历史验收记录。
 
 `mysql-it` profile 在缺少 `DEC_MYSQL_JDBC_URL` 时会失败，避免被跳过的集成测试误报为成功。发布时应使用同一源码提交运行以下命令：
 
@@ -29,7 +29,7 @@ DEC_MYSQL_JDBC_URL='jdbc:mysql://host:port/dec_test' DEC_MYSQL_USER=... DEC_MYSQ
 
 ## 发布与回退
 
-发布提交应同时包含源码、两个 Skill、canonical Demo、生成 XML/HTML 与生成 Java 示例。使用 `v0.1.0` tag 指向该提交，发布九个模块的二进制、sources、Javadoc JAR 与 SHA-256 清单。生成的 Service 在应用未绑定 Runtime 时会抛出 `DESIGN_GAP`；Demo Binding 的 `PLANNED` 条目不表示可部署业务应用。
+发布提交应同时包含源码、两个 Skill、canonical Demo、生成 XML/HTML 与生成 Java 示例。使用 `v0.1.0` tag 指向该提交，发布九个模块的二进制、sources、Javadoc JAR 与 SHA-256 清单。生成的 Service 是由应用实现的接口；Demo Binding 的 `PLANNED` 条目不表示可部署业务应用。
 
 回退部署时把运行中的 `RuntimeCatalog` 发布指针切回此前已验证的快照或重载上一版输入；旧 Session 继续用旧快照完成。数据库迁移与外部副作用的回退需由应用部署流程单独管理。
 

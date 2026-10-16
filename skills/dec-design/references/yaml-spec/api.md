@@ -30,10 +30,6 @@ apis:
           type: int
           required: true
           relEnum: OrderStatus
-      validations:
-        - type: expression
-          expression: status = 1 and type = 1
-          message: 参数组合不合法
     response:
       type: object
       modelRef: OrderInfo
@@ -116,19 +112,23 @@ relEnum: OrderStatus
 
 同一字段不得同时使用 `relEnum` 和内联 `type: enum`，避免双主。
 
-## 5. Request 表达式校验
+## 5. Validation message 与 Request 表达式
 
-跨字段条件放在 `request.validations`：
+字段级 `validations` 可设置 `message`，用于生成 Bean Validation 的用户可读错误信息；建议所有对外 API 字段显式填写中文或项目约定语言的 message。未填写时，生成器必须根据 `desc`、校验类型和值生成稳定默认消息，不能生成没有错误信息的 `@NotNull`、`@Min`、`@Max`、`@Size` 或 `@Pattern`。
+
+跨字段条件不要借 `request.validations` 把业务状态硬编码到 DTO。`request.validations[type=expression]` 只适合纯传输层的组合约束（例如两个互斥的分页参数）；订单状态、订单类型、可支付性、库存和权限等业务事实必须建模为 RuleView / Information / Business，并由业务执行阶段判断。这样生成的 Request DTO 只承载字段格式校验，业务规则仍可在不同入口复用。
+
+如果确实是传输层组合约束，可放在 `request.validations`：
 
 ```yaml
 request:
   validations:
     - type: expression
-      expression: status = 1 and type = 1
-      message: status/type 组合不合法
+      expression: format = csv and compress = true
+      message: CSV 请求必须启用压缩
 ```
 
-`expression` 用于接口参数之间的传输层组合约束；“订单必须可支付”等业务规则仍放 RuleView / Information。
+`expression` 用于接口参数之间的传输层组合约束；“订单必须处于待支付状态”“订单类型必须允许提交”等业务规则仍放 RuleView / Information。若某个条件需要访问 View、Data、RuleView 或跨 API 复用，应报告为业务设计并移出 API expression。
 
 ## 6. Response
 

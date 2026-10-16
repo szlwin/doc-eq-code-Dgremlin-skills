@@ -3,7 +3,7 @@
   <!-- dec-id: BUS-ORDER-PAYMENT -->
   <directory-info>
     <!-- dec-id: DIR-ORDERED -->
-    <directory name="ordered" information-ref="order.ordered" model-ref="OrderInfo" is-root="true">
+    <directory name="ordered" information-ref="common.ordered" model-ref="OrderInfo" is-root="true">
       <action-info>
         <!-- dec-id: ACT-SAVE-ORDER -->
         <action name="saveOrder" system-ref="order" rule-ref="save-Order">
@@ -15,7 +15,7 @@
       </action-info>
     </directory>
     <!-- dec-id: DIR-PAYING -->
-    <directory name="paying" information-ref="order.paying" model-ref="OrderInfo">
+    <directory name="paying" information-ref="common.paying" model-ref="OrderInfo">
       <subdirectory-info>
         <subdirectory rel="ordered"/>
       </subdirectory-info>

@@ -34,19 +34,43 @@ jobs:
     - name: Validate canonical demo and binding
       run: |-
         python skills/dec-design/scripts/validate_dec_yaml.py demo/order-payment-yaml
-        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete --require-tests
+        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete --require-tests --require-symbols
     - name: Check derived XML and HTML drift
       run: |-
         python skills/dec-design/scripts/yaml_to_xml.py demo/order-payment-yaml -o /tmp/dec-demo-xml --emit-id-comments
-        python skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml -o /tmp/dec-demo-html/order-payment.html
+        python skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml -o /tmp/dec-demo-html
         diff -qr --exclude=.DS_Store demo/order-payment-xml /tmp/dec-demo-xml
-        diff -qr --exclude=.DS_Store demo/order-payment-html /tmp/dec-demo-html
+        diff -qr --exclude=.DS_Store demo/design-html /tmp/dec-demo-html
         diff -qr --exclude=.DS_Store demo/order-payment-xml demo/order-payment-app/src/main/resources/dec/design
     - name: Verify reactor, MySQL behavior and release artifacts
       env:
         DEC_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/dec_test?allowPublicKeyRetrieval=true&useSSL=false
         DEC_MYSQL_USER: root
         DEC_MYSQL_PASSWORD: dec_ci_local
-      run: ./dec-java-lite/mvnw -B -f dec-java-lite/pom.xml clean verify -Prelease-artifacts,mysql-it
-    - name: Compile generated demo application
-      run: ./dec-java-lite/mvnw -B -f demo/order-payment-app/pom.xml test
+      run: ./dec-java-lite/mvnw -B -f dec-java-lite/pom.xml clean install -Prelease-artifacts,mysql-it
+    - name: Verify cross-domain expense approval fixture
+      run: |-
+        python skills/dec-design/scripts/validate_dec_yaml.py dec-java-lite/fixtures/expense-approval
+        python skills/dec-design/scripts/yaml_to_xml.py dec-java-lite/fixtures/expense-approval -o /tmp/dec-expense-xml --emit-id-comments
+        diff -qr --exclude=.DS_Store dec-java-lite/examples/expense-approval/generated/src/main/resources/dec/design /tmp/dec-expense-xml
+        ./dec-java-lite/mvnw -B -f dec-java-lite/examples/expense-approval/generated/pom.xml test
+    - name: Verify configurable API grouping
+      run: |-
+        java -jar dec-java-lite/dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate --yaml demo/order-payment-yaml --output /tmp/dec-configured-demo --base-package com.example.orderpayment --generation-config demo/order-payment-generation.properties
+        ./dec-java-lite/mvnw -B -f /tmp/dec-configured-demo/pom.xml test
+    - name: Test demo and verify current Binding evidence
+      env:
+        DEC_DB_URL: jdbc:mysql://127.0.0.1:3306/dec_test?allowPublicKeyRetrieval=true&useSSL=false
+        DEC_DB_USERNAME: root
+        DEC_DB_PASSWORD: dec_ci_local
+      run: |-
+        python skills/dec-implementation/scripts/run_binding_verification.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --input ../../dec-java-lite --input ../../skills/dec-implementation --input ../order-payment-generation.properties -- ../../dec-java-lite/mvnw -B clean test
+        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete --require-evidence
+    - name: Archive Binding verification evidence
+      uses: actions/upload-artifact@v4
+      with:
+        name: dec-binding-evidence
+        path: |-
+          demo/order-payment-app/target/dec-binding-evidence.json
+          demo/order-payment-app/target/surefire-reports/TEST-*.xml
+        if-no-files-found: error

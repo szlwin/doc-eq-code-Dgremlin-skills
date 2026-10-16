@@ -2,9 +2,6 @@
 <api-config>
   <api name="submitOrder" desc="提交订单" system="order" url="/api/orders/{orderId}/submit" method="POST">
     <request>
-      <validation-info>
-        <validation type="expression" expression="status = 1 and type = 1" message="status 与 type 组合不满足接口约束"/>
-      </validation-info>
       <parameter name="orderId" in="path" type="long" required="true" desc="订单 ID">
         <validation-info>
           <validation type="notNull"/>

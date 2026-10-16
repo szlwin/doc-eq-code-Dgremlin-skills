@@ -510,6 +510,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                         continue
                     if item.get("value") is None:
                         err(errors, file, f"Enum {name}.values[{vi}].value: required")
+                    elif isinstance(item.get("value"), bool) or not isinstance(item.get("value"), int):
+                        err(errors, file, f"Enum {name}.values[{vi}].value: must be an Integer")
+                    elif not -2147483648 <= item.get("value") <= 2147483647:
+                        err(errors, file, f"Enum {name}.values[{vi}].value: must fit Java Integer range")
                     if not item.get("name"):
                         err(errors, file, f"Enum {name}.values[{vi}].name: required")
                     if item.get("value") is not None:

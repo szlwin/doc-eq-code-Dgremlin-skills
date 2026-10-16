@@ -56,7 +56,7 @@ ruleViews:
   - id: RULE-IS-PAY-SUCCESS
     name: isPaySuccess
     type: checkPattern
-    pattern: payInfo.resultCode = SUCCESS
+    pattern: payInfo.resultCode = 1
   code: ISPAYSUCCESS
   dataSource: data1
 - id: RV-IS-PAY-ERROR
@@ -67,7 +67,7 @@ ruleViews:
   - id: RULE-IS-PAY-ERROR
     name: isPayError
     type: checkPattern
-    pattern: payInfo.resultCode = ERROR
+    pattern: payInfo.resultCode = 2
   code: ISPAYERROR
   dataSource: data1
 - id: RV-RECORD-PAY-ERROR

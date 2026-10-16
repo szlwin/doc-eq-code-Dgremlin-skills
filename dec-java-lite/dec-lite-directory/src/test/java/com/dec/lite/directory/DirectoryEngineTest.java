@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DirectoryEngineTest {
     @Test
     void directoryCallbacksAndProduceConsumerShareScopeAndFailureCallbackPreservesError() throws Exception {
-        Fixture success = fixture("SUCCESS");
+        Fixture success = fixture(1);
         List<String> calls = new ArrayList<>();
         success.context().session().onWorkflow(new WorkflowCallback() {
             public void before(ActionDefinition action, ExecutionSession session) { calls.add("before:" + action.id()); }
@@ -40,7 +40,7 @@ class DirectoryEngineTest {
         assertTrue(calls.stream().anyMatch(value -> value.startsWith("consume:")));
         assertEquals(1, success.transaction().commits);
 
-        Fixture failure = fixture("SUCCESS");
+        Fixture failure = fixture(1);
         List<SessionError> errors = new ArrayList<>();
         failure.context().session().consumeProduced((action, produced, session) -> { throw new IllegalStateException("consumer broke"); });
         failure.context().session().onWorkflow(new WorkflowCallback() {
@@ -60,7 +60,7 @@ class DirectoryEngineTest {
     }
     @Test
     void successPathRunsStartPayOnceAndSelectsOnlySuccess() throws Exception {
-        Fixture fixture = fixture("SUCCESS");
+        Fixture fixture = fixture(1);
         DirectoryExecutionResult result = fixture.engine().executeTo("success", fixture.context());
         assertTrue(result.success(), result.error());
         assertEquals("success", result.currentDirectory());
@@ -78,7 +78,7 @@ class DirectoryEngineTest {
 
     @Test
     void resultTargetAutomaticallyClassifiesAndExecutesSelectedCase() throws Exception {
-        Fixture fixture = fixture("SUCCESS");
+        Fixture fixture = fixture(1);
         DirectoryExecutionResult result = fixture.engine().executeTo("PayResult", fixture.context());
         assertTrue(result.success(), result.error());
         assertEquals("success", result.currentDirectory());
@@ -88,7 +88,7 @@ class DirectoryEngineTest {
 
     @Test
     void errorPathExecutesErrorActionsInOrderAndBackRestoresPaying() throws Exception {
-        Fixture fixture = fixture("ERROR");
+        Fixture fixture = fixture(2);
         DirectoryExecutionResult result = fixture.engine().executeTo("error", fixture.context());
         assertTrue(result.success(), result.error());
         assertEquals(List.of("recordPyaError", "smsNotify"), fixture.calls().stream()
@@ -108,7 +108,7 @@ class DirectoryEngineTest {
 
     @Test
     void dependencyFailureRollsBackWholePathAndDoesNotRunPayAction() throws Exception {
-        Fixture fixture = fixture("SUCCESS", 0L);
+        Fixture fixture = fixture(1, 0L);
         DirectoryExecutionResult result = fixture.engine().executeTo("success", fixture.context());
         assertFalse(result.success());
         assertTrue(result.error().contains("Dependency"));
@@ -120,20 +120,20 @@ class DirectoryEngineTest {
 
     @Test
     void zeroOrWrongCaseCannotCompleteAndRollsBack() throws Exception {
-        Fixture zero = fixture("UNKNOWN");
+        Fixture zero = fixture(99);
         DirectoryExecutionResult zeroResult = zero.engine().executeTo("success", zero.context());
         assertFalse(zeroResult.success());
         assertTrue(zeroResult.error().contains("exactly one match"));
         assertEquals(0L, zero.context().model().read("status"));
         assertEquals(1, zero.transaction().rollbacks);
 
-        Fixture wrong = fixture("ERROR");
+        Fixture wrong = fixture(2);
         DirectoryExecutionResult wrongResult = wrong.engine().executeTo("success", wrong.context());
         assertFalse(wrongResult.success());
         assertTrue(wrongResult.error().contains("differs from classified case"));
         assertEquals(0L, wrong.context().model().read("status"));
 
-        Fixture duplicate = fixture("SUCCESS");
+        Fixture duplicate = fixture(1);
         Path temp = Files.createTempDirectory("duplicate-case-");
         Files.copy(resourceDirectory().resolve("systems-order.yaml"), temp.resolve("systems-order.yaml"));
         for (String rule : List.of("rule-user.yaml", "rule-order.yaml", "rule-payment.yaml")) Files.copy(resourceDirectory().resolve(rule), temp.resolve(rule));
@@ -163,7 +163,7 @@ class DirectoryEngineTest {
 
     @Test
     void graphAndPathRejectInvalidCaseAndDirectCaseSkip() throws Exception {
-        Fixture fixture = fixture("SUCCESS");
+        Fixture fixture = fixture(1);
         assertEquals(2, fixture.engine().graph().executionEdges().size());
         assertEquals(2, fixture.engine().graph().caseEdges().size());
         assertEquals(1, fixture.engine().graph().backEdges().size());
@@ -190,8 +190,8 @@ class DirectoryEngineTest {
         assertThrows(DirectoryCompilationException.class, () -> new DirectoryGraphCompiler().compile(project, compilation));
     }
 
-    private static Fixture fixture(String resultCode) throws Exception { return fixture(resultCode, 1L); }
-    private static Fixture fixture(String resultCode, Long active) throws Exception {
+    private static Fixture fixture(Integer resultCode) throws Exception { return fixture(resultCode, 1L); }
+    private static Fixture fixture(Integer resultCode, Long active) throws Exception {
         DecProject project = new DecYamlParser().parse(resourceDirectory());
         InformationCompilation compilation = new InformationParser().parse(project);
         List<String> calls = new ArrayList<>();

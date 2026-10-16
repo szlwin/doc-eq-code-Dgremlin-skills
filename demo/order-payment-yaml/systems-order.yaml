@@ -149,6 +149,11 @@ systems:
       payment.success
       or
       payment.error
+  - id: INFO-PAYMENT-PROCESSING
+    name: processing
+    description: 支付单处于处理中状态
+    viewRef: OrderInfo
+    ruleData: payInfo.status = 1
   modelAccess:
   - modelRef: OrderInfo
     read:
@@ -179,3 +184,11 @@ systems:
       payment.error
       and
       order.payErrorStatus
+  - id: INFO-COMMON-ORDERED
+    name: ordered
+    description: 订单及明细已下单，尚未产生支付单
+    expression: order.ordered and not payment.paymentInfo
+  - id: INFO-COMMON-PAYING
+    name: paying
+    description: 订单及明细支付中，支付单处理中且尚无结果
+    expression: order.paying and payment.paymentInfo and payment.processing and not payment.hasResult

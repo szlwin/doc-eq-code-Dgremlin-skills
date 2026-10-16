@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<business-config name="expense-approval">
+  <!-- dec-id: BUS-EXPENSE -->
+  <directory-info>
+    <!-- dec-id: DIR-EXPENSE-DRAFT -->
+    <directory name="draft" information-ref="expense.draft" model-ref="ExpenseInfo" is-root="true">
+      <change-info information-ref="expense.draft"/>
+    </directory>
+    <!-- dec-id: DIR-EXPENSE-SUBMITTED -->
+    <directory name="submitted" information-ref="expense.submitted" model-ref="ExpenseInfo">
+      <subdirectory-info>
+        <subdirectory rel="draft"/>
+      </subdirectory-info>
+      <action-info>
+        <!-- dec-id: ACT-EXPENSE-SUBMITTED -->
+        <action name="recordSubmitted" system-ref="expense"/>
+      </action-info>
+      <change-info information-ref="expense.submitted"/>
+    </directory>
+    <!-- dec-id: DIR-EXPENSE-APPROVED -->
+    <directory name="approved" information-ref="expense.approved" model-ref="ExpenseInfo">
+      <subdirectory-info>
+        <subdirectory rel="submitted"/>
+      </subdirectory-info>
+      <dependency-info>
+        <dependency information-ref="expense.eligible"/>
+      </dependency-info>
+      <action-info>
+        <!-- dec-id: ACT-EXPENSE-APPROVED -->
+        <action name="recordApproved" system-ref="expense"/>
+      </action-info>
+      <change-info information-ref="expense.approved"/>
+    </directory>
+  </directory-info>
+</business-config>

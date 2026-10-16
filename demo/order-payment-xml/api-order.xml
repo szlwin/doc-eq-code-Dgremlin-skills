@@ -3,22 +3,19 @@
   <!-- dec-id: API-ORDER-SUBMIT -->
   <api name="submitOrder" desc="提交订单" system="order" url="/api/orders/{orderId}/submit" method="POST">
     <request>
-      <validation-info>
-        <validation type="expression" expression="status = 1 and type = 1" message="status 与 type 组合不满足接口约束"/>
-      </validation-info>
       <!-- dec-id: API-PARAM-ORDER-ID -->
       <parameter name="orderId" in="path" type="long" required="true" desc="订单 ID">
         <validation-info>
-          <validation type="notNull"/>
-          <validation type="min" value="1"/>
-          <validation type="max" value="999999999"/>
+          <validation type="notNull" message="订单 ID不能为空"/>
+          <validation type="min" value="1" message="订单 ID最小为1"/>
+          <validation type="max" value="999999999" message="订单 ID最大为999999999"/>
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-REMARK -->
       <parameter name="remark" in="body" type="string" required="false" desc="订单备注">
         <validation-info>
-          <validation type="maxLength" value="500"/>
-          <validation type="regex" value="^[A-Za-z0-9 _.,-]{0,500}$"/>
+          <validation type="maxLength" value="500" message="订单备注长度最大为500"/>
+          <validation type="regex" value="^[A-Za-z0-9 _.,-]{0,500}$" message="订单备注格式不正确"/>
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-STATUS -->
@@ -26,34 +23,34 @@
       <!-- dec-id: API-PARAM-TYPE -->
       <parameter name="type" in="body" type="int" required="true" desc="订单类型" rel-enum="OrderType"/>
       <!-- dec-id: API-PARAM-USER-ID -->
-      <parameter name="userId" in="body" type="int" required="true">
+      <parameter name="userId" in="body" type="int" required="true" desc="用户 ID">
         <validation-info>
-          <validation type="min" value="1"/>
+          <validation type="min" value="1" message="用户 ID最小为1"/>
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-PRODUCT-ID -->
-      <parameter name="productId" in="body" type="int" required="true">
+      <parameter name="productId" in="body" type="int" required="true" desc="产品 ID">
         <validation-info>
-          <validation type="min" value="1"/>
+          <validation type="min" value="1" message="产品 ID最小为1"/>
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-PRODUCT-NAME -->
-      <parameter name="productName" in="body" type="string" required="true">
+      <parameter name="productName" in="body" type="string" required="true" desc="产品名称">
         <validation-info>
-          <validation type="minLength" value="1"/>
-          <validation type="maxLength" value="120"/>
+          <validation type="minLength" value="1" message="产品名称长度最小为1"/>
+          <validation type="maxLength" value="120" message="产品名称长度最大为120"/>
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-PRODUCT-PRICE -->
-      <parameter name="productPrice" in="body" type="decimal" required="true">
+      <parameter name="productPrice" in="body" type="decimal" required="true" desc="产品价格">
         <validation-info>
-          <validation type="min" value="1"/>
+          <validation type="min" value="1" message="产品价格最小为1元"/>
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-PRODUCT-COUNT -->
-      <parameter name="productCount" in="body" type="int" required="true">
+      <parameter name="productCount" in="body" type="int" required="true" desc="产品数量">
         <validation-info>
-          <validation type="min" value="1"/>
+          <validation type="min" value="1" message="产品数量最小为1"/>
         </validation-info>
       </parameter>
     </request>
@@ -89,7 +86,7 @@
         </validation-info>
       </parameter>
       <!-- dec-id: API-PARAM-PAY-RESULT-CODE -->
-      <parameter name="resultCode" in="body" type="string" required="true" rel-enum="PayResultCode"/>
+      <parameter name="resultCode" in="body" type="int" required="true" rel-enum="PayResultCode"/>
     </request>
     <response type="object" model-ref="OrderInfo">
       <field name="id" type="long" required="true"/>

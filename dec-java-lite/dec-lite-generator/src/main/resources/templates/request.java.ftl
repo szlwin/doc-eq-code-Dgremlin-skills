@@ -5,10 +5,10 @@ import jakarta.validation.constraints.*;
 import ${import};
 </#list>
 
-/** DEC ${designId} from ${designSource}. */
+/** DEC ${designId}; YAML ${designSource}#${designPath}.request; XML ${designXml} api[name=${designName}]/request. */
 public class ${className} {
 <#list fields as field>
-<#if field.designId??>    /** DEC ${field.designId}. */
+<#if field.designId??>    /** DEC ${field.designId}; YAML ${designSource}#${designPath}.request.params[id=${field.designId}]; XML ${designXml} parameter[name=${field.canonicalName}]. */
 </#if>
 <#list field.annotations as annotation>
     ${annotation}

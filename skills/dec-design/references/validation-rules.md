@@ -20,7 +20,7 @@
 ## Enum
 
 - Enum name 全局唯一；
-- 每个 Enum 至少一个具体 `value`，例如状态枚举可使用 `1/2/3/4`；
+- 每个 Enum 至少一个具体 `value`，且 `value` 必须是 `Integer`（`-2147483648..2147483647`），例如状态枚举可使用 `1/2/3/4`；
 - 同一 Enum 的 `value` 和 `name` 均不得重复；
 - `Data.column.relEnum`、API request/response `relEnum` 必须精确引用 Enum；
 - 同一 API 字段不得同时配置 `relEnum` 与内联 `type: enum` values；
@@ -51,7 +51,9 @@
 - request parameter name 唯一，`in ∈ {path,query,header,body}`；
 - URL `{name}` 与 path 参数一一对应，path 必须 required=true 且不得 default；
 - 字段级 validation：`min/max/minLength/maxLength/pattern/regex` 要有 value，`enum` 要有 values；
-- request-level `expression` 必须有 expression 文本，例如 `status = 1 and type = 1`；
+- 字段级 validation 的 `message` 若省略，代码生成器必须生成稳定默认错误信息；生成的 `@NotNull`、`@NotEmpty`、`@Min`、`@Max`、`@Size`、`@Pattern` 不得省略 `message`；
+- request-level `expression` 必须有 expression 文本；示例：`format = csv and compress = true`；
+- request-level `expression` 只允许纯 transport 组合约束；依赖业务状态、View、Data、权限或跨入口复用的条件必须建模为 RuleView/Information/Business；
 - required、长度、枚举、表达式校验均可机器验证；
 - response.modelRef 存在时引用 View；
 - relEnum 存在时引用公共 Enum。

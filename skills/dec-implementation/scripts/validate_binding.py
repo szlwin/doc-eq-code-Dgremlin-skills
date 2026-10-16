@@ -12,6 +12,8 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, 
 import jsonschema
 import yaml
 
+from binding_evidence import DESIGN_ALGORITHM, design_digest, inside, java_index, resolve_symbol, verify_evidence, test_is_proven
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schemas" / "implementation-binding.schema.json"
@@ -93,9 +95,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     p.add_argument("--design", required=True, type=Path, help="canonical DEC YAML file or directory")
     p.add_argument("--binding", required=True, type=Path)
     p.add_argument("--project-root", type=Path, help="optional source project root; validates bound file paths")
-    p.add_argument("--require-tests", action="store_true", help="require tests for IMPLEMENTED/VERIFIED non-runtime bindings")
+    p.add_argument("--require-tests", action="store_true", help="require test declarations for all IMPLEMENTED/VERIFIED bindings, including runtime-managed")
     p.add_argument("--require-complete", action="store_true", help="require every canonical Design ID to have one binding")
     p.add_argument("--require-ready", action="store_true", help="require every canonical Design ID to have a VERIFIED binding")
+    p.add_argument("--require-symbols", action="store_true", help="verify Java class/method declarations using a JDK")
+    p.add_argument("--evidence", type=Path, help="test-run evidence JSON from run_binding_verification.py")
+    p.add_argument("--require-evidence", action="store_true", help="require current passing test evidence for IMPLEMENTED/VERIFIED bindings")
     p.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
 
@@ -104,12 +109,41 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         design_ids, id_errors = collect_design_ids(args.design.resolve())
         result["errors"].extend(id_errors)
 
+        result["designDigestAlgorithm"] = DESIGN_ALGORITHM
+        result["designDigest"] = design_digest(args.design.resolve())
+        require_evidence = args.require_evidence or args.require_ready or args.evidence is not None
+        require_symbols = args.require_symbols or require_evidence
+        if require_symbols and args.project_root is None:
+            result["errors"].append("--project-root is required for symbol/evidence verification")
         binding = load_yaml(args.binding.resolve())
         schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
         validator = jsonschema.Draft202012Validator(schema)
         for err in sorted(validator.iter_errors(binding), key=lambda e: list(e.path)):
             result["errors"].append(f"binding schema {list(err.path)}: {err.message}")
 
+        if any(error.startswith("binding schema") for error in result["errors"]):
+            raise ValueError("invalid Binding schema; semantic checks stopped")
+        root = args.project_root.resolve() if args.project_root else None
+        index = []
+        evidence_cases = []
+        if require_symbols and root:
+            paths = []
+            for item in binding["bindings"]:
+                if item["status"] not in {"IMPLEMENTED", "VERIFIED"}:
+                    continue
+                for group in ("implementation", "tests"):
+                    for loc in item.get(group, []):
+                        if loc.get("file"):
+                            paths.append(inside(root, loc["file"]))
+            index = java_index([path for path in paths if path.suffix == ".java"])
+        if require_evidence and root:
+            evidence_path = args.evidence or root / "target/dec-binding-evidence.json"
+            try:
+                evidence_cases = verify_evidence(evidence_path, args.design.resolve(), args.binding.resolve(), root)
+                result["evidenceVerified"] = True
+            except (ValueError, OSError) as exc:
+                result["errors"].append(f"test evidence: {exc}")
+        result["symbolsVerified"] = require_symbols and root is not None
         seen: Set[str] = set()
         bound_ids: Set[str] = set()
         if isinstance(binding, Mapping):
@@ -135,7 +169,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     result["errors"].append(f"{design_id}: release readiness requires VERIFIED, found {status}")
                 if status in {"IMPLEMENTED", "VERIFIED"} and not runtime and not implementations:
                     result["errors"].append(f"{design_id}: {status} requires implementation locations or runtimeManaged=true")
-                if args.require_tests and status in {"IMPLEMENTED", "VERIFIED"} and not runtime and not (item.get("tests") or []):
+                if (args.require_tests or require_evidence) and status in {"IMPLEMENTED", "VERIFIED"} and not (item.get("tests") or []):
                     result["errors"].append(f"{design_id}: tests required")
 
                 if args.project_root:
@@ -145,11 +179,29 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                             exists = location_exists(root, loc)
                             if exists is False:
                                 result["errors"].append(f"{design_id}: bound {group} file does not exist: {loc.get('file')}")
+                            if require_symbols and status in {"IMPLEMENTED", "VERIFIED"}:
+                                try:
+                                    resolved = resolve_symbol(root, loc, index)
+                                except ValueError as exc:
+                                    result["symbolsVerified"] = False
+                                    result["errors"].append(f"{design_id}: {group}: {exc}")
+                                else:
+                                    if require_evidence and group == "tests":
+                                        try:
+                                            test_is_proven(resolved, evidence_cases, index)
+                                        except ValueError as exc:
+                                            result["evidenceVerified"] = False
+                                            result["errors"].append(f"{design_id}: tests: {exc}")
 
         if args.require_complete or args.require_ready:
             for missing in sorted(design_ids - bound_ids):
                 result["errors"].append(f"missing binding for designId {missing}")
 
+        result["coverageComplete"] = bool(design_ids) and bound_ids == design_ids
+        result["releaseReady"] = (result["coverageComplete"] and require_evidence and not result["errors"]
+                                  and all(b["status"] == "VERIFIED" for b in binding["bindings"]))
+        result["statuses"] = {status: sum(b["status"] == status for b in binding["bindings"])
+                              for status in sorted({b["status"] for b in binding["bindings"]})}
         result["designIds"] = len(design_ids)
         result["boundIds"] = len(bound_ids)
         if result["errors"]:
@@ -162,6 +214,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print(f"{result['status']}: designIds={result.get('designIds', 0)} boundIds={result.get('boundIds', 0)}")
+        print(f"coverageComplete={result.get('coverageComplete', False)} releaseReady={result.get('releaseReady', False)} "
+              f"symbolsVerified={result.get('symbolsVerified', False)} evidenceVerified={result.get('evidenceVerified', False)}")
         for warning in result["warnings"]:
             print(f"WARN {warning}")
         for error in result["errors"]:

@@ -46,7 +46,9 @@
                 "notes": {
                   "type": "string"
                 },
-                "value": {},
+                "value": {
+                  "type": "integer"
+                },
                 "name": {
                   "type": "string",
                   "minLength": 1

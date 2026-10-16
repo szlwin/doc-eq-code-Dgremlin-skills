@@ -477,9 +477,14 @@ def _build_enum(doc: minidom.Document, root: Mapping[str, Any], emit: bool) -> m
         for vi, raw_value in enumerate(values):
             value = _map(raw_value, f"enums[{i}].values[{vi}]")
             _reject_unknown(value, {"value", "name", "desc"}, f"enums[{i}].values[{vi}]")
+            enum_value = _require(value, "value", f"enums[{i}].values[{vi}]")
+            if isinstance(enum_value, bool) or not isinstance(enum_value, int):
+                raise ConversionError(f"enums[{i}].values[{vi}].value: must be an Integer")
+            if not -2147483648 <= enum_value <= 2147483647:
+                raise ConversionError(f"enums[{i}].values[{vi}].value: must fit Java Integer range")
             _id_comment(doc, enum_el, value, emit)
             enum_el.appendChild(_element(doc, "enum-value", {
-                "value": _require(value, "value", f"enums[{i}].values[{vi}]"),
+                "value": enum_value,
                 "name": _require(value, "name", f"enums[{i}].values[{vi}]"),
                 "desc": value.get("desc"),
             }))

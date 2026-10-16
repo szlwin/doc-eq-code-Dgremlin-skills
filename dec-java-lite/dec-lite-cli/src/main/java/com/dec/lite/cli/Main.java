@@ -116,8 +116,11 @@ public class Main {
                     return 2;
                 }
                 String basePackage = optionValue(args, "--base-package", "com.dec.generated");
+                Path generationConfig = optionPath(args, "--generation-config");
+                var options = generationConfig == null ? com.dec.lite.generator.GenerationOptions.defaults()
+                        : com.dec.lite.generator.GenerationOptions.load(generationConfig);
                 GeneratorPipeline.GenerationResult result = new GeneratorPipeline()
-                        .generate(project, output, basePackage);
+                        .generate(project, output, basePackage, options);
                 System.out.println("generated=" + result.files().size());
                 for (String file : result.files()) System.out.println("file=" + file);
             }
@@ -182,7 +185,7 @@ public class Main {
         System.out.println("       commands: inspect, information, action, directory, query, generate");
         System.out.println("       directory options: [--target <directory>]");
         System.out.println("       query options: --directory <name> [--eq <case>] [--from <directory>] [--to <directory-or-case>] [--with <relation>] [--where property=value] [--offset N] [--size N] [--candidate-limit N]");
-        System.out.println("       generate options: --output <directory> [--base-package <package>]");
+        System.out.println("       generate options: --output <directory> [--base-package <package>] [--generation-config <properties-file>]");
     }
 
     private static void printInformation(InformationCompilation compilation) {

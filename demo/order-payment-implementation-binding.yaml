@@ -5,14 +5,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/SubmitOrderController.java
-    symbol: SubmitOrderController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#submitOrder
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderApiBindings.java
-    symbol: SubmitOrderBinding
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#submitOrder
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderWorkflow.java
-    symbol: OrderWorkflow
+    file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
+    symbol: OrderWorkflow#submitOrder
   notes: Local demo API executes canonical Directory workflow through a generated controller and an application binding.
   tests:
   - module: order-payment-app
@@ -26,8 +26,8 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/SubmitOrderController.java
-    symbol: SubmitOrderController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#submitOrder
   notes: Generated transport binding exercised by HTTP integration test.
   tests:
   - module: order-payment-app
@@ -38,7 +38,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   notes: Generated transport binding exercised by HTTP integration test.
   tests:
@@ -50,7 +50,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   notes: Generated transport binding exercised by HTTP integration test.
   tests:
@@ -62,7 +62,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   notes: Generated transport binding exercised by HTTP integration test.
   tests:
@@ -72,13 +72,21 @@ bindings:
 - designId: BUS-ORDER-PAYMENT
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime. One OrderPaymentListener binds BUS-ORDER-PAYMENT and receives all executed Action events,
+    including success/error branches and Back Actions. Duplicate flow listener registration is rejected.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/business/OrderPaymentListener.java
+    symbol: OrderPaymentListener
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/config/ActionListenerConfiguration.java
+    symbol: ActionListenerConfiguration#actionListenerRegistry
 - designId: DIR-ORDERED
   strategy: REUSE
   status: VERIFIED
@@ -232,18 +240,53 @@ bindings:
 - designId: ACT-SMS-NOTIFY
   strategy: REUSE
   status: VERIFIED
-  notes: Implemented by the local demo adapter; external production connector is outside this demo.
+  notes: Custom Action smsNotify is registered from Spring beans; SmsSender runs after the outer transaction commits. LoggingSmsSender
+    is a local logging adapter, not a real SMS provider. The flow-bound OrderPaymentListener handles before/after events for
+    BUS-ORDER-PAYMENT, including this Action; listener failure rolls back and suppresses scheduled SMS.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
-    symbol: OrderWorkflowTest
+    symbol: OrderWorkflowTest#customSmsActionSendsOnlyAfterTheOuterTransactionCommits
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#customSmsActionDoesNotSendWhenTheOuterTransactionRollsBack
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#afterCommitSmsFailureLeavesCommittedStateAndRetryDoesNotResend
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#duplicateConcurrentCallbacksAndLateConflictingResultDoNotRepeatSideEffects
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#actionListenerRunsAroundSmsActionBeforeCommit
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#beforeListenerFailureRollsBackAndPreventsAction
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#afterListenerFailureRollsBackAndSuppressesScheduledSms
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#flowListenerObservesSuccessAndBackActions
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderWorkflow.java
-    symbol: OrderWorkflow
+    file: src/main/java/com/example/orderpayment/payment/action/SmsNotifyAction.java
+    symbol: SmsNotifyAction#execute
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork#notifySms
+    file: src/main/java/com/example/orderpayment/payment/action/SmsSender.java
+    symbol: SmsSender#sendPaymentError
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/config/CustomActionConfiguration.java
+    symbol: CustomActionConfiguration#customActionRegistry
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/business/OrderPaymentListener.java
+    symbol: OrderPaymentListener#before
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/business/OrderPaymentListener.java
+    symbol: OrderPaymentListener#after
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/config/ActionListenerConfiguration.java
+    symbol: ActionListenerConfiguration#actionListenerRegistry
 - designId: ACT-CONFIRM-PAY-ERROR
   strategy: REUSE
   status: VERIFIED
@@ -259,14 +302,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/entity/User.java
+    file: src/main/java/com/example/orderpayment/user/entity/User.java
     symbol: User
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dao/UserDao.java
+    file: src/main/java/com/example/orderpayment/user/dao/UserDao.java
     symbol: UserDao
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
   notes: Generated Entity, DAO and Mapper execute against the local typed store. Real external DataSource integration remains
     outside this demo.
   tests:
@@ -278,14 +321,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/entity/Order.java
+    file: src/main/java/com/example/orderpayment/order/entity/Order.java
     symbol: Order
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dao/OrderDao.java
+    file: src/main/java/com/example/orderpayment/order/dao/OrderDao.java
     symbol: OrderDao
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
   notes: Generated Entity, DAO and Mapper execute against the local typed store. Real external DataSource integration remains
     outside this demo.
   tests:
@@ -297,14 +340,17 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/entity/OrderDetail.java
+    file: src/main/java/com/example/orderpayment/order/entity/OrderDetail.java
     symbol: OrderDetail
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dao/OrderDetailDao.java
+    file: src/main/java/com/example/orderpayment/order/dao/OrderDetailDao.java
     symbol: OrderDetailDao
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/mapper/LocalOrderDetailMapperAdapter.java
+    symbol: LocalOrderDetailMapperAdapter#selectByOrderId
   notes: Generated Entity, DAO and Mapper execute against the local typed store. Real external DataSource integration remains
     outside this demo.
   tests:
@@ -316,14 +362,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/entity/Pay.java
+    file: src/main/java/com/example/orderpayment/payment/entity/Pay.java
     symbol: Pay
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dao/PayDao.java
+    file: src/main/java/com/example/orderpayment/payment/dao/PayDao.java
     symbol: PayDao
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
   notes: Generated Entity, DAO and Mapper execute against the local typed store. Real external DataSource integration remains
     outside this demo.
   tests:
@@ -335,14 +381,17 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/entity/PayDetail.java
+    file: src/main/java/com/example/orderpayment/payment/entity/PayDetail.java
     symbol: PayDetail
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dao/PayDetailDao.java
+    file: src/main/java/com/example/orderpayment/payment/dao/PayDetailDao.java
     symbol: PayDetailDao
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/payment/mapper/LocalPayDetailMapperAdapter.java
+    symbol: LocalPayDetailMapperAdapter#selectByPayId
   notes: Generated Entity, DAO and Mapper execute against the local typed store. Real external DataSource integration remains
     outside this demo.
   tests:
@@ -354,7 +403,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderStatus.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderStatus.java
     symbol: OrderStatus
   notes: Generated canonical enum values round-trip through API JSON.
   tests:
@@ -366,7 +415,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderStatus.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderStatus.java
     symbol: OrderStatus
   tests:
   - module: order-payment-app
@@ -378,7 +427,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderStatus.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderStatus.java
     symbol: OrderStatus
   tests:
   - module: order-payment-app
@@ -390,7 +439,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderStatus.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderStatus.java
     symbol: OrderStatus
   tests:
   - module: order-payment-app
@@ -402,7 +451,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderStatus.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderStatus.java
     symbol: OrderStatus
   tests:
   - module: order-payment-app
@@ -414,7 +463,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderType.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderType.java
     symbol: OrderType
   notes: Generated canonical enum values round-trip through API JSON.
   tests:
@@ -426,7 +475,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderType.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderType.java
     symbol: OrderType
   tests:
   - module: order-payment-app
@@ -438,7 +487,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/OrderType.java
+    file: src/main/java/com/example/orderpayment/order/enums/OrderType.java
     symbol: OrderType
   tests:
   - module: order-payment-app
@@ -450,7 +499,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/PaymentStatus.java
+    file: src/main/java/com/example/orderpayment/payment/enums/PaymentStatus.java
     symbol: PaymentStatus
   notes: Generated canonical enum values round-trip through API JSON.
   tests:
@@ -462,7 +511,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/PaymentStatus.java
+    file: src/main/java/com/example/orderpayment/payment/enums/PaymentStatus.java
     symbol: PaymentStatus
   tests:
   - module: order-payment-app
@@ -474,7 +523,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/PaymentStatus.java
+    file: src/main/java/com/example/orderpayment/payment/enums/PaymentStatus.java
     symbol: PaymentStatus
   tests:
   - module: order-payment-app
@@ -486,7 +535,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/PayResultCode.java
+    file: src/main/java/com/example/orderpayment/payment/enums/PayResultCode.java
     symbol: PayResultCode
   notes: Generated canonical enum values round-trip through API JSON.
   tests:
@@ -498,7 +547,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/PayResultCode.java
+    file: src/main/java/com/example/orderpayment/payment/enums/PayResultCode.java
     symbol: PayResultCode
   tests:
   - module: order-payment-app
@@ -510,7 +559,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/enums/PayResultCode.java
+    file: src/main/java/com/example/orderpayment/payment/enums/PayResultCode.java
     symbol: PayResultCode
   tests:
   - module: order-payment-app
@@ -527,6 +576,17 @@ bindings:
     symbol: OrderWorkflowTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+- designId: RULE-VALIDATE-SUBMIT-ORDER
+  strategy: REUSE
+  status: VERIFIED
+  notes: Canonical business combination is evaluated by the save-Order RuleView before persistence; it is intentionally absent
+    from the generated request DTO.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
+    symbol: OrderApiTest#evaluatesOrderStatusAndTypeInBusinessRuleView
+  runtimeManaged: true
+  runtimeCapability: RuleView checkPattern evaluation
 - designId: RULE-INSERT-ORDER
   strategy: REUSE
   status: VERIFIED
@@ -537,11 +597,8 @@ bindings:
     symbol: OrderWorkflowTest
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalRuleAdapter.java
+    file: src/main/java/com/example/orderpayment/order/workflow/LocalRuleAdapter.java
     symbol: LocalRuleAdapter#execute
-  - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
 - designId: RULE-INSERT-DETAIL
   strategy: REUSE
   status: VERIFIED
@@ -552,11 +609,11 @@ bindings:
     symbol: OrderWorkflowTest
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalRuleAdapter.java
+    file: src/main/java/com/example/orderpayment/order/workflow/LocalRuleAdapter.java
     symbol: LocalRuleAdapter#execute
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
 - designId: RV-ORDER-IS-WAIT-PAY
   strategy: REUSE
   status: PLANNED
@@ -625,11 +682,11 @@ bindings:
     symbol: OrderWorkflowTest
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalRuleAdapter.java
+    file: src/main/java/com/example/orderpayment/order/workflow/LocalRuleAdapter.java
     symbol: LocalRuleAdapter#execute
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
 - designId: RV-HAS-PAYMENT-INFO
   strategy: REUSE
   status: VERIFIED
@@ -670,11 +727,11 @@ bindings:
     symbol: OrderWorkflowTest
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalRuleAdapter.java
+    file: src/main/java/com/example/orderpayment/order/workflow/LocalRuleAdapter.java
     symbol: LocalRuleAdapter#execute
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/order/store/LocalOrderStore.java
+    symbol: LocalOrderStore
 - designId: RV-HAS-PAY-RESULT
   strategy: REUSE
   status: VERIFIED
@@ -748,18 +805,19 @@ bindings:
 - designId: RULE-RECORD-PAY-ERROR
   strategy: REUSE
   status: VERIFIED
-  notes: Canonical Rule executes through the local DataOperationAdapter and generated DAO against staged entities.
+  notes: Canonical Rule executes through the local DataOperationAdapter and the dedicated payment-error adapter; its external
+    mongo1 substitute writes the demo table within the current transaction.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalRuleAdapter.java
+    file: src/main/java/com/example/orderpayment/order/workflow/LocalRuleAdapter.java
     symbol: LocalRuleAdapter#execute
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/LocalOrderStore.java
-    symbol: LocalOrderStore.UnitOfWork
+    file: src/main/java/com/example/orderpayment/payment/adapter/LocalPaymentErrorAdapter.java
+    symbol: LocalPaymentErrorAdapter#record
 - designId: RV-RESET-PAY-RESULT
   strategy: REUSE
   status: VERIFIED
@@ -1013,13 +1071,13 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/view/UserInfo.java
+    file: src/main/java/com/example/orderpayment/user/view/UserInfo.java
     symbol: UserInfo
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderViewAssembler.java
+    file: src/main/java/com/example/orderpayment/order/view/OrderViewAssembler.java
     symbol: OrderViewAssembler#read
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/DecViewModelBridge.java
+    file: src/main/java/com/example/orderpayment/order/workflow/DecViewModelBridge.java
     symbol: DecViewModelBridge#fromModel
   notes: Generated View is assembled from Entity records read through generated DAO; the DEC model bridge is isolated.
   tests:
@@ -1031,13 +1089,13 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/view/OrderInfo.java
+    file: src/main/java/com/example/orderpayment/order/view/OrderInfo.java
     symbol: OrderInfo
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderViewAssembler.java
+    file: src/main/java/com/example/orderpayment/order/view/OrderViewAssembler.java
     symbol: OrderViewAssembler#read
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/DecViewModelBridge.java
+    file: src/main/java/com/example/orderpayment/order/workflow/DecViewModelBridge.java
     symbol: DecViewModelBridge#fromModel
   notes: Generated View is assembled from Entity records read through generated DAO; the DEC model bridge is isolated.
   tests:
@@ -1049,7 +1107,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   tests:
   - module: order-payment-app
@@ -1061,7 +1119,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   tests:
   - module: order-payment-app
@@ -1073,7 +1131,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   tests:
   - module: order-payment-app
@@ -1085,7 +1143,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   tests:
   - module: order-payment-app
@@ -1097,7 +1155,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/SubmitOrderRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/SubmitOrderRequest.java
     symbol: SubmitOrderRequest
   tests:
   - module: order-payment-app
@@ -1109,14 +1167,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/StartPaymentController.java
-    symbol: StartPaymentController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#startPayment
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderApiBindings.java
-    symbol: StartPaymentBinding
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#startPayment
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderWorkflow.java
-    symbol: OrderWorkflow
+    file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
+    symbol: OrderWorkflow#startPayment
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1130,8 +1188,8 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/StartPaymentController.java
-    symbol: StartPaymentController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#startPayment
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1142,14 +1200,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/ReceivePaymentResultController.java
-    symbol: ReceivePaymentResultController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#receivePaymentResult
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderApiBindings.java
-    symbol: ReceivePaymentResultBinding
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#receivePaymentResult
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderWorkflow.java
-    symbol: OrderWorkflow
+    file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
+    symbol: OrderWorkflow#receivePaymentResult
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1163,8 +1221,8 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/ReceivePaymentResultController.java
-    symbol: ReceivePaymentResultController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#receivePaymentResult
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1175,7 +1233,7 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/dto/ReceivePaymentResultRequest.java
+    file: src/main/java/com/example/orderpayment/order/dto/ReceivePaymentResultRequest.java
     symbol: ReceivePaymentResultRequest
   tests:
   - module: order-payment-app
@@ -1187,14 +1245,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/BackToPayingController.java
-    symbol: BackToPayingController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#backToPaying
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderApiBindings.java
-    symbol: BackToPayingBinding
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#backToPaying
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderWorkflow.java
-    symbol: OrderWorkflow
+    file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
+    symbol: OrderWorkflow#backToPaying
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1208,8 +1266,8 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/BackToPayingController.java
-    symbol: BackToPayingController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#backToPaying
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1220,14 +1278,14 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/GetOrderController.java
-    symbol: GetOrderController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#getOrder
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderApiBindings.java
-    symbol: GetOrderBinding
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#getOrder
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/demo/OrderWorkflow.java
-    symbol: OrderWorkflow
+    file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
+    symbol: OrderWorkflow#getOrder
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1241,10 +1299,40 @@ bindings:
   status: VERIFIED
   implementation:
   - module: order-payment-app
-    file: src/main/java/com/example/orderpayment/controller/GetOrderController.java
-    symbol: GetOrderController
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#getOrder
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
     symbol: OrderApiTest#generatedControllersReachTheExecutableWorkflow
   notes: Generated transport binding exercised by HTTP integration test.
+- designId: INFO-PAYMENT-PROCESSING
+  strategy: REUSE
+  status: VERIFIED
+  runtimeManaged: true
+  runtimeCapability: DirectoryWorkflowRunner canonical Information recognition and persisted-state verification
+  notes: Existing Store consistency constraints moved into canonical Information; no parallel Java state predicates.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#canonicalInformationRejectsMismatchedDetailAndPaymentStates
+- designId: INFO-COMMON-ORDERED
+  strategy: REUSE
+  status: VERIFIED
+  runtimeManaged: true
+  runtimeCapability: DirectoryWorkflowRunner canonical Information recognition and persisted-state verification
+  notes: Existing Store consistency constraints moved into canonical Information; no parallel Java state predicates.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#canonicalInformationRejectsMismatchedDetailAndPaymentStates
+- designId: INFO-COMMON-PAYING
+  strategy: REUSE
+  status: VERIFIED
+  runtimeManaged: true
+  runtimeCapability: DirectoryWorkflowRunner canonical Information recognition and persisted-state verification
+  notes: Existing Store consistency constraints moved into canonical Information; no parallel Java state predicates.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#canonicalInformationRejectsMismatchedDetailAndPaymentStates

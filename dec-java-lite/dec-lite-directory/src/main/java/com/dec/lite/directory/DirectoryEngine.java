@@ -19,11 +19,16 @@ import java.util.List;
 /** Directory state machine bound to one ExecutionSession and one Scope per path. */
 public final class DirectoryEngine {
     private final DirectoryGraph graph;
+    private final java.time.Clock clock;
     private final PathPlanner planner = new PathPlanner();
     private final BackPlanner backPlanner = new BackPlanner();
     private final DependencyGate dependencies = new DependencyGate();
 
-    public DirectoryEngine(DirectoryGraph graph) { this.graph = graph; }
+    public DirectoryEngine(DirectoryGraph graph) { this(graph, java.time.Clock.systemUTC()); }
+    public DirectoryEngine(DirectoryGraph graph, java.time.Clock clock) {
+        this.graph = graph;
+        this.clock = java.util.Objects.requireNonNull(clock, "clock");
+    }
     public DirectoryGraph graph() { return graph; }
 
     public DirectoryExecutionResult executeTo(String target, DirectoryExecutionContext context) {
@@ -59,8 +64,10 @@ public final class DirectoryEngine {
                 completedTarget = selected;
                 completedPlan = new PathPlan(plan.from(), selected, nodes, kinds);
             }
+            if (!clock.instant().isBefore(context.deadline()))
+                throw new RuntimeFailure(RuntimeErrorCode.TIMEOUT, target, "Directory deadline exceeded before commit: " + target);
             scope.commit();
-            context.trace(completedTarget, DirectoryStage.TRANSACTION, "commit");
+            context.trace(completedTarget, DirectoryStage.TRANSACTION, "scope complete; state=" + context.session().transactions().state());
             context.model().replaceFrom(working);
             context.information().invalidate(mutations);
             context.setCurrentDirectory(completedTarget);
@@ -101,8 +108,10 @@ public final class DirectoryEngine {
                 change.mutations().forEach(mutations::add);
             }
             verify(destination.informationRef(), working, context, target);
+            if (!clock.instant().isBefore(context.deadline()))
+                throw new RuntimeFailure(RuntimeErrorCode.TIMEOUT, target, "Directory deadline exceeded before commit: " + target);
             scope.commit();
-            context.trace(target, DirectoryStage.TRANSACTION, "commit Back");
+            context.trace(target, DirectoryStage.TRANSACTION, "Back scope complete; state=" + context.session().transactions().state());
             context.model().replaceFrom(working);
             context.information().invalidate(mutations);
             context.setCurrentDirectory(target);
@@ -124,7 +133,7 @@ public final class DirectoryEngine {
 
     private void executeDirectory(DirectoryDefinition directory, ModelContext model,
                                   DirectoryExecutionContext context, MutationSet mutations) {
-        if (Instant.now().isAfter(context.deadline())) throw new RuntimeFailure(RuntimeErrorCode.VALIDATION, directory.id(), directory.source(), "Directory deadline exceeded: " + directory.name(), null);
+        if (!clock.instant().isBefore(context.deadline())) throw new RuntimeFailure(RuntimeErrorCode.TIMEOUT, directory.id(), directory.source(), "Directory deadline exceeded: " + directory.name(), null);
         context.trace(directory.name(), DirectoryStage.CHECKING_DEPENDENCIES, directory.dependencies().toString());
         try { dependencies.verify(directory.dependencies(), context.information(), model); }
         catch (DirectoryExecutionException failure) { throw new RuntimeFailure(RuntimeErrorCode.DEPENDENCY, directory.id(), directory.source(), failure.getMessage(), failure); }

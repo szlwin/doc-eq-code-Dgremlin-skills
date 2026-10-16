@@ -74,7 +74,7 @@
       <property name="orderId" type="int" desc="订单ID"/>
       <property name="userId" type="int" desc="用户ID"/>
       <property name="status" type="int" desc="支付状态"/>
-      <property name="resultCode" type="string" desc="支付结果码"/>
+      <property name="resultCode" type="int" desc="支付结果码"/>
     </property-info>
     <table-info>
       <table name="pay_info" data-source="data1" key="p_id" key-type="increment">

@@ -19,7 +19,7 @@
 - RuleView `code/desc` 输出同名属性；
 - Enum 输出 `<enum-config>/<enum>/<enum-value>`；Config `enumFiles` 输出 `enum-file-info/enum-file`；
 - Data Column、API Parameter/Field 的 `relEnum` 输出 `rel-enum`；
-- API request expression 输出 `<validation type="expression" expression="...">`。
+- 纯传输层 API request expression 输出 `<validation type="expression" expression="...">`；业务组合条件不应从 API DTO 生成。
 
 这些新增 XML grammar 需要对应 Compiler/Runtime 支持。Converter 能生成 XML **不等于** Runtime 已实现；未实现时必须标记 capability gap。
 

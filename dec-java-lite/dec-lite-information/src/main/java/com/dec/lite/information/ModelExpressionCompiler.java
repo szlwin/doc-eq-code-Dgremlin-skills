@@ -39,7 +39,13 @@ public final class ModelExpressionCompiler {
                 if (c == '\'' || c == '"') { quoted = true; quote = c; current.append(c); continue; }
                 if (Character.isWhitespace(c)) { flush(current); continue; }
                 if (c == '(' || c == ')' || c == ',') { flush(current); tokens.add(String.valueOf(c)); continue; }
-                if (c == '=' || c == '!') { flush(current); if (c == '!' && i + 1 < source.length() && source.charAt(i + 1) == '=') { tokens.add("!="); i++; } else tokens.add(String.valueOf(c)); continue; }
+                if (c == '=' || c == '!' || c == '<' || c == '>') {
+                    flush(current);
+                    if (c != '=' && i + 1 < source.length() && source.charAt(i + 1) == '=') {
+                        tokens.add("" + c + '='); i++;
+                    } else tokens.add(String.valueOf(c));
+                    continue;
+                }
                 current.append(c);
             }
             if (quoted) throw new InformationCompilationException("unterminated model expression string"); flush(current);
@@ -57,7 +63,7 @@ public final class ModelExpressionCompiler {
                 if (first.equals("exists")) { require(")"); return new Exists(path); }
                 require(","); Node condition = parseOr(); require(")"); return new Quantifier(first, path, condition);
             }
-            if (peek("=") || peek("!=") || peek("!")) { String op = next(); if ("!".equals(op)) op = "!="; return new Compare(path(first), op, literal(next())); }
+            if (peek("=") || peek("!=") || peek("!") || peek("<") || peek("<=") || peek(">") || peek(">=")) { String op = next(); if ("!".equals(op)) op = "!="; return new Compare(path(first), op, literal(next())); }
             throw error("model expression requires comparison or supported function: " + first);
         }
         String next() { if (index >= tokens.size()) throw error("unexpected end"); return tokens.get(index++); }
@@ -70,7 +76,7 @@ public final class ModelExpressionCompiler {
             if (value.equalsIgnoreCase("null")) return new Literal(null, "null");
             if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) return new Literal(Boolean.valueOf(value), value.toLowerCase(Locale.ROOT));
             if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) return new Literal(value.substring(1, value.length() - 1), value);
-            try { if (value.contains(".")) return new Literal(Double.valueOf(value), value); return new Literal(Long.valueOf(value), value); }
+            try { return new Literal(new java.math.BigDecimal(value), value); }
             catch (NumberFormatException ignored) { throw error("literal required: " + value); }
         }
         InformationCompilationException error(String message) { return new InformationCompilationException(message); }
@@ -95,8 +101,29 @@ public final class ModelExpressionCompiler {
         public RecognitionResult evaluate(Object scope, String version) {
             Lookup lookup = lookup(scope, path);
             if (!lookup.present()) return RecognitionResult.unresolved(version, "missing model path: " + path);
-            boolean equal = java.util.Objects.equals(normalize(lookup.value()), normalize(literal.value()));
-            return RecognitionResult.of(("=".equals(op) ? equal : !equal) ? RecognitionResult.Status.TRUE : RecognitionResult.Status.FALSE, version, path);
+            Object actual = lookup.value(), expected = literal.value();
+            boolean matches;
+            try {
+                if ("=".equals(op) || "!=".equals(op)) {
+                    boolean equal = actual instanceof Number a && expected instanceof Number b
+                            ? decimal(a).compareTo(decimal(b)) == 0 : java.util.Objects.equals(actual, expected);
+                    matches = "=".equals(op) ? equal : !equal;
+                } else {
+                    if (!(actual instanceof Number a) || !(expected instanceof Number b))
+                        return RecognitionResult.error(version, "numeric comparison requires numbers: " + path);
+                    int comparison = decimal(a).compareTo(decimal(b));
+                    matches = switch (op) {
+                        case "<" -> comparison < 0;
+                        case "<=" -> comparison <= 0;
+                        case ">" -> comparison > 0;
+                        case ">=" -> comparison >= 0;
+                        default -> throw new IllegalStateException("unsupported comparison: " + op);
+                    };
+                }
+            } catch (NumberFormatException failure) {
+                return RecognitionResult.error(version, "non-finite or invalid numeric value: " + path);
+            }
+            return RecognitionResult.of(matches ? RecognitionResult.Status.TRUE : RecognitionResult.Status.FALSE, version, path);
         }
         public Set<String> readPaths() { return Set.of(path); }
         public String canonical() { return "compare(" + path + op + literal.source() + ")"; }
@@ -138,7 +165,7 @@ public final class ModelExpressionCompiler {
     }
     private record Lookup(boolean present, Object value) { }
     private static Lookup lookup(Object scope, String path) { Object current = scope; for (String part : path.split("\\.")) { if (current instanceof java.util.Map<?, ?> map && map.containsKey(part)) current = map.get(part); else return new Lookup(false, null); } return new Lookup(true, current); }
-    private static Object normalize(Object value) { return value instanceof Number n ? n.doubleValue() : value; }
+    private static java.math.BigDecimal decimal(Number value) { return new java.math.BigDecimal(value.toString()); }
     private static RecognitionResult combine(String op, RecognitionResult left, RecognitionResult right, String version) {
         if ("and".equals(op)) {
             if (left.status() == RecognitionResult.Status.ERROR) return merge(left, right, version, RecognitionResult.Status.ERROR);

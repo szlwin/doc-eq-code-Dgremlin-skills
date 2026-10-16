@@ -28,9 +28,20 @@
       <artifactId>mybatis-spring-boot-starter</artifactId>
       <version>3.0.3</version>
     </dependency>
+<#if mysql>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+</#if>
     <dependency>
       <groupId>com.dec</groupId>
-      <artifactId>dec-lite-directory</artifactId>
+      <artifactId>dec-lite-spring</artifactId>
       <version>0.1.0</version>
     </dependency>
     <dependency>

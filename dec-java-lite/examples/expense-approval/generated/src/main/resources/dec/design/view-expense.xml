@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-view-mapping>
+  <!-- dec-id: VIEW-EXPENSE -->
+  <view name="ExpenseInfo" system="expense" target-main="expense">
+    <property-info>
+      <property name="id" ref-property="id"/>
+      <property name="status" ref-property="status"/>
+      <property name="amount" ref-property="amount"/>
+      <property name="reviewerEnabled" ref-property="reviewerEnabled"/>
+    </property-info>
+  </view>
+</orm-view-mapping>

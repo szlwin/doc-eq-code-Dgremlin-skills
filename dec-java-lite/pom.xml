@@ -15,6 +15,7 @@
     <module>dec-lite-action</module>
     <module>dec-lite-session</module>
     <module>dec-lite-directory</module>
+    <module>dec-lite-spring</module>
     <module>dec-lite-query</module>
     <module>dec-lite-generator</module>
     <module>dec-lite-cli</module>

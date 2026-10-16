@@ -10,9 +10,11 @@ package ${package};
 import ${import};
 </#list>
 
-/** DEC ${designId}<#if designSource??> from ${designSource}</#if>. */
+/** DEC ${designId}<#if designSource??>; YAML ${designSource}#${designPath}; XML ${designXml} view[name=${designName}]</#if>. */
 public class ${className} {
 <#list fields as field>
+<#if designSource??>    /** YAML ${designSource}#${designPath}.properties.${field.name}; XML ${designXml} property[name=${field.name}]. */
+</#if>
     private ${field.type} ${field.name};
 </#list>
 

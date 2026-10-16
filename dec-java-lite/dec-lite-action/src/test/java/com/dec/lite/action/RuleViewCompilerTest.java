@@ -26,7 +26,7 @@ class RuleViewCompilerTest {
         assertEquals(14, compiled.size());
 
         RuleViewRegistry registry = compiler.register(project, null);
-        ModelContext model = model(1L, "UNKNOWN");
+        ModelContext model = model(1L, 99);
         RecognitionResult waitPay = registry.invoke("order", "isWaitPay", model, Map.of(), new MutationSet());
         assertEquals(RecognitionResult.Status.TRUE, waitPay.status());
 
@@ -41,12 +41,12 @@ class RuleViewCompilerTest {
     void externalDataOperationsFailClosedWithoutAdapter() throws Exception {
         DecProject project = new DecYamlParser().parse(resourceDirectory());
         RuleViewRegistry registry = new RuleViewCompiler().register(project, null);
-        RecognitionResult result = registry.invoke("payment", "pay", model(0L, "UNKNOWN"), Map.of(), new MutationSet());
+        RecognitionResult result = registry.invoke("payment", "pay", model(0L, 99), Map.of(), new MutationSet());
         assertEquals(RecognitionResult.Status.ERROR, result.status());
         assertTrue(result.errors().get(0).contains("DataOperationAdapter"));
     }
 
-    private static ModelContext model(Long status, String resultCode) {
+    private static ModelContext model(Long status, Integer resultCode) {
         Map<String, Object> values = new LinkedHashMap<>();
         values.put("status", status);
         values.put("orderDetailList", List.of(new LinkedHashMap<>(Map.of("status", status)), new LinkedHashMap<>(Map.of("status", status))));

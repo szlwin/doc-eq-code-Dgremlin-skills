@@ -50,10 +50,6 @@ final class ExpressionCompiler {
             String operator = consume().kind();
             Operand right = parseOperand(true);
             String rightCode = right.code();
-            if (left.fieldName() != null && enumFields.contains(left.fieldName()) && right.literal() != null
-                    && right.literal().matches("-?\\d+(?:\\.\\d+)?")) {
-                rightCode = javaString(right.literal());
-            }
             return ("NE".equals(operator) ? "!" : "") + "Objects.equals(" + left.code() + ", " + rightCode + ")";
         }
         if (left.code().startsWith("this.")) return "Boolean.TRUE.equals(" + left.code() + ")";

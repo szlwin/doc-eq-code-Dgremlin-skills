@@ -98,6 +98,12 @@ class XmlToYamlTest(unittest.TestCase):
         with self.assertRaises(XmlToYamlError):
             xml_to_yaml(minidom.parseString("<directory-config/>"))
 
+    def test_enum_value_must_be_integer(self):
+        with self.assertRaises(XmlToYamlError):
+            xml_to_yaml(minidom.parseString(
+                '<enum-config><enum name="State"><enum-value value="OPEN" name="OPEN"/></enum></enum-config>'
+            ))
+
 
 if __name__ == "__main__":
     unittest.main()

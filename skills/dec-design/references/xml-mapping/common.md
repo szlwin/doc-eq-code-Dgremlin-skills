@@ -8,7 +8,7 @@
 - YAML camelCase 映射到现有 XML 的 kebab-case / 历史标签；
 - YAML `id/description/notes/version/kind` 默认不写成 Runtime 属性；
 - `desc` 是目标设计语言字段，不等同于 metadata `description`；在 API、RuleView、Business 等支持位置会生成 XML `desc` 属性；
-- `--emit-id-comments` 可输出 `<!-- dec-id: ... -->`；
+- Design ID 注释的使用边界统一见 [`yaml-to-xml.md`](../yaml-to-xml.md)；
 - `expression/ruleData` 作为 XML attribute；`changeData/process` 使用 CDATA；
 - unknown field 必须失败；
 - `ref-rule` 不生成；目标属性统一 `rule-ref`。

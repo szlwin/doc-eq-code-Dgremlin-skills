@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orm-data-mapping>
+  <!-- dec-id: DATA-EXPENSE -->
+  <data name="expense" system="expense">
+    <property-info>
+      <property name="id" type="integer"/>
+      <property name="status" type="integer"/>
+      <property name="amount" type="decimal"/>
+      <property name="reviewerEnabled" type="boolean"/>
+    </property-info>
+    <table-info>
+      <table name="expense_request" data-source="approvalDb" key="id" key-type="set">
+        <column name="id" ref-property="id"/>
+        <column name="status" ref-property="status"/>
+        <column name="amount" ref-property="amount"/>
+        <column name="reviewerEnabled" ref-property="reviewerEnabled"/>
+      </table>
+    </table-info>
+  </data>
+</orm-data-mapping>

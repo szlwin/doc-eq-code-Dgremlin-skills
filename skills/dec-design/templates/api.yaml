@@ -50,8 +50,8 @@ apis:
           relEnum: OrderType
       validations:
         - type: expression
-          expression: status = 1 and type = 1
-          message: status 与 type 组合不满足接口约束
+          expression: format = csv and compress = true
+          message: CSV 请求必须启用压缩
     response:
       type: object
       desc: <response description>

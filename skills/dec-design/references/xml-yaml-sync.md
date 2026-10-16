@@ -122,13 +122,9 @@ notes: 该规则必须在支付前完成      # XML 无法表达，保留
 
 ## 7. Rename 与 `dec-id` 注释
 
-强烈建议所有“可能被外部人工修改”的 XML 使用：
+Design ID 注释的适用边界和快照规则统一见 [`yaml-to-xml.md`](yaml-to-xml.md)；本节只说明同步时如何使用已有注释进行身份匹配。
 
-```sh
-python3 scripts/yaml_to_xml.py design \
-  -o generated/xml \
-  --emit-id-comments
-```
+需要外部编辑的 XML，应按 [`yaml-to-xml.md`](yaml-to-xml.md) 的外部编辑策略生成。
 
 例如：
 
@@ -195,8 +191,10 @@ status = ROLLED_BACK
 
 ```sh
 python3 scripts/yaml_to_xml.py design --check
-python3 scripts/yaml_to_xml.py design -o generated/xml --emit-id-comments
+python3 scripts/yaml_to_xml.py design -o generated/xml
 ```
+
+若生成结果还要再次交给外部编辑，按 [`yaml-to-xml.md`](yaml-to-xml.md) 的外部编辑策略生成带身份注释的 XML。
 
 如果项目有 DEC Compiler/Runtime 验证，再继续运行真实 Compiler/Runtime test。
 

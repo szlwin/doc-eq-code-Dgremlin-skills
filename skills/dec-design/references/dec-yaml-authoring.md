@@ -29,7 +29,7 @@ kind: business
 - Rule DSL 用 `type: dsl`，命令用 `cmd`；
 - RuleView 必须有 `code`，可有默认 `dataSource`；Rule 可用 `dataSource` 覆盖；
 - 公共枚举定义在 `kind: enum`，Column/API 字段通过 `relEnum` 绑定；
-- API 支持 required、数值 min/max、长度 minLength/maxLength、regex、内联 enum、公共 relEnum 和 request-level expression；
+- API 支持 required、数值 min/max、长度 minLength/maxLength、regex、内联 enum、公共 relEnum 和纯 transport request-level expression；字段校验应提供 message，业务状态组合放 RuleView/Information/Business；
 - Directory 只能位于 `business.directories`。
 
 ## 示例
@@ -74,7 +74,7 @@ apis:
         - {name: orderId, in: path, type: long, required: true}
         - {name: status, in: body, type: int, required: true, relEnum: OrderStatus}
       validations:
-        - {type: expression, expression: "status = 1 and type = 1"}
+        - {type: expression, expression: "format = csv and compress = true", message: "CSV 请求必须启用压缩"}
 ```
 
 ## 必跑

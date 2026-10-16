@@ -1,0 +1,14 @@
+DEC-DESIGN-INDEX.md
+pom.xml
+src/main/java/com/example/expenses/GeneratedApplication.java
+src/main/java/com/example/expenses/business/ExpenseApprovalFlow.java
+src/main/java/com/example/expenses/config/ActionListenerConfiguration.java
+src/main/java/com/example/expenses/config/CustomActionConfiguration.java
+src/main/java/com/example/expenses/design/DecDesignMap.java
+src/main/java/com/example/expenses/expense/dao/ExpenseDao.java
+src/main/java/com/example/expenses/expense/entity/Expense.java
+src/main/java/com/example/expenses/expense/information/ExpenseInformation.java
+src/main/java/com/example/expenses/expense/mapper/ExpenseMapper.java
+src/main/java/com/example/expenses/expense/view/ExpenseInfo.java
+src/main/resources/dec/datasources.properties
+src/main/resources/dec/design-files.txt

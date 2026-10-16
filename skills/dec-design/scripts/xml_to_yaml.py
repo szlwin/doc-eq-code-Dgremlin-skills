@@ -491,8 +491,13 @@ def _parse_enum(root: minidom.Element, ids: IdFactory) -> Dict[str, Any]:
             vpath = f"{path}/enum-value[{vi}]"
             _assert_attrs(value_el, {"value", "name", "desc"}, vpath)
             value = _required_attr(value_el, "value", vpath)
+            if not re.fullmatch(r"[-+]?\d+", value.strip()):
+                raise ConversionError(f"{vpath}@value: must be an Integer")
+            integer_value = int(value.strip())
+            if not -2147483648 <= integer_value <= 2147483647:
+                raise ConversionError(f"{vpath}@value: must fit Java Integer range")
             vname = _required_attr(value_el, "name", vpath)
-            item: Dict[str, Any] = {"value": _number_or_text(value), "name": vname}
+            item: Dict[str, Any] = {"value": integer_value, "name": vname}
             vdesc = _attr(value_el, "desc")
             if vdesc is not None:
                 item["desc"] = vdesc

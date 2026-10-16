@@ -17,10 +17,13 @@ apis:
       desc: 订单 ID
       validations:
       - type: notNull
+        message: 订单 ID不能为空
       - type: min
         value: 1
+        message: 订单 ID最小为1
       - type: max
         value: 999999999
+        message: 订单 ID最大为999999999
     - id: API-PARAM-REMARK
       name: remark
       in: body
@@ -30,8 +33,10 @@ apis:
       validations:
       - type: maxLength
         value: 500
+        message: 订单备注长度最大为500
       - type: regex
         value: ^[A-Za-z0-9 _.,-]{0,500}$
+        message: 订单备注格式不正确
     - id: API-PARAM-STATUS
       name: status
       in: body
@@ -54,6 +59,8 @@ apis:
       validations:
       - type: min
         value: 1
+        message: 用户 ID最小为1
+      desc: 用户 ID
     - id: API-PARAM-PRODUCT-ID
       name: productId
       in: body
@@ -62,6 +69,8 @@ apis:
       validations:
       - type: min
         value: 1
+        message: 产品 ID最小为1
+      desc: 产品 ID
     - id: API-PARAM-PRODUCT-NAME
       name: productName
       in: body
@@ -70,8 +79,11 @@ apis:
       validations:
       - type: minLength
         value: 1
+        message: 产品名称长度最小为1
       - type: maxLength
         value: 120
+        message: 产品名称长度最大为120
+      desc: 产品名称
     - id: API-PARAM-PRODUCT-PRICE
       name: productPrice
       in: body
@@ -80,6 +92,8 @@ apis:
       validations:
       - type: min
         value: 1
+        message: 产品价格最小为1元
+      desc: 产品价格
     - id: API-PARAM-PRODUCT-COUNT
       name: productCount
       in: body
@@ -88,10 +102,8 @@ apis:
       validations:
       - type: min
         value: 1
-    validations:
-    - type: expression
-      expression: status = 1 and type = 1
-      message: status 与 type 组合不满足接口约束
+        message: 产品数量最小为1
+      desc: 产品数量
   response:
     type: object
     desc: 提交后的订单摘要
@@ -156,7 +168,7 @@ apis:
     - id: API-PARAM-PAY-RESULT-CODE
       name: resultCode
       in: body
-      type: string
+      type: int
       required: true
       relEnum: PayResultCode
   response:

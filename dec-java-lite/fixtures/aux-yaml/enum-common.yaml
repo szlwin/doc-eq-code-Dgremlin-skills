@@ -50,10 +50,10 @@ enums:
   desc: 支付结果
   values:
   - id: ENUM-VALUE-PAY-RESULT-SUCCESS
-    value: SUCCESS
+    value: 1
     name: SUCCESS
     desc: 成功
   - id: ENUM-VALUE-PAY-RESULT-ERROR
-    value: ERROR
+    value: 2
     name: ERROR
     desc: 失败

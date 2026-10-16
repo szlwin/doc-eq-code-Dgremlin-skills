@@ -65,7 +65,7 @@ validations:
 request:
   validations:
     - type: expression
-      expression: status = 1 and type = 1
+      expression: format = csv and compress = true
 ```
 
 →

@@ -16,7 +16,7 @@
 | Enum | Runtime/共享枚举 | 语言 Enum、serializer、DB/API converter |
 | Data | Runtime model/mapping | 新 adapter 或 Runtime 缺口 |
 | View | Runtime relation | 无法表达时 DESIGN_GAP |
-| API | 外部契约 | endpoint/DTO/required/min/max/length/regex/enum/expression |
+| API | 外部契约 | endpoint/DTO/required/min/max/length/regex/enum/message；业务组合条件由 RuleView/Information 承载 |
 | RuleView / Rule | 优先 Runtime | 自定义能力或 Runtime 缺口 |
 | System | ownership boundary | 通常不生成同名方法 |
 | Information | 优先 Runtime evaluator | 能力实现，不复制业务条件 |
@@ -35,9 +35,12 @@ effectiveDataSource = rule.dataSource
 
 实现必须把逻辑 name 解析到 Config DataSource，支持 MySQL、Redis、MongoDB、第三方系统、HTTP/gRPC 微服务等统一抽象。
 
+DAO/Mapper 适配的 Store 默认由 Factory 组装；项目可使用 Spring @Bean/@Component 或已有 DI 装配。硬要求是作用域、共享状态、线程安全和事务所有权明确，不以对象锁代替持久化事务。Binding 记录实际生命周期承载点，不要求必须存在名为 Factory 的类。
+
 ## 4. Enum / relEnum
 
 - `kind: enum` 是公共枚举事实；
+- 每个 Enum `values[].value` 必须是 Java `Integer` 语义的 YAML 整数（`-2147483648..2147483647`）；带引号的数字、浮点数、布尔值和超出范围的数值均不是合法 Enum value；
 - Data Column、API request/response 的 `relEnum` 必须使用同一个 Enum；
 - 语言 Enum/常量、数据库转换、API serializer 不得改变 `value/name`；
 - 同字段使用 relEnum 后不再复制 inline enum values。
@@ -45,9 +48,9 @@ effectiveDataSource = rule.dataSource
 ## 5. API
 
 - ApiKey `<system>.<apiName>`；RuleView.apiRef 可选；
-- URL/method/parameter in/type/required/default/min/max/length/pattern/regex/enum/relEnum/request expression/response 不得漂移；
-- transport validation 先于 RuleView；
-- request expression 是参数组合约束，不替代业务 Rule；
+- URL/method/parameter in/type/required/default/min/max/length/pattern/regex/enum/relEnum/message/response 不得漂移；
+- transport validation 先于 RuleView，生成的 Bean Validation 注解必须带可读错误信息；
+- request expression 只用于纯 transport 参数组合，不替代业务 Rule；订单状态、订单类型、库存和权限等条件必须由 RuleView/Information/Business 承载；
 - endpoint 只做 transport mapping + DEC 调用，不复制业务规则。
 
 ## 6. RuleView / Information / Business

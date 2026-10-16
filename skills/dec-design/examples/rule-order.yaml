@@ -7,6 +7,10 @@ ruleViews:
   viewRef: OrderInfo
   apiRef: order.submitOrder
   rules:
+  - id: RULE-VALIDATE-SUBMIT-ORDER
+    name: validateSubmitOrder
+    type: checkPattern
+    pattern: status = 1 and type = 1
   - id: RULE-INSERT-ORDER
     name: insertOrder
     type: insert

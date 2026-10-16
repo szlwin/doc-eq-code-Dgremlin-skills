@@ -146,7 +146,7 @@ datas:
       type: int
       desc: 支付状态
     resultCode:
-      type: string
+      type: int
       desc: 支付结果码
   tables:
   - name: pay_info

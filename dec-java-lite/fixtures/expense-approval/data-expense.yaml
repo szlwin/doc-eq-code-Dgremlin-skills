@@ -1,0 +1,25 @@
+version: dec/v1
+kind: data
+datas:
+- id: DATA-EXPENSE
+  name: expense
+  system: expense
+  properties:
+    id: integer
+    status: integer
+    amount: decimal
+    reviewerEnabled: boolean
+  tables:
+  - name: expense_request
+    dataSource: approvalDb
+    columns:
+      id:
+        ref: id
+      status:
+        ref: status
+      amount:
+        ref: amount
+      reviewerEnabled:
+        ref: reviewerEnabled
+    key: id
+    keyType: set

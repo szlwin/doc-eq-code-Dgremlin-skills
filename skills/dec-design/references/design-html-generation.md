@@ -7,7 +7,7 @@
 所有 DEC HTML 设计文档都必须通过 Skill 内置脚本生成：
 
 ```bash
-python3 scripts/render_dec_graph.py <yaml-file-or-dir> -o <business.html>
+python3 scripts/render_dec_graph.py <yaml-file-or-dir> -o <generated-html-dir>
 ```
 
 禁止手工创建或维护 DEC HTML 设计事实。YAML 发生修改后，必须重新运行脚本；脚本默认覆盖同名已生成 HTML，这是预期行为。
@@ -26,21 +26,21 @@ HTML 不回写 YAML，也不参与设计合法性判断；合法性仍由 `valid
 例如：
 
 ```bash
-python3 scripts/render_dec_graph.py examples -o generated-html/order-payment.html
+python3 scripts/render_dec_graph.py examples -o generated-html
 ```
 
-会在同一目录生成：
+会在输出目录生成不绑定单一流程的共享页面；每个 Business 的详细图单独命名：
 
 ```text
-order-payment.html                         # Directory 首页 / Business Directory Map 列表
-order-payment-index.html                   # 设计文档总览
-order-payment-datasources.html             # DataSource / Connection 全局索引
-order-payment-data.html                    # Data 全局稳定跳转目标
-order-payment-views.html                   # View 全局稳定跳转目标
-order-payment-ruleviews.html               # RuleView 全局稳定跳转目标
-order-payment-apis.html                    # API 全局稳定跳转目标
-order-payment-systems.html                 # System 总入口
-order-payment-enums.html                   # Enum 全局稳定跳转目标
+directories.html                           # Directory 首页 / Business Directory Map 列表
+index.html                   # 设计文档总览
+datasources.html             # DataSource / Connection 全局索引
+data.html                    # Data 全局稳定跳转目标
+views.html                   # View 全局稳定跳转目标
+ruleviews.html               # RuleView 全局稳定跳转目标
+apis.html                    # API 全局稳定跳转目标
+systems.html                 # System 总入口
+enums.html                   # Enum 全局稳定跳转目标
 directory/<business>.html                  # 每个 Business Directory Map 详细页
 system/<system>/index.html                 # System 首页
 system/<system>/data.html                  # System Data
@@ -51,7 +51,19 @@ system/<system>/enums.html                 # System Enum
 system/<system>/information.html           # System Information dependency graph
 ```
 
-如果原 HTML 已存在，脚本直接覆盖，避免 HTML 与 YAML 漂移。
+推荐 `-o` 指定站点目录，入口为 `index.html` 和 `directories.html`。旧的 `-o <name>.html` 参数仍可使用，但只取其父目录，不再生成该旧文件名或以其为前缀的共享页面。共享页面汇总本次输入的全部流程；将多个流程的 canonical 文件一起传入一次生成，避免分别生成覆盖站点索引。不同 Business/System 归一化后文件名冲突时，在写入前报错。
+
+如果原 HTML 已存在，脚本直接覆盖，避免 HTML 与 YAML 漂移。迁移时仅删除旧参数/当前 Business 名称对应且带本生成器标记的旧前缀根页面；未知文件保留。Demo 站点目录使用 `demo/design-html/`，流程详情仍可叫 `directory/order-payment.html`，新增流程使用各自名称。
+
+仓库若跟踪 HTML 快照，必须在 canonical YAML 修改后覆盖对应目录并做目录级漂移检查。例如本包示例与 Demo 分别使用：
+
+```bash
+python3 scripts/render_dec_graph.py examples -o examples/generated-html
+python3 scripts/render_dec_graph.py demo/order-payment-yaml -o demo/design-html
+diff -qr --exclude=.DS_Store examples/generated-html <temporary-regenerated-output>
+```
+
+生成的 HTML 是派生产物；不要只提交 YAML 或手工调整单页 HTML。
 
 ### 2.1 System-first 主导航
 
@@ -114,13 +126,13 @@ Information 图的箭头必须表达“谁依赖谁”：
 user.effective ─────▶ user.activated
                └────▶ user.certified
 
-order.payable ──────▶ order.ordered
-              └─────▶ order.waitPay
+order.payable ── OR ─▶ order.ordered
+              └─ OR ─▶ order.waitPay
 ```
 
 这与 expression 的语义一致；不得画成反方向。
 
-跨 System 依赖仍保留在当前 System 页面中，并以 external 样式显示。
+跨 System 依赖仍保留在当前 System 页面中，并以 external 样式显示。各连通依赖组独立布局，没有组合引用边的信息另行排列；节点中文说明按显示宽度换行。图上标明可安全识别的 OR/AND/NOT，页面直接展示完整组合 expression；混合/括号条件不扁平化为单一操作符。详见 `business-visualization.md`。
 
 ## 5. Business Directory Map
 
@@ -138,6 +150,8 @@ Business 页面保持业务阅读优先：
 
 点击 Directory、Action、Dependency、Produce、Change 后，右侧 Inspector 使用分组式展示，并把 `informationRef/modelRef/systemRef/ruleRef` 转成可点击链接。
 
+Dependency Information 同时支持图内逐级展开：点击节点或其四向“＋”，组合节点显示直接引用的 Information（保留 OR/AND/NOT 语义），继续点击原子节点显示完整规则框。展开节点采用紫色，连线随拖动更新；再次点击收起，重置清除全部展开。右侧 Inspector 保留，交互细节见 `business-visualization.md`。
+
 ## 6. Information 页面
 
 每个 System 单独生成一份 Information HTML：
@@ -147,6 +161,8 @@ Business 页面保持业务阅读优先：
 - 支持缩放、平移、节点拖动；
 - 点击节点后，右侧按 `基本信息 / Dependencies / Rule data / Expression / Change data` 分组展示；
 - `System / View / RuleView / dependency Information` 均可直接跳转。
+
+Information 节点四周分别显示上、下、左、右“＋”，点击后在对应方向打开紫色规则详情框，用紫色虚线连接原节点；点击对应“−”收起，原节点不变高。详情内容包含：嵌入 ruleData、changeData、expression，或 ruleRef 对应 RuleView 和全部 Rule 定义；长内容独立滚动，新框沿选定方向避让已有节点，拖动时连线跟随，重置关闭全部详情框。详情无需依赖右侧链接；具体交互见 `business-visualization.md`。
 
 Information 建议提供 `description`，用于 HTML 中快速理解节点；缺少 description 不影响 grammar，但会降低 Review 可读性。
 
@@ -166,7 +182,7 @@ System 页面中的 Enum 列表同样展示具体 `value=name`，点击 Enum 可
 
 ```bash
 python3 scripts/validate_dec_yaml.py <yaml-dir>
-python3 scripts/render_dec_graph.py <yaml-dir> -o <generated-html/business.html>
+python3 scripts/render_dec_graph.py <yaml-dir> -o <generated-html-dir>
 ```
 
 如果 XML 也需要同步：
@@ -211,3 +227,5 @@ System 首页必须列出 Data、View→RuleView、Enum、API、Information，�
 Directory 首页必须列出 Business Directory Map；每个 Business Map 生成到 `directory/<business>.html`。
 
 View 详情必须以层级方式展示 Relation/子对象；标量 Property 显示 Data-derived logical type、`desc`、Enum 链接。
+
+Information 图保留右侧详情面板：点击原信息框显示完整定义与 System / View / RuleView 等跳转链接；四向“＋/−”独立控制图内规则框，不替代或清空右侧面板。窄屏下详情面板沿用响应式布局放到图下方。

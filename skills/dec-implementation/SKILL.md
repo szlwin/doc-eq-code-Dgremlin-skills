@@ -21,9 +21,11 @@ description: 根据已批准的 DEC canonical YAML 独立实现或修改真实�
 按需追加：
 
 - DataSource：`references/datasource-implementation.md`；
-- Enum / `relEnum`：`references/enum-implementation.md`；
+- Enum / `relEnum`：`references/enum-implementation.md`；Enum `value` 固定为 Integer，API/Entity/serializer 不得改成字符串；
 - API / RuleView.apiRef：`references/api-implementation.md`；
-- RuleView / Action / Produce / Change：`references/rule-action-implementation.md`。
+- 框架通用性、并发、乱序、集合关系和失败场景验证：`references/scenario-validation.md`；
+- Runtime 初始化、classpath 设计加载、编译复用：`references/runtime-assembly.md`；
+- RuleView / Action / Produce / Change、业务流程绑定的 Action 前后监听器：`references/rule-action-implementation.md`。
 
 如果 `dec-design` Skill 未安装，本包仍可按上述最小消费契约独立实现已校验的 canonical YAML；YAML 内容必须通过 `scripts/yaml_io.py` 读取，不要求任何特定编排器、项目布局或研发流程 Skill。
 
@@ -50,19 +52,35 @@ description: 根据已批准的 DEC canonical YAML 独立实现或修改真实�
 
 XML 是派生格式。YAML 与 XML 不一致时先从 YAML 重生 XML。
 
-## 2. 硬边界
+## 2. 语义要求与默认工程约定
 
-1. 不得改设计迁就代码；无法实现时返回 `DESIGN_GAP`。
-2. 不得把 YAML 未声明的业务规则藏入代码。
-3. 每个代码承载的设计节点必须可追踪到稳定 Design ID。
-   生成代码应在类或字段附近标明 Design ID 与 canonical YAML 来源；生成器应输出 Design ID → 生成文件索引。手写业务实现仍由 Implementation Binding 定位，不能只依赖类名相似或注释猜测。
-4. 实现策略固定：`REUSE → COMPATIBLE_EXTEND → MODIFY → CREATE`。
-5. Runtime-managed 节点不制造空壳代码。
-6. CodeGraph/GitNexus/graphify 只是定位索引，不是设计权威。
-7. Memory 不是项目事实权威。
-8. 只修改本次 scope；未提供 scope 时由用户指定 Design IDs/文件范围决定。
-9. 旧独立 Directory 不实现，只支持 `business.directories`。
-10. generated XML 不手改。
+### 2.1 语义硬要求
+
+以下要求不能被生成配置或文件布局覆盖：
+
+1. canonical YAML 是业务事实来源；不得为了 Java 布局修改业务设计，不添加未声明的业务规则。无法满足设计时报告 `DESIGN_GAP`。
+2. 每个实现节点保持稳定 Design ID 追踪；生成类、字段、方法与参数保留 `Design ID + YAML#路径 + XML#路径`，索引和 Binding 指向真实符号。布局变化后更新绑定和测试证据。
+3. API 的 URL、HTTP method、参数/响应/验证、Enum value、System 归属、Information/Directory/Action/Produce/Back 语义不能因分组变化而漂移。
+4. 不在 Store、Workflow 或 Service 复制 Runtime 已承载的业务判断、路径规划和状态规则；runtime-managed 节点不制造空壳业务实现。
+5. 事务所有权、作用域和共享状态明确且可验证。Runner 显式选择外部托管或自管模式；最终写回/校验在提交前完成，失败按事务契约传播。对象锁不能冒充数据库事务或分布式一致性。
+6. 已声明的真实 DataSource 接入不能被静默内存 fallback 替代；不增加与业务事实重复的状态副本，不以通知表替代用户 Custom Action。
+7. generated XML 由正式 converter 派生；CodeGraph、Memory 等只是辅助索引。只实现本次 scope；本版本仅消费 `business.directories`。
+8. 完整覆盖、符号存在、测试证据有效与发布就绪分别验证；PLANNED 和未实现能力必须如实保留。
+
+### 2.2 默认工程约定（可覆盖）
+
+默认约定用于缺少项目规定时的起点，不是 DEC 业务语义。优先遵循用户明确要求、现有项目架构和显式技术配置；常规布局/装配调整可直接执行并记录依据，无需仅因偏离默认而请求额外批准。已被用户选定的项目约定仍适用于该项目，不因本节自动撤销。
+
+| 默认 | 允许的替代与边界 |
+|---|---|
+| `REUSE → COMPATIBLE_EXTEND → MODIFY → CREATE` | 优先复用；已有技术约束可调整实现策略，说明原因，不改变设计事实。 |
+| Factory 创建普通 Store | 可使用 Spring `@Bean`、`@Component` 或已有 DI 机制，只要依赖、作用域、线程安全和事务所有权明确；不要把可变请求状态放入共享单例。 |
+| `<base-package>.<system>.<layer>` 分包 | 可沿用模块/业务能力/端口适配器布局；System 语义归属与 Design ID 绑定仍保留。本仓库生成器当前只提供 API 分组覆盖，不宣称支持任意包布局配置。 |
+| 同 System 下按 URL 首资源归组 Controller/Service | 可按子资源或业务能力分组，通过独立生成配置按 API Design ID 覆盖；不为类布局改 URL 或 System。避免机械地每个方法一文件或整个应用一个类。详见 `references/api-implementation.md`。 |
+| 复用 `DirectoryWorkflowRunner.advance(...)`、生成资源清单及 classpath 加载 | 可适配项目已有初始化/组合入口，但不得重复实现业务规则；编译结果和请求状态必须隔离，保留相同失败与事务语义。 |
+| 直接使用 Store，删除仅转发 DAO 的 UnitOfWork | 有实际资源/暂存变更或项目接口兼容需求时可保留；不得以空 commit/completed 状态假装物理提交。 |
+
+覆盖默认时，在工程说明或 Binding notes 中记录实际约定、技术配置位置和验证方式；生成配置位于 canonical 设计目录之外，纳入版本管理和测试证据输入。分组变更要迁移手写 Service 实现、更新 Binding，并检查旧 Bean/文件清理，不只重新生成 Java。
 
 ## 3. 节点实现责任
 
@@ -72,13 +90,13 @@ XML 是派生格式。YAML 与 XML 不一致时先从 YAML 重生 XML。
 | Enum | 优先 Runtime/共享枚举；否则生成单一代码枚举/映射，保持 value/name 不漂移 |
 | Data | Runtime model/mapping；Column `relEnum` 必须关联同一 Enum |
 | View | Runtime business model/relation |
-| API | endpoint/DTO/transport validation；`relEnum`、required/min/max/length/regex/expression 必须一致 |
+| API | endpoint/DTO/transport validation；`relEnum`、required/min/max/length/regex 与错误信息必须一致；业务组合条件由 RuleView/Information 承载 |
 | RuleView / Rule | 优先 Runtime-managed；支持 RuleView 默认 DataSource + Rule override |
 | System | ownership/capability boundary |
 | Information | 优先 Runtime evaluator，不复制 Java 条件 |
 | Business / Directory | 优先 Runtime orchestration |
 | Action + `ruleRef` | 执行指定 System RuleView |
-| Action 无 `ruleRef` | Custom Action，必须实现并注册 |
+| Action 无 `ruleRef` | 实现 CustomAction 并统一注册；Workflow 注入注册表，副作用时序见 rule-action-implementation.md |
 | Produce / Change / Back | 保持后置条件、物化和补偿语义 |
 
 ## 4. 独立输入 / 输出
@@ -135,9 +153,13 @@ Runtime 已实现该设计事实
 
 ### Step 6：最小实现
 
-只实现 YAML 规定语义；不得增加隐藏状态/fallback/权限/条件。Custom Action / DataSource adapter 显式注册；Runtime-managed RuleView/Information 不复制业务判断。
+只实现 YAML 规定语义；不得增加隐藏状态/fallback/权限/条件。Custom Action / DataSource adapter 显式注册；Runtime-managed RuleView/Information 不复制业务判断。优先使用框架提供的 Directory Workflow Runner/Session Facade，避免在每个 Workflow 重复创建 InformationEngine、RuleViewRegistry、ActionRuntime 和 ExecutionContext。
+
+业务事实去重（状态恢复、单步迁移、持久化回读与 DTO 校验）按 `references/implementation-workflow.md` 执行；Store/Workflow 不得保留与 Information/流程边平行的判断。
 
 业务状态优先使用设计对应的 View/Entity；已有 DAO/Repository 必须进入实际读写链路。Runtime 所需动态 Map 应收敛在单独适配边界，不得成为应用层的主业务模型。
+
+Workflow/Service 只协调设计声明的调用顺序和事务边界，不通过方法级 `synchronized` 保护请求。需要并发控制时，在 Session、Transaction、DAO/Repository 或 DataSource 层实现，并验证冲突、回滚和重试语义。
 
 ### Step 7：真实验证
 
@@ -153,15 +175,15 @@ python3 scripts/validate_binding.py \
   --binding implementation-binding.yaml
 ```
 
-交付前使用 `--require-complete` 确认 scope 内每个 Design ID 都有处置；需要行为测试的实现再加 `--require-tests`，并按项目实际根目录加 `--project-root` 检查绑定文件存在。
+交付前用 `--require-complete --require-tests --require-symbols --project-root ...` 检查覆盖、测试声明及真实 Java 符号；runtimeManaged 的已实现节点同样需要测试。用 `scripts/run_binding_verification.py` 包装真实测试命令生成当前设计/源码/Binding/报告摘要证据，再以 `--require-evidence` 核对。具体命令、JDK 要求和边界见 `references/implementation-binding.md`。
 
-`--require-complete` 只检查 ID 覆盖率，允许 `PLANNED`/`BLOCKED`。应用发布就绪检查使用 `--require-ready`（隐含完整覆盖，要求所有 Binding 为 `VERIFIED`），同时核对真实场景与注册表。生成代码能编译但 Service 尚未绑定 Runtime 时，Binding 保持 `PLANNED`。
+`--require-complete` 只检查 ID 覆盖率，允许 `PLANNED`/`BLOCKED`。应用发布就绪检查使用 `--require-ready`（隐含完整覆盖、符号、当前测试证据检查，要求所有 Binding 为 `VERIFIED`），同时核对真实场景与注册表。生成代码能编译但 Service 尚未绑定 Runtime 时，Binding 保持 `PLANNED`。
 
 Binding 指向真实 module/file/symbol/test 或明确 Runtime capability。
 
 ### Step 9：符合性 Review
 
-检查少实现、多实现、平行规则、旧实现残留、Owner/DataSource 错误、枚举漂移、API validation 漂移、执行顺序/失败语义错误、Binding drift、测试缺口。
+检查少实现、多实现、平行规则、旧实现残留、Owner/DataSource 错误、枚举漂移、API validation 漂移、执行顺序/失败语义错误、Workflow/Service/Controller 方法级 `synchronized`、Binding drift、测试缺口。
 
 ## 6. DataSource
 
@@ -191,7 +213,8 @@ effectiveDataSource(rule) =
 ## 8. API / RuleView
 
 - URL/method/source/type/required/default/min/max/length/pattern/regex/enum/relEnum/expression/response 与 YAML 一致；
-- request-level expression 在进入 RuleView 前执行，但不替代业务 Rule；
+- request-level expression 仅用于纯 transport 组合约束，在进入 RuleView 前执行；业务状态、库存、权限和状态转换必须由 RuleView/Information 承载，不能生成到 Request DTO 的 `@AssertTrue`；
+- 生成 `@NotNull`、`@NotEmpty`、`@Min`、`@Max`、`@Size`、`@Pattern` 时必须带 `message`，优先使用 YAML validation.message，缺省时使用稳定默认消息；
 - RuleView.apiRef 存在时 endpoint 路由到该 RuleView，不复制平行业务逻辑；
 - `RuleView.code` 用于快速查找/注册索引，不能替代 Design ID 或 name；
 - `ruleRef` 引用 RuleView name，不是 Rule name。
@@ -241,9 +264,11 @@ Enum 也可以绑定：
 - scope 内 Design IDs 全部有明确处置；
 - 无阻塞 DESIGN_GAP；
 - code/runtime 行为与 canonical YAML 一致；
+- Design ID 注释、YAML/XML 节点路径与 `DEC-DESIGN-INDEX.md` 可以相互跳转；
+- Runtime 已覆盖的编排没有在应用 Workflow 中重复实现；
 - DataSource 继承/覆盖正确；
 - relEnum 与 Enum 值一致；
-- API required/min/max/length/regex/enum/expression 一致；
+- API required/min/max/length/regex/enum/message 一致，且业务组合条件未泄漏到 DTO/Controller；
 - Binding 校验通过；
 - 真实 build/test/Compiler/scenario 已运行并记录；
 - 所有 YAML/XML I/O 均由正式 Skill 脚本完成；

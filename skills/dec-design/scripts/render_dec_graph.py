@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
 import shutil
 import sys
+import unicodedata
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Sequence, Set, Tuple
@@ -316,18 +318,30 @@ def cleanup_legacy_system_directories(site_root: Path, systems: Iterable[str]) -
         if entries and all(_is_generated_html_file(x) for x in entries):
             shutil.rmtree(legacy)
 
+def cleanup_legacy_root_pages(site_root: Path, pages: Mapping[str, str], prefixes: Iterable[str | None]) -> None:
+    """Remove recognized old prefixed indexes; preserve unknown/user-owned files."""
+    current = set(pages.values())
+    for prefix in prefixes:
+        if not prefix:
+            continue
+        for suffix in ("", "-index", "-datasources", "-data", "-views", "-ruleviews", "-apis", "-systems", "-enums"):
+            name = f"{slug(prefix)}{suffix}.html"
+            path = site_root / name
+            if name not in current and not path.is_symlink() and _is_generated_html_file(path):
+                path.unlink()
+
+
 def page_names(out: Path, systems: Iterable[str]) -> Dict[str, str]:
-    stem = out.stem
     pages = {
-        "business": out.name,
-        "index": f"{stem}-index.html",
-        "datasources": f"{stem}-datasources.html",
-        "data": f"{stem}-data.html",
-        "views": f"{stem}-views.html",
-        "ruleviews": f"{stem}-ruleviews.html",
-        "apis": f"{stem}-apis.html",
-        "systems": f"{stem}-systems.html",
-        "enums": f"{stem}-enums.html",
+        "business": "directories.html",
+        "index": "index.html",
+        "datasources": "datasources.html",
+        "data": "data.html",
+        "views": "views.html",
+        "ruleviews": "ruleviews.html",
+        "apis": "apis.html",
+        "systems": "systems.html",
+        "enums": "enums.html",
     }
     for system in systems:
         pages[f"system:{system}"] = f"system/{slug(system)}/index.html"
@@ -465,26 +479,46 @@ def nav_html(pages: Mapping[str, str], current: str = "") -> str:
 CSS = r'''
 :root{--bg:#f6f8f5;--card:#fff;--ink:#233039;--muted:#62706a;--line:#dbe3d8;--brand:#315f4b;--brand2:#eaf4ed;--accent:#8a5c14;--link:#155e75}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.page{max-width:1500px;margin:auto;padding:20px}.hero{background:#fdfefc;border:1px solid var(--line);border-radius:18px;padding:24px 28px;margin-bottom:14px}.hero h1{margin:0 0 4px;font-size:28px}.hero p{margin:0;color:var(--muted)}.site-nav{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:6px;background:rgba(246,248,245,.95);backdrop-filter:blur(6px);padding:9px 2px 12px}.nav-link{padding:7px 11px;border-radius:9px;color:#39514a;text-decoration:none;border:1px solid transparent}.nav-link:hover,.nav-link.active{background:#fff;border-color:var(--line)}.panel,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 1px 2px rgba(15,23,42,.03)}.panel h2,.card h2,.card h3{margin-top:0}.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}.meta{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.badge{display:inline-flex;align-items:center;background:#eef3ef;border:1px solid #d8e2da;color:#3f554c;border-radius:999px;padding:2px 8px;font-size:12px}.badge.em{background:#fff7df;border-color:#ead8a4;color:#765310}.muted{color:var(--muted)}.xref{color:var(--link);text-decoration:none;border-bottom:1px dotted #7aa6b2}.xref:hover{border-bottom-style:solid}.kv{display:grid;grid-template-columns:minmax(110px,160px) 1fr;gap:5px 12px;margin:8px 0}.kv dt{color:#64736b}.kv dd{margin:0;min-width:0}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;background:#f7f8f6;border:1px solid #e4e8e2;border-radius:9px;padding:9px;overflow:auto}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 9px;border-bottom:1px solid #e6ebe4;vertical-align:top}th{background:#f7f9f6;color:#526159;font-weight:650}.small{font-size:13px}.generated-banner{padding:9px 12px;background:#fff8e7;border:1px solid #efdca4;border-radius:10px;color:#715414;margin:10px 0}.graph-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px}.graph-canvas{position:relative;min-width:0}.graph-wrap{height:680px;border:1px solid #dfe6dc;border-radius:14px;background:#fbfcfa;overflow:hidden}.interactive-svg{width:100%;height:100%;touch-action:none;cursor:grab}.interactive-svg:active{cursor:grabbing}.graph-toolbar{position:absolute;right:12px;top:12px;z-index:5;display:flex;gap:6px}.graph-toolbar button{width:34px;height:34px;border:1px solid #ccd7cd;border-radius:9px;background:#fff;cursor:pointer;font-size:18px}.inspector{border:1px solid #dfe6dc;border-radius:14px;background:#fbfcfa;padding:15px;max-height:680px;overflow:auto}.inspector h3{margin:0 0 10px}.inspector-section{padding:10px 0;border-top:1px solid #e4e9e2}.inspector-section:first-child{border-top:0}.inspector-section h4{margin:0 0 6px;font-size:14px}.inspector ul{margin:5px 0;padding-left:20px}.legend{display:flex;gap:14px;flex-wrap:wrap;margin:9px 0 12px;font-size:13px;color:#58675f}.swatch{display:inline-block;width:16px;height:11px;border:1px solid #819089;border-radius:3px;margin-right:5px}.swatch.dir{background:#dcefdc}.swatch.act{background:#fff1bf;border-radius:50%}.swatch.dep{background:#dfeaf8;border-color:#7b9bbd}.swatch.change{background:#fae4cc}.swatch.prod{background:#e7f3da;border:3px double #79945b}.node-title{font-size:14px;font-weight:700;fill:#253238}.node-detail{font-size:11px;fill:#586760}.edge-label{font-size:10.5px;font-weight:600;paint-order:stroke;stroke:#fbfcfa;stroke-width:4px;stroke-linejoin:round}.dir-node{fill:#dcefdc;stroke:#789477;stroke-width:1.6}.action-node{fill:#fff1bf;stroke:#b89d47;stroke-width:1.5}.dependency-node{fill:#dfeaf8;stroke:#6f91b4;stroke-width:1.5}.produce-node{fill:#eef7e7;stroke:#76915e;stroke-width:3}.change-node{fill:#fae4cc;stroke:#b17b43;stroke-width:1.5}.info-node{fill:#e8f4e9;stroke:#769477;stroke-width:1.5}.external-info-node{fill:#f5f5f3;stroke:#8a918c;stroke-width:1.5;stroke-dasharray:6 4}.info-node-back{fill:#f7fbf7;stroke:#9bb39b;stroke-width:1}.viz-node{cursor:move}.viz-node:focus>*:first-child{stroke:#2563eb!important;stroke-width:3!important}.notice{color:#617069;font-size:13px}.source-note{margin:18px 2px;color:#77837d;font-size:12px}.quick-links{display:flex;flex-wrap:wrap;gap:8px}.quick-links a{padding:5px 9px;background:#edf5f1;border-radius:8px;text-decoration:none;color:#315f4b}.section-note{color:#66756d}.empty{padding:24px;color:#758078;text-align:center}.ref-list{display:flex;flex-wrap:wrap;gap:6px}.ref-list a{display:inline-block;padding:3px 7px;background:#eff5f2;border-radius:7px;text-decoration:none;color:#315f4b}@media(max-width:1000px){.graph-layout{grid-template-columns:1fr}.inspector{max-height:none}.graph-wrap{height:600px}}
+.inline-information{height:100%;overflow:auto;overscroll-behavior:contain;cursor:text;user-select:text;padding:8px;background:#fff;border:1px solid #cbdacb;border-radius:8px;font:12px/1.5 ui-sans-serif,sans-serif;color:#233039;overflow-wrap:anywhere}.inline-information h4{margin:8px 0 4px}.inline-information p{margin:4px 0}.inspector pre,.inline-information pre{margin:4px 0 10px;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 ui-monospace,monospace}.info-expand-control{cursor:pointer}.info-expand-control circle{fill:#fff;stroke:#617c65;stroke-width:1.5}.info-expand-control text{font-size:16px;font-weight:bold;fill:#406047;pointer-events:none}.info-expand-control:focus circle{stroke:#2563eb;stroke-width:3}.rule-face{fill:#efe5fa;stroke:#9368bb;stroke-width:2}.rule-detail-node .inline-information{background:#faf6ff;border-color:#d8c4eb}
+
 '''
 
 JS = r'''
 (function(){
  function point(svg,x,y){var p=svg.createSVGPoint();p.x=x;p.y=y;return p.matrixTransform(svg.getScreenCTM().inverse());}
  function node(svg,id){return Array.from(svg.querySelectorAll('.viz-node')).find(function(n){return n.dataset.nodeId===id;});}
- function nodeBox(svg,id){var n=node(svg,id);if(!n)return null;var b=n.getBBox(),dx=parseFloat(n.dataset.dx||0),dy=parseFloat(n.dataset.dy||0);return{x:b.x+dx,y:b.y+dy,w:b.width,h:b.height,cx:b.x+dx+b.width/2,cy:b.y+dy+b.height/2};}
+ function nodeBox(svg,id){var n=node(svg,id);if(!n)return null;var face=n.querySelector('.info-face, .rule-face'),b=(face||n).getBBox(),dx=parseFloat(n.dataset.dx||0),dy=parseFloat(n.dataset.dy||0);return{x:b.x+dx,y:b.y+dy,w:b.width,h:b.height,cx:b.x+dx+b.width/2,cy:b.y+dy+b.height/2};}
  function endpoints(a,b){var dx=b.cx-a.cx,dy=b.cy-a.cy;if(Math.abs(dx)>=Math.abs(dy)){var s=dx>=0?1:-1;return[a.cx+s*a.w/2,a.cy,b.cx-s*b.w/2,b.cy];}var s2=dy>=0?1:-1;return[a.cx,a.cy+s2*a.h/2,b.cx,b.cy-s2*b.h/2];}
- function updateEdge(svg,g){var a=nodeBox(svg,g.dataset.source),b=nodeBox(svg,g.dataset.target);if(!a||!b)return;var e=endpoints(a,b),x1=e[0],y1=e[1],x2=e[2],y2=e[3],bend=parseFloat(g.dataset.bend||0),path=g.querySelector('.edge-path'),label=g.querySelector('.edge-label'),mx=(x1+x2)/2,my=(y1+y2)/2,d,lx,ly;if(bend){my+=bend;d='M '+x1+' '+y1+' Q '+mx+' '+my+', '+x2+' '+y2;lx=mx;ly=my-5;}else{d='M '+x1+' '+y1+' C '+mx+' '+y1+', '+mx+' '+y2+', '+x2+' '+y2;lx=mx;ly=(y1+y2)/2-6;}path.setAttribute('d',d);if(label){label.setAttribute('x',lx);label.setAttribute('y',ly);}}
+ function updateEdge(svg,g){if(g.style.display==='none')return;var a=nodeBox(svg,g.dataset.source),b=nodeBox(svg,g.dataset.target);if(!a||!b)return;var e=endpoints(a,b),x1=e[0],y1=e[1],x2=e[2],y2=e[3],bend=parseFloat(g.dataset.bend||0),path=g.querySelector('.edge-path'),label=g.querySelector('.edge-label'),mx=(x1+x2)/2,my=(y1+y2)/2,d,lx,ly;if(bend){my+=bend;d='M '+x1+' '+y1+' Q '+mx+' '+my+', '+x2+' '+y2;lx=mx;ly=my-5;}else{d='M '+x1+' '+y1+' C '+mx+' '+y1+', '+mx+' '+y2+', '+x2+' '+y2;lx=mx;ly=(y1+y2)/2-6;}path.setAttribute('d',d);if(label){label.setAttribute('x',lx);label.setAttribute('y',ly);}}
  function updateEdges(svg,nodeId){svg.querySelectorAll('.graph-edge').forEach(function(g){if(!nodeId||g.dataset.source===nodeId||g.dataset.target===nodeId)updateEdge(svg,g);});}
  function zoom(svg,factor,cx,cy){var vb=svg.viewBox.baseVal,pt=point(svg,cx,cy),nw=vb.width*factor,nh=vb.height*factor,rx=(pt.x-vb.x)/vb.width,ry=(pt.y-vb.y)/vb.height;vb.x=pt.x-rx*nw;vb.y=pt.y-ry*nh;vb.width=nw;vb.height=nh;}
- function reset(svg){var v=(svg.dataset.originalViewbox||'0 0 1000 700').split(/\s+/).map(Number),vb=svg.viewBox.baseVal;vb.x=v[0];vb.y=v[1];vb.width=v[2];vb.height=v[3];svg.querySelectorAll('.viz-node').forEach(function(n){n.dataset.dx='0';n.dataset.dy='0';n.removeAttribute('transform');});updateEdges(svg);}
+ function reset(svg){var v=(svg.dataset.originalViewbox||'0 0 1000 700').split(/\s+/).map(Number),vb=svg.viewBox.baseVal;vb.x=v[0];vb.y=v[1];vb.width=v[2];vb.height=v[3];svg.querySelectorAll('.viz-node').forEach(function(n){n.dataset.dx='0';n.dataset.dy='0';n.removeAttribute('transform');delete n.dataset.expansionDirection;if(n.dataset.expansionNode)n.style.display='none';});svg.querySelectorAll('.rule-detail-node, .rule-detail-edge').forEach(function(n){n.style.display='none';});svg.querySelectorAll('.info-expand-control').forEach(function(c){c.setAttribute('aria-expanded','false');c.querySelector('text').textContent='＋';});svg.querySelectorAll('.graph-edge').forEach(function(e){if(e.dataset.expansionEdge)e.style.display='none';});updateEdges(svg);}
+ function positionNode(n){n.setAttribute('transform','translate('+parseFloat(n.dataset.dx||0)+' '+parseFloat(n.dataset.dy||0)+')');}
+ function overlaps(a,b){return a.x<b.x+b.w+24&&a.x+a.w+24>b.x&&a.y<b.y+b.h+24&&a.y+a.h+24>b.y;}
+ function placeRulePanel(svg,source,panel,direction){var a=nodeBox(svg,source.dataset.nodeId),size=nodeBox(svg,panel.dataset.nodeId),b={x:a.cx-size.w/2,y:a.cy-size.h/2,w:size.w,h:size.h};if(direction==='up')b.y=a.y-b.h-60;if(direction==='down')b.y=a.y+a.h+60;if(direction==='left')b.x=a.x-b.w-60;if(direction==='right')b.x=a.x+a.w+60;var obstacles=Array.from(svg.querySelectorAll('.viz-node')).filter(function(n){return n!==panel&&n!==source&&n.style.display!=='none';}).map(function(n){return nodeBox(svg,n.dataset.nodeId);});for(var i=0;i<=obstacles.length;i++){var hit=obstacles.filter(function(o){return overlaps(b,o);});if(!hit.length)break;if(direction==='up')b.y=Math.min.apply(null,hit.map(function(o){return o.y;}))-b.h-40;else if(direction==='down')b.y=Math.max.apply(null,hit.map(function(o){return o.y+o.h;}))+40;else if(direction==='left')b.x=Math.min.apply(null,hit.map(function(o){return o.x;}))-b.w-40;else b.x=Math.max.apply(null,hit.map(function(o){return o.x+o.w;}))+40;}panel.dataset.dx=b.x;panel.dataset.dy=b.y;positionNode(panel);}
+ function revealRulePair(svg,source,panel){var a=nodeBox(svg,source.dataset.nodeId),b=nodeBox(svg,panel.dataset.nodeId),x=Math.min(a.x,b.x)-30,y=Math.min(a.y,b.y)-30,w=Math.max(a.x+a.w,b.x+b.w)-x+30,h=Math.max(a.y+a.h,b.y+b.h)-y+30,v=svg.viewBox.baseVal,f=Math.max(1,w/v.width,h/v.height);v.width*=f;v.height*=f;if(x<v.x)v.x=x;if(y<v.y)v.y=y;if(x+w>v.x+v.width)v.x=x+w-v.width;if(y+h>v.y+v.height)v.y=y+h-v.height;}
+ function syncExpansion(svg){
+   var nodes=Array.from(svg.querySelectorAll('.viz-node')),visible=new Set(),queue=nodes.filter(function(n){return n.dataset.expansionRoot;});
+   while(queue.length){var n=queue.shift(),id=n.dataset.nodeId;if(visible.has(id))continue;visible.add(id);if(n.dataset.expansionDirection)JSON.parse(n.dataset.expansionTargets||'[]').forEach(function(id){var target=node(svg,id);if(target)queue.push(target);});}
+   nodes.forEach(function(n){if(n.dataset.expansionNode){n.style.display=visible.has(n.dataset.nodeId)?'':'none';if(!visible.has(n.dataset.nodeId))delete n.dataset.expansionDirection;}});
+   svg.querySelectorAll('.info-expand-control').forEach(function(c){if(c.dataset.expansion){var active=c.closest('.viz-node').dataset.expansionDirection===c.dataset.direction;c.setAttribute('aria-expanded',String(active));c.querySelector('text').textContent=active?'−':'＋';}});
+   svg.querySelectorAll('.graph-edge').forEach(function(e){if(e.dataset.expansionEdge){var source=node(svg,e.dataset.source);e.style.display=visible.has(e.dataset.source)&&source.dataset.expansionDirection&&visible.has(e.dataset.target)?'':'none';}});
+ }
+ function toggleInformation(source,direction){
+   var svg=source.closest('.interactive-svg');if(source.dataset.expansionDirection===direction)delete source.dataset.expansionDirection;else source.dataset.expansionDirection=direction;
+   syncExpansion(svg);
+   if(source.dataset.expansionDirection)JSON.parse(source.dataset.expansionTargets).forEach(function(id){var target=node(svg,id);placeRulePanel(svg,source,target,direction);revealRulePair(svg,source,target);});updateEdges(svg);
+ }
+ function selectNode(g){activate(g);if(g.dataset.expansionTargets)toggleInformation(g,g.dataset.expansionDirection||'right');}
+ function toggleRulePanel(control){if(control.dataset.expansion){toggleInformation(control.closest('.viz-node'),control.dataset.direction);return;}var source=control.closest('.viz-node'),svg=source.closest('.interactive-svg'),panel=node(svg,control.dataset.panelId),expanded=control.getAttribute('aria-expanded')!=='true';if(!panel)return;panel.style.display=expanded?'':'none';control.setAttribute('aria-expanded',String(expanded));control.querySelector('text').textContent=expanded?'−':'＋';svg.querySelectorAll('.rule-detail-edge').forEach(function(edge){if(edge.dataset.target===panel.dataset.nodeId)edge.style.display=expanded?'':'none';});if(expanded){placeRulePanel(svg,source,panel,control.dataset.direction);revealRulePair(svg,source,panel);}updateEdges(svg);}
  function activate(g){var p=g.closest('.panel'),box=p&&p.querySelector('.inspector-body');if(!box)return;var id=g.dataset.nodeId,tpl=Array.from(p.querySelectorAll('template.node-template')).find(function(t){return t.dataset.detailId===id;});if(tpl)box.innerHTML=tpl.innerHTML;}
  document.querySelectorAll('.interactive-svg').forEach(function(svg){
    updateEdges(svg);var pan=null,drag=null,moved=false;
-   svg.addEventListener('wheel',function(e){e.preventDefault();zoom(svg,e.deltaY>0?1.12:.89,e.clientX,e.clientY);},{passive:false});
-   svg.addEventListener('pointerdown',function(e){var n=e.target.closest('.viz-node');moved=false;if(n){var p=point(svg,e.clientX,e.clientY);drag={node:n,id:n.dataset.nodeId,start:p,dx:parseFloat(n.dataset.dx||0),dy:parseFloat(n.dataset.dy||0)};n.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();}else{pan={x:e.clientX,y:e.clientY,vx:svg.viewBox.baseVal.x,vy:svg.viewBox.baseVal.y};svg.setPointerCapture(e.pointerId);}});
-   svg.addEventListener('pointermove',function(e){if(drag){var p=point(svg,e.clientX,e.clientY),dx=drag.dx+p.x-drag.start.x,dy=drag.dy+p.y-drag.start.y;if(Math.abs(dx-drag.dx)+Math.abs(dy-drag.dy)>2)moved=true;drag.node.dataset.dx=dx;drag.node.dataset.dy=dy;drag.node.setAttribute('transform','translate('+dx+' '+dy+')');updateEdges(svg,drag.id);}else if(pan){var r=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal;vb.x=pan.vx-(e.clientX-pan.x)*vb.width/r.width;vb.y=pan.vy-(e.clientY-pan.y)*vb.height/r.height;}});
+   svg.addEventListener('wheel',function(e){if(e.target.closest('.inline-information'))return;e.preventDefault();zoom(svg,e.deltaY>0?1.12:.89,e.clientX,e.clientY);},{passive:false});
+   svg.addEventListener('pointerdown',function(e){if(e.target.closest('.inline-information')||e.target.closest('.info-expand-control'))return;var n=e.target.closest('.viz-node');moved=false;if(n){var p=point(svg,e.clientX,e.clientY);drag={node:n,id:n.dataset.nodeId,start:p,dx:parseFloat(n.dataset.dx||0),dy:parseFloat(n.dataset.dy||0)};n.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation();}else{pan={x:e.clientX,y:e.clientY,vx:svg.viewBox.baseVal.x,vy:svg.viewBox.baseVal.y};svg.setPointerCapture(e.pointerId);}});
+   svg.addEventListener('pointermove',function(e){if(drag){var p=point(svg,e.clientX,e.clientY),dx=drag.dx+p.x-drag.start.x,dy=drag.dy+p.y-drag.start.y;if(Math.abs(dx-drag.dx)+Math.abs(dy-drag.dy)>2)moved=true;drag.node.dataset.dx=dx;drag.node.dataset.dy=dy;positionNode(drag.node);updateEdges(svg,drag.id);}else if(pan){var r=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal;vb.x=pan.vx-(e.clientX-pan.x)*vb.width/r.width;vb.y=pan.vy-(e.clientY-pan.y)*vb.height/r.height;}});
    svg.addEventListener('pointerup',function(){drag=null;pan=null;});svg.addEventListener('pointercancel',function(){drag=null;pan=null;});
-   svg.querySelectorAll('.viz-node').forEach(function(g){g.addEventListener('click',function(){if(!moved)activate(g);});g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();activate(g);}});});
+   svg.querySelectorAll('.viz-node').forEach(function(g){g.addEventListener('click',function(e){var control=e.target.closest('.info-expand-control');if(control){toggleRulePanel(control);return;}if(!moved&&!e.target.closest('.inline-information'))selectNode(g);});g.addEventListener('keydown',function(e){if(e.target.closest('.inline-information'))return;if(e.key==='Enter'||e.key===' '){e.preventDefault();var control=e.target.closest('.info-expand-control');if(control)toggleRulePanel(control);else selectNode(g);}});});
  });
  document.querySelectorAll('[data-graph-action]').forEach(function(btn){btn.addEventListener('click',function(){var panel=btn.closest('.panel'),svg=panel&&panel.querySelector('.interactive-svg');if(!svg)return;var a=btn.dataset.graphAction,r=svg.getBoundingClientRect();if(a==='in')zoom(svg,.82,r.left+r.width/2,r.top+r.height/2);else if(a==='out')zoom(svg,1.22,r.left+r.width/2,r.top+r.height/2);else if(a==='reset')reset(svg);});});
 })();
@@ -507,7 +541,7 @@ def toolbar() -> str:
 
 
 def _defs() -> str:
-    colors = {"flow":"#4b5563","case":"#0f766e","dependency":"#6b7280","action":"#64748b","produce":"#4d7c0f","change":"#92400e","back":"#b45309","depends":"#475569"}
+    colors = {"flow":"#4b5563","case":"#0f766e","dependency":"#6b7280","action":"#64748b","produce":"#4d7c0f","change":"#92400e","back":"#b45309","depends":"#475569","rule":"#8854b8"}
     out = ["<defs>"]
     for k,c in colors.items():
         out.append(f'<marker id="arrow-{k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="{c}"/></marker>')
@@ -536,7 +570,7 @@ def _svg_text_lines(x: float, y: float, text: str, *, cls: str = "node-title", m
 
 
 def _edge_path(x1: float, y1: float, x2: float, y2: float, *, kind: str, label: str, source_id: str, target_id: str, bend: float = 0) -> str:
-    styles = {"flow":("#4b5563","",2),"case":("#0f766e","",2),"dependency":("#6b7280","4 4",1.7),"action":("#64748b","",1.6),"produce":("#4d7c0f","",1.7),"change":("#92400e","",1.7),"back":("#b45309","8 5",2),"depends":("#475569","",1.8)}
+    styles = {"flow":("#4b5563","",2),"case":("#0f766e","",2),"dependency":("#6b7280","4 4",1.7),"action":("#64748b","",1.6),"produce":("#4d7c0f","",1.7),"change":("#92400e","",1.7),"back":("#b45309","8 5",2),"depends":("#475569","",1.8),"rule":("#8854b8","5 3",1.8)}
     color,dash,width=styles.get(kind,("#64748b","",1.6)); dash_attr=f' stroke-dasharray="{dash}"' if dash else ""
     if bend:
         mx=(x1+x2)/2; my=(y1+y2)/2+bend; d=f'M {x1:.1f} {y1:.1f} Q {mx:.1f} {my:.1f}, {x2:.1f} {y2:.1f}'; lx,ly=mx,my-5
@@ -571,8 +605,7 @@ def info_detail_html(info: Mapping[str, Any], pages: Mapping[str, str], cat: Map
     parts=[f"<div class='inspector-section'><h4>Information</h4><dl class='kv'>{rows}</dl></div>"]
     if deps:
         parts.append("<div class='inspector-section'><h4>Dependencies</h4><div class='ref-list'>"+"".join(link(pages,"info",d) for d in deps)+"</div></div>")
-    for title,key in (("Rule data","ruleData"),("Expression","expression"),("Change data","changeData")):
-        if info.get(key): parts.append(f"<div class='inspector-section'><h4>{h(title)}</h4><div class='code'>{h(info.get(key))}</div></div>")
+    parts.append(information_rules_html(info, cat or {"ruleviews": {}}))
     if cat is not None:
         changes=information_enum_changes(cat,info)
         if changes:
@@ -648,46 +681,195 @@ def system_information_context(infos: Mapping[str, Dict[str, Any]], system: str)
     return out
 
 
-def information_layout(infos: Mapping[str, Dict[str, Any]]) -> Dict[str, Tuple[int,int]]:
-    # Draw semantic direction as "dependent -> dependency". Roots (Information not
-    # depended on by another visible Information) are on the left; prerequisites go right.
-    deps={k:[d for d in v.get("dependsOn",[]) if d in infos] for k,v in infos.items()}
-    dependency_targets={d for ds in deps.values() for d in ds}
-    roots=sorted(set(infos)-dependency_targets) or sorted(infos)
-    level={k:0 for k in roots}; q=deque(roots)
-    while q:
-        cur=q.popleft()
-        for dep in deps.get(cur,[]):
-            nv=level[cur]+1
-            if nv>level.get(dep,-1): level[dep]=nv; q.append(dep)
-    for k in infos: level.setdefault(k,0)
-    by:Dict[int,List[str]]=defaultdict(list)
-    for k,l in level.items(): by[l].append(k)
-    for l in by: by[l].sort(key=lambda k:(bool(infos[k].get("external")),k))
-    pos={}
-    for l,items in sorted(by.items()):
-        for row,key in enumerate(items): pos[key]=(90+l*350,80+row*165)
-    return pos
+def information_relation_label(info: Mapping[str, Any], dependency: str | None = None) -> str:
+    """Label only flat, unambiguous expressions; keep mixed/grouped logic verbatim in the page."""
+    expression = str(info.get("expression") or "").strip()
+    ref = r"[A-Za-z_][A-Za-z0-9_-]*\.[A-Za-z_][A-Za-z0-9_-]*"
+    term = rf"(?:not\s+)?{ref}"
+    for operator, label in (("or", "OR · 任一"), ("and", "AND · 全部")):
+        if re.fullmatch(rf"{term}(?:\s+{operator}\s+{term})+", expression):
+            terms = re.split(rf"\s+{operator}\s+", expression)
+            negative = {t.split()[1] for t in terms if re.match(r"not\s+", t)}
+            positive = {t for t in terms if not re.match(r"not\s+", t)}
+            if negative & positive:
+                return "表达式引用"
+            if dependency in negative:
+                return operator.upper() + " · NOT"
+            return label
+    if re.fullmatch(rf"not\s+{ref}", expression):
+        return "NOT · 取反"
+    return "表达式引用"
+
+
+def information_text_lines(text: str, limit: int, max_lines: int) -> List[str]:
+    """Bound SVG text by display width (CJK is two units), not Python character count."""
+    lines = []; current = ""; width = 0
+    for char in str(text):
+        units = 0 if unicodedata.combining(char) else (2 if unicodedata.east_asian_width(char) in "WF" else 1)
+        if char == "\n" or width + units > limit:
+            lines.append(current); current = ""; width = 0
+            if char == "\n":
+                continue
+        current += char; width += units
+    if current or not lines:
+        lines.append(current)
+    if len(lines) > max_lines:
+        lines = lines[:max_lines]
+        lines[-1] = lines[-1][:-1] + "…"
+    return lines
+
+
+def information_layout(infos: Mapping[str, Dict[str, Any]]) -> Dict[str, Tuple[float, float]]:
+    # Layout each connected component independently, then put isolated facts in a grid.
+    # Arrow direction remains dependent -> dependency; states are never linked by inference.
+    deps = {k: sorted({d for d in v.get("dependsOn", []) if d in infos}) for k, v in infos.items()}
+    neighbors = {k: set(deps[k]) for k in infos}
+    for key, targets in deps.items():
+        for target in targets:
+            neighbors[target].add(key)
+    remaining = {k for k in infos if neighbors[k]}; components = []
+    while remaining:
+        pending = [min(remaining)]; component = set()
+        while pending:
+            key = pending.pop()
+            if key in component:
+                continue
+            component.add(key); pending.extend(sorted(neighbors[key] - component))
+        remaining -= component; components.append(component)
+    positions = {}; top = 60.0
+    for component in components:
+        incoming = {k: 0 for k in component}; levels = {k: 0 for k in component}
+        for key in component:
+            for target in deps[key]:
+                incoming[target] += 1
+        queue = deque(sorted(k for k in component if incoming[k] == 0)); visited = 0
+        while queue:
+            key = queue.popleft(); visited += 1
+            for target in deps[key]:
+                levels[target] = max(levels[target], levels[key] + 1)
+                incoming[target] -= 1
+                if incoming[target] == 0:
+                    queue.append(target)
+        if visited != len(component):
+            raise ValueError("Information dependency cycle: " + ", ".join(sorted(component)))
+        by_level = defaultdict(list)
+        for key in sorted(component):
+            by_level[levels[key]].append(key)
+        for level in sorted(by_level, reverse=True):
+            def desired_y(key):
+                return sum(positions[d][1] for d in deps[key]) / len(deps[key]) if deps[key] else top
+            last_y = top - 188
+            for key in sorted(by_level[level], key=lambda k: (desired_y(k), bool(infos[k].get("external")), k)):
+                y = max(desired_y(key), last_y + 188)
+                positions[key] = (60 + level * 440, y); last_y = y
+        top = max(positions[k][1] for k in component) + 136 + 90
+    isolated = sorted(k for k in infos if not neighbors[k])
+    for index, key in enumerate(isolated):
+        positions[key] = (60 + (index % 2) * 440, top + (index // 2) * 188)
+    return positions
+
+
+def information_rules_html(info: Mapping[str, Any], cat: Mapping[str, Any]) -> str:
+    """Use the same canonical rule sections in graph panels and the inspector."""
+    parts = ["<div class='inspector-section information-rules'><h4>识别规则</h4>"]
+    source = recognizer(info)
+    parts.append(f"<p>规则来源: <strong>{h(source)}</strong></p>")
+    for key in ("expression", "ruleData"):
+        if info.get(key):
+            parts.append(f"<pre>{h(info[key])}</pre>")
+    if info.get("ruleRef"):
+        name = str(info["ruleRef"]); ruleview = cat["ruleviews"].get(name)
+        parts.append(f"<h4>RuleView · {h(name)}</h4>")
+        if ruleview is None:
+            parts.append("<p>当前设计输入未包含该 RuleView 定义。</p>")
+        else:
+            for key in ("id", "code", "desc", "viewRef", "apiRef", "dataSource"):
+                if ruleview.get(key):
+                    parts.append(f"<p>{h(key)}: {h(ruleview[key])}</p>")
+            for index, rule in enumerate(as_list(ruleview.get("rules")), 1):
+                if not isinstance(rule, Mapping):
+                    continue
+                parts.append(f"<h4>Rule {index} · {h(rule.get('name'))}</h4>")
+                datasource = rule.get("dataSource") or ruleview.get("dataSource") or "runtime/project default"
+                parts.append(f"<p>有效 DataSource: {h(datasource)}</p>")
+                for key, value in rule.items():
+                    if value is None:
+                        continue
+                    text = json.dumps(value, ensure_ascii=False, indent=2) if isinstance(value, (Mapping, list)) else str(value)
+                    parts.append(f"<p><strong>{h(key)}</strong></p><pre>{h(text)}</pre>")
+    if source == "unknown":
+        parts.append("<p>当前 Information 未提供规则定义。</p>")
+    parts.append("</div>")
+    if info.get("changeData"):
+        parts.append(f"<div class='inspector-section'><h4>Change data</h4><p>物化 changeData</p><pre>{h(info['changeData'])}</pre></div>")
+    return "".join(parts)
+
+
+def information_inline_html(info: Mapping[str, Any], cat: Mapping[str, Any]) -> str:
+    """Embed canonical rule content so opening a node never requires a second page."""
+    parts = [f"<p>Design ID: {h(info.get('id') or '—')}</p>",
+             f"<p>{h(info.get('description') or info.get('desc') or '')}</p>"]
+    if info.get("viewRef"):
+        parts.append(f"<p>View: <strong>{h(info['viewRef'])}</strong></p>")
+    parts.append(information_rules_html(info, cat))
+    return "".join(parts)
 
 
 def article_information_graph(infos: Mapping[str, Dict[str, Any]], system: str, pages: Mapping[str,str], cat: Mapping[str,Any]) -> Tuple[str,str]:
-    pos=information_layout(infos); width=max(1000,max((x for x,_ in pos.values()),default=800)+330); height=max(440,max((y for _,y in pos.values()),default=300)+180)
+    pos = information_layout(infos)
+    width = max(840, max((x for x, _ in pos.values()), default=500) + 340)
+    height = max(400, max((y for _, y in pos.values()), default=200) + 186)
     parts=[f'<svg class="interactive-svg" viewBox="0 0 {width} {height}" data-original-viewbox="0 0 {width} {height}" role="img" aria-label="Information dependency graph for {h(system)}">',_defs()]
     templates=[]
-    for key,info in infos.items():
-        for dep in info.get("dependsOn",[]):
+    involved = {k for k, info in infos.items() if any(d in infos for d in info.get("dependsOn", []))}
+    involved.update(d for info in infos.values() for d in info.get("dependsOn", []) if d in infos)
+    isolated = set(infos) - involved
+    if isolated:
+        heading_y = min(pos[k][1] for k in isolated) - 24
+        parts.append(f'<text x="60" y="{heading_y}" class="node-detail" data-isolated-heading="true">独立 Information（本图中无组合引用边）</text>')
+    for key, info in infos.items():
+        for dep in info.get("dependsOn", []):
             if dep in pos:
-                sx,sy=pos[key]; tx,ty=pos[dep]
-                # Important: arrow points from dependent Information to the prerequisite.
-                parts.append(_edge_path(sx+210,sy+42,tx,ty+42,kind="depends",label="depends on",source_id=f"info:{key}",target_id=f"info:{dep}"))
-    for key,info in infos.items():
-        x,y=pos[key]; external=bool(info.get("external")); composite=bool(info.get("expression")); inner=[]
-        if composite: inner.append(f'<rect x="{x+6}" y="{y-6}" width="210" height="88" rx="10" class="info-node-back"/>')
-        inner.append(f'<rect x="{x}" y="{y}" width="210" height="88" rx="10" class="{"external-info-node" if external else "info-node"}" filter="url(#soft-shadow)"/>')
-        inner.append(_svg_text_lines(x+105,y+29,key,max_chars=23,max_lines=2,dy=16))
-        desc=str(info.get("description") or info.get("desc") or recognizer(info)); desc=(desc[:42]+"…") if len(desc)>43 else desc
-        inner.append(f'<text x="{x+105}" y="{y+69}" text-anchor="middle" class="node-detail">{h(desc)}{" · external" if external else ""}</text>')
-        parts.append(_interactive_group(f"info:{key}","".join(inner),anchor("info",key)))
+                sx, sy = pos[key]; tx, ty = pos[dep]
+                parts.append(_edge_path(sx+280,sy+68,tx,ty+68,kind="depends",label=information_relation_label(info,dep),source_id=f"info:{key}",target_id=f"info:{dep}"))
+    for key, info in infos.items():
+        x, y = pos[key]; external = bool(info.get("external")); composite = bool(info.get("expression"))
+        desc = str(info.get("description") or info.get("desc") or recognizer(info))
+        inner = []
+        if composite:
+            inner.append(f'<rect x="{x+6}" y="{y-6}" width="280" height="136" rx="10" class="info-node-back"/>')
+        inner.append(f'<rect x="{x}" y="{y}" width="280" height="136" rx="10" class="info-face {"external-info-node" if external else "info-node"}" filter="url(#soft-shadow)"/>')
+        inner.append(f'<title>{h(key)} · {h(desc)}</title>')
+        for text, limit, count, center, dy, cls in ((key,32,2,y+29,18,"node-title"),(desc,42,3,y+77,15,"node-detail")):
+            lines = information_text_lines(text, limit, count)
+            start = center - (len(lines)-1)*dy/2
+            for i, line in enumerate(lines):
+                inner.append(f'<text x="{x+140}" y="{start+i*dy}" text-anchor="middle" class="{cls}">{h(line)}</text>')
+        badge = information_relation_label(info) if composite else "原子 · " + recognizer(info)
+        if external:
+            badge += " · external"
+        inner.append(f'<text x="{x+140}" y="{y+119}" text-anchor="middle" class="node-detail">{h(badge)}</text>')
+        panels = []
+        for direction, bx, by, label in (("up",x+140,y-14,"上"),("down",x+140,y+150,"下"),
+                                         ("left",x-14,y+68,"左"),("right",x+294,y+68,"右")):
+            panel_id = f"rule:{key}:{direction}"
+            inner.append(f'<g class="info-expand-control" data-direction="{direction}" data-panel-id="{h(panel_id)}" role="button" tabindex="0" aria-expanded="false" aria-label="向{label}展开或收起 {h(key)} 的规则">'
+                         f'<circle cx="{bx}" cy="{by}" r="11"/><text x="{bx}" y="{by+4}" text-anchor="middle">＋</text></g>')
+            panel_inner = '<rect x="0" y="0" width="320" height="340" rx="12" class="rule-face"/>'
+            panel_inner += _svg_text_lines(160,23,key,cls="node-title",max_chars=32,max_lines=1)
+            panel_inner += '<text x="160" y="44" text-anchor="middle" class="node-detail">规则详情 · 再点原节点对应的 − 收起</text>'
+            panel_inner += f'<foreignObject x="10" y="54" width="300" height="276"><div xmlns="http://www.w3.org/1999/xhtml" class="inline-information" tabindex="0">{information_inline_html(info,cat)}</div></foreignObject>'
+            panel = _interactive_group(panel_id, panel_inner)
+            panel = panel.replace('class="viz-node"', 'class="viz-node rule-detail-node" style="display:none"', 1)
+            edge = _edge_path(0,0,0,0,kind="rule",label="规则详情",source_id=f"info:{key}",target_id=panel_id)
+            edge = edge.replace('class="graph-edge"', 'class="graph-edge rule-detail-edge" style="display:none"', 1)
+            panels.extend([edge, panel])
+            templates.append(f'<template class="node-template" data-detail-id="{h(panel_id)}">'
+                             f'{info_detail_html(info,pages,cat)}</template>')
+        group = _interactive_group(f"info:{key}","".join(inner),anchor("info",key))
+        group = group.replace('tabindex="0"', f'tabindex="0" data-info-x="{x}" data-info-y="{y}" data-isolated="{str(key in isolated).lower()}"', 1)
+        parts.append(group)
+        parts.extend(panels)
         templates.append(f'<template class="node-template" data-detail-id="info:{h(key)}">{info_detail_html(info,pages,cat)}</template>')
     parts.append("</svg>")
     return "".join(parts),"".join(templates)
@@ -720,6 +902,66 @@ def _business_flow_layout(business: Mapping[str, Any]) -> Tuple[Dict[str, Tuple[
     return pos,flow
 
 
+def business_information_expansion(root_id: str, ref: str, inner: str,
+                                   box: Tuple[float, float, float, float],
+                                   cat: Mapping[str, Any], pages: Mapping[str, str]) -> Tuple[str, str]:
+    """One reachable graph per occurrence; shared dependencies are not duplicated."""
+    if ref not in cat["infos"]:
+        return _interactive_group(root_id, inner), ""
+    reachable = {}
+    pending = [ref]
+    while pending:
+        key = pending.pop()
+        if key in reachable:
+            continue
+        info = cat["infos"].get(key)
+        if info is None:
+            raise ValueError(f"Missing Information definition: {key}")
+        reachable[key] = info
+        pending.extend(info.get("dependsOn", []))
+    information_layout(reachable)  # Reject cycles before emitting interactive state.
+    ids = {key: root_id if key == ref else f"expand:{root_id}:info:{key}" for key in reachable}
+    parts, templates = [], []
+    for key, info in reachable.items():
+        nid = ids[key]
+        dependencies = info.get("dependsOn", [])
+        targets = [ids[dep] for dep in dependencies] or [f"expand:{root_id}:rule:{key}"]
+        if key == ref:
+            body, (x, y, width, height) = inner, box
+        else:
+            x, y, width, height = 0, 0, 280, 136
+            body = '<rect x="0" y="0" width="280" height="136" rx="10" class="rule-face"/>'
+            body += _svg_text_lines(140, 27, key, max_chars=32, max_lines=2)
+            body += _svg_text_lines(140, 67, str(info.get("description") or ""), cls="node-detail", max_chars=34, max_lines=3)
+            body += f'<text x="140" y="120" text-anchor="middle" class="node-detail">{h(information_relation_label(info) if dependencies else recognizer(info))}</text>'
+        for direction, cx, cy, label in (("up", x+width/2, y-14, "上"), ("down", x+width/2, y+height+14, "下"),
+                                         ("left", x-14, y+height/2, "左"), ("right", x+width+14, y+height/2, "右")):
+            body += (f'<g class="info-expand-control" data-expansion="true" data-direction="{direction}" role="button" tabindex="0" aria-expanded="false" aria-label="向{label}展开或收起 {h(key)}">'
+                     f'<circle cx="{cx}" cy="{cy}" r="11"/><text x="{cx}" y="{cy+4}" text-anchor="middle">＋</text></g>')
+        group = _interactive_group(nid, body)
+        attrs = f'data-expansion-targets="{h(json.dumps(targets))}"'
+        if key == ref:
+            attrs += ' data-expansion-root="true"'
+        else:
+            attrs += ' data-expansion-node="true" style="display:none"'
+        parts.append(group.replace('class="viz-node"', f'class="viz-node" {attrs}', 1))
+        detail = info_detail_html(info, pages, cat)
+        templates.append(f'<template class="node-template" data-detail-id="{h(nid)}">{detail}</template>')
+        for index, target in enumerate(targets):
+            kind = "depends" if dependencies else "rule"
+            label = information_relation_label(info, dependencies[index]) if dependencies else "规则详情"
+            edge = _edge_path(0, 0, 0, 0, kind=kind, label=label, source_id=nid, target_id=target)
+            parts.append(edge.replace('class="graph-edge"', 'class="graph-edge" data-expansion-edge="true" style="display:none"', 1))
+        if not dependencies:
+            rule_id = targets[0]
+            body = '<rect x="0" y="0" width="320" height="340" rx="12" class="rule-face"/>'
+            body += _svg_text_lines(160, 25, key, max_chars=32, max_lines=1)
+            body += f'<foreignObject x="10" y="45" width="300" height="285"><div xmlns="http://www.w3.org/1999/xhtml" class="inline-information" tabindex="0">{information_inline_html(info,cat)}</div></foreignObject>'
+            parts.append(_interactive_group(rule_id, body).replace('class="viz-node"', 'class="viz-node" data-expansion-node="true" style="display:none"', 1))
+            templates.append(f'<template class="node-template" data-detail-id="{h(rule_id)}">{detail}</template>')
+    return "".join(parts), "".join(templates)
+
+
 def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pages: Mapping[str,str]) -> Tuple[str,str]:
     dirs=[d for d in as_list(business.get("directories")) if isinstance(d,Mapping) and d.get("name")]; dmap={str(d["name"]):d for d in dirs}; pos,flow=_business_flow_layout(business)
     if not pos:return "<div class='empty'>No Directory</div>",""
@@ -744,8 +986,10 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
         for i,dep in enumerate([v for v in as_list(d.get("dependencies")) if isinstance(v,Mapping) and v.get("informationRef")]):
             ref=str(dep["informationRef"]); dx,dy=x-190,y-85-i*68; nid=f"dep:{name}:{i}"
             parts.append(_edge_path(x,y+18,dx+155,dy+24,kind="dependency",label="depend",source_id=f"dir:{name}",target_id=nid))
-            inner=f'<rect x="{dx}" y="{dy}" width="155" height="48" rx="10" class="dependency-node"/><text x="{dx+77.5}" y="{dy+29}" text-anchor="middle" class="node-detail">{h(ref)}</text>'
-            parts.append(_interactive_group(nid,inner)); templates.append(f'<template class="node-template" data-detail-id="{h(nid)}"><div class="inspector-section"><h4>Dependency</h4>{link(pages,"info",ref)}</div></template>')
+            inner=f'<rect x="{dx}" y="{dy}" width="155" height="48" rx="10" class="info-face dependency-node"/><text x="{dx+77.5}" y="{dy+29}" text-anchor="middle" class="node-detail">{h(ref)}</text>'
+            expanded, detail = business_information_expansion(nid, ref, inner, (dx,dy,155,48), cat, pages)
+            parts.append(expanded)
+            templates.append(detail or f'<template class="node-template" data-detail-id="{h(nid)}"><div class="inspector-section"><h4>Dependency</h4>{link(pages,"info",ref)}</div></template>')
         # actions and produces below directory
         for i,a in enumerate([v for v in as_list(d.get("actions")) if isinstance(v,Mapping) and v.get("name")]):
             aid=f"action:{name}:{i}"; ax,ay=x+25+i*115,y+120
@@ -760,15 +1004,21 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
                 templates.append(f'<template class="node-template" data-detail-id="{h(pid)}"><div class="inspector-section"><h4>Produce</h4><dl class="kv"><dt>Ref</dt><dd>{h(p.get("ref"))}</dd><dt>Information</dt><dd>{link(pages,"info",info) if info else "—"}</dd></dl></div></template>')
         ch=d.get("change")
         if isinstance(ch,Mapping):
-            cid=f"change:{name}"; cx,cy=x+215,y+10; pts=f"{cx},{cy+27} {cx+20},{cy} {cx+120},{cy} {cx+140},{cy+27} {cx+120},{cy+54} {cx+20},{cy+54}"
-            parts.append(_edge_path(x+180,y+35,cx,cy+27,kind="change",label="CHANGE",source_id=f"dir:{name}",target_id=cid))
+            cid=f"change:{name}"; cx,cy=x+225,y-90; pts=f"{cx},{cy+27} {cx+20},{cy} {cx+120},{cy} {cx+140},{cy+27} {cx+120},{cy+54} {cx+20},{cy+54}"
+            parts.append(_edge_path(x+180,y+18,cx,cy+27,kind="change",label="CHANGE",source_id=f"dir:{name}",target_id=cid))
             label=str(ch.get("informationRef") or "process")
-            inner=f'<polygon points="{pts}" class="change-node"/><text x="{cx+70}" y="{cy+31}" text-anchor="middle" class="node-detail">{h(label)}</text>'
+            inner=f'<polygon points="{pts}" class="change-node"/>'+_svg_text_lines(cx+70,cy+30,label,cls="node-detail",max_chars=20,max_lines=3,dy=14)
+            parts.append(_interactive_group(cid,inner))
             change_detail = (
                 link(pages, "info", ch.get("informationRef"))
                 if ch.get("informationRef")
                 else '<div class="code">' + h(ch.get("process")) + "</div>"
             )
+            info = cat["infos"].get(str(ch.get("informationRef") or ""))
+            if info:
+                change_detail += info_detail_html(info, pages, cat)
+            if ch.get("informationRef") and ch.get("process"):
+                change_detail += '<div class="code">' + h(ch["process"]) + '</div>'
             templates.append(
                 f'<template class="node-template" data-detail-id="{h(cid)}">'
                 f'<div class="inspector-section"><h4>Change</h4>{change_detail}</div>'
@@ -785,7 +1035,7 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
 def render_business_map_detail(b: Mapping[str,Any], cat: Mapping[str,Any], pages: Mapping[str,str], docs: Sequence[Tuple[Path,Mapping[str,Any]]]) -> str:
     svg,templates=article_business_graph(b,cat,pages)
     parts=[html_start(f"Business Directory Map · {b.get('name')}",str(b.get('desc') or ''),pages,"business")]
-    parts.append(f"<div class='panel'><div class='legend'><span><i class='swatch dir'></i>Directory</span><span><i class='swatch act'></i>Action</span><span><i class='swatch dep'></i>Dependency</span><span><i class='swatch prod'></i>Produce</span><span><i class='swatch change'></i>Change</span><span>BACK = 反向虚线</span></div><div class='notice'>滚轮或 ＋/－ 缩放；拖动空白区域平移；拖动节点重新布局，连线自动跟随。点击节点在右侧查看结构化详情。</div><div class='graph-layout'><div class='graph-canvas'>{toolbar()}<div class='graph-wrap'>{svg}</div></div><aside class='inspector'><h3>Directory detail</h3><div class='inspector-body'><div class='muted'>点击图中节点查看详细信息。</div></div></aside>{templates}</div></div>")
+    parts.append(f"<div class='panel'><div class='legend'><span><i class='swatch dir'></i>Directory</span><span><i class='swatch act'></i>Action</span><span><i class='swatch dep'></i>Dependency</span><span><i class='swatch prod'></i>Produce</span><span><i class='swatch change'></i>Change</span><span>BACK = 反向虚线</span></div><div class='notice'>滚轮或 ＋/－ 缩放；拖动空白区域平移；拖动节点重新布局，连线自动跟随。点击节点在右侧查看结构化详情；点击依赖 Information 或四向 ＋ 可逐级展开组合条件与规则，再次点击收起。</div><div class='graph-layout'><div class='graph-canvas'>{toolbar()}<div class='graph-wrap'>{svg}</div></div><aside class='inspector'><h3>Directory detail</h3><div class='inspector-body'><div class='muted'>点击图中节点查看详细信息。</div></div></aside>{templates}</div></div>")
     return "".join(parts)+html_end(docs)
 
 
@@ -803,7 +1053,13 @@ def render_business_html(cat: Mapping[str,Any], pages: Mapping[str,str], docs: S
 def render_information_html(system: str, cat: Mapping[str,Any], pages: Mapping[str,str], docs: Sequence[Tuple[Path,Mapping[str,Any]]]) -> str:
     context=system_information_context(cat["infos"],system); svg,templates=article_information_graph(context,system,pages,cat)
     parts=[html_start(f"DEC Information Graph · {system}","依赖箭头语义：依赖者 → 被依赖者。例如 user.effective → user.activated / user.certified。",pages,"systems")]
-    parts.append(f"<div class='panel'><h2>Information dependency graph · {h(system)}</h2><p class='section-note'>绿色为本 System Information；灰色虚线为跨 System 依赖上下文。</p><div class='notice'>滚轮/＋－缩放；空白区拖动平移；节点可拖动。点击 Information 后，右侧可直接跳转到 System、View 和 RuleView。</div><div class='graph-layout'><div class='graph-canvas'>{toolbar()}<div class='graph-wrap'>{svg}</div></div><aside class='inspector'><h3>Information detail</h3><div class='inspector-body'><div class='muted'>点击 Information 节点查看 recognizer、依赖、expression、changeData 以及设计文档链接。</div></div></aside>{templates}</div></div>")
+    parts.append(f"<div class='panel'><h2>Information dependency graph · {h(system)}</h2><p class='section-note'>绿色为本 System Information；灰色虚线为跨 System 依赖上下文。</p><div class='notice'>点击原信息框在右侧查看详情与跳转链接；点击节点上、下、左、右的 ＋，在该方向打开紫色规则框，并用紫色虚线连接原节点；点击对应的 − 收起。支持多个方向同时打开、拖动节点和详情框；规则内容可独立滚动、复制。紫色线仅表示详情归属，不是业务依赖。</div><div class='graph-layout information-layout'><div class='graph-canvas'>{toolbar()}<div class='graph-wrap'>{svg}</div></div><aside class='inspector'><h3>Information detail</h3><div class='inspector-body'><div class='muted'>点击原信息框查看 Information、System、View、RuleView 和依赖详情；四周 ＋ 可独立打开图内规则框。</div></div></aside>{templates}</div></div>")
+    expressions = [(key, info) for key, info in sorted(context.items()) if info.get("expression")]
+    if expressions:
+        parts.append("<div class='panel'><h2>组合条件（canonical expression）</h2><p class='section-note'>OR 表示任一满足；AND 表示全部满足；NOT 表示取反。混合或带括号的条件以完整表达式为准，图中的引用边不代表执行顺序。</p>")
+        for key, info in expressions:
+            parts.append(f"<h3>{link(pages,'info',key)}</h3><div class='code'>{h(info['expression'])}</div>")
+        parts.append("</div>")
     # readable list, complete instead of raw key=value dump
     parts.append("<div class='panel'><h2>Information definitions</h2><div class='card-grid'>")
     for key in sorted(context):
@@ -1111,7 +1367,20 @@ def render_enums(cat: Mapping[str,Any], pages: Mapping[str,str], docs: Sequence[
     return "".join(parts)+html_end(docs)
 
 def write_site(out: Path, docs: Sequence[Tuple[Path,Mapping[str,Any]]]) -> Dict[str,Path]:
+    # Prefer a site directory. Legacy .html arguments select the parent directory;
+    # shared page names no longer inherit any particular business/file prefix.
+    legacy_stem = out.stem if out.suffix.lower() == ".html" else None
+    site_root = out.parent if legacy_stem is not None else out
+    out = site_root / "directories.html"
     cat=build_catalog(docs); validate_visual_semantics(cat); systems=sorted(cat["systems"]); pages=page_names(out,systems)
+    for kind, names in (("Business", [str(b.get("name") or "business") for b in cat["businesses"]]),
+                        ("System", systems)):
+        paths = set()
+        for name in names:
+            path = slug(name)
+            if path in {".", ".."} or path in paths:
+                raise ValueError(f"{kind} HTML filename collision or invalid name: {name}")
+            paths.add(path)
     for b in cat["businesses"]:
         bname=str(b.get("name") or "business")
         for d in as_list(b.get("directories")):
@@ -1139,21 +1408,23 @@ def write_site(out: Path, docs: Sequence[Tuple[Path,Mapping[str,Any]]]) -> Dict[
     # Business Directory Map detail pages live under directory/.
     dp=subdir_pages(pages,None)
     for b in cat["businesses"]:
-        name=str(b.get("name") or "business"); bpages=dict(dp); bpages["business"]=f"{slug(name)}.html"
+        name=str(b.get("name") or "business"); bpages=dict(dp)
         for d in as_list(b.get("directories")):
             if isinstance(d,Mapping) and d.get("name"): bpages[f"directory:{d['name']}"]=f"{slug(name)}.html#{anchor('directory',d['name'])}"
         wpath(f"business-map:{name}",f"directory/{slug(name)}.html",render_business_map_detail(b,cat,bpages,docs))
+    cleanup_legacy_root_pages(site_root, pages, [legacy_stem] +
+                              [str(b.get("name") or "business") for b in cat["businesses"]])
     return generated
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser=argparse.ArgumentParser(description="Generate DEC Business/Information graphs and linked HTML design documents from canonical YAML")
     parser.add_argument("inputs",nargs="+",help="canonical DEC YAML file(s) or directories")
-    parser.add_argument("-o","--output",required=True,help="Business Directory HTML output path; the linked HTML site is generated beside it and existing generated files are overwritten")
+    parser.add_argument("-o","--output",required=True,help="HTML site output directory (recommended); legacy .html paths select their parent directory. Entry pages: index.html and directories.html")
     args=parser.parse_args(argv)
     try:
         docs=load_docs(discover(args.inputs)); out=Path(args.output); generated=write_site(out,docs)
-        print(f"PASSED: rendered html_files={len(generated)} business={out} from {len(docs)} YAML document(s); existing generated HTML overwritten")
+        print(f"PASSED: rendered html_files={len(generated)} index={generated['index']} business={generated['business']} from {len(docs)} YAML document(s); existing generated HTML overwritten")
         return 0
     except Exception as e:
         print(f"FAILED: {e}",file=sys.stderr);return 2

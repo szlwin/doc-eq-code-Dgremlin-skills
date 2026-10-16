@@ -30,3 +30,8 @@ Directory 的前进和 Back 各开启一个 Scope；同一路径的 Action、Pro
 ## 验证
 
 `ExecutionSessionTest` 覆盖嵌套加入、连接复用、跨路由拒绝、补偿、提交结果不明、System 写权限和并发隔离。`DirectoryEngineTest` 覆盖整路径提交与失败回滚、Back、回调与 Produce 消费失败。`QueryCompilerTest` 覆盖 Session 查询错误与 Trace。设置 `DEC_MYSQL_JDBC_URL`、`DEC_MYSQL_USER`、`DEC_MYSQL_PASSWORD` 后，`MySqlQueryIntegrationTest` 验证真实 MySQL 连接复用及 order/payment 两次写入的整体回滚。
+
+
+## Workflow 的事务归属
+
+`DirectoryWorkflowRunner` 通过 `WorkflowTransaction` 显式选择外部托管或 Runtime 自管；最外层 scope 覆盖 Directory、最终写回和持久化校验。内部 Directory scope 只 JOIN，不提前物理提交。`TransactionPolicy.EXTERNAL` 的完成状态为 `EXTERNAL_PENDING`，失败只向所有者标记 `ROLLBACK_ONLY`；trace 不把这种参与记录为数据库已提交。`REQUIRED` 管理的资源在完成回调后提交。接入 API、Spring 示例与迁移说明见 [Directory Runtime](directory-runtime.md)。

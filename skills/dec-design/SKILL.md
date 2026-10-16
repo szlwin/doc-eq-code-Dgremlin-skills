@@ -1,6 +1,6 @@
 ---
 name: dec-design
-description: 将已确认的软件需求、业务模型和业务流程转换为规范驱动的 DEC canonical YAML，并依据 DEC 文档规则做字段、引用与业务语义校验，再确定性生成兼容 DEC Runtime/Compiler 的 XML。适用于 DataSource、Enum、Data、View、RuleView、API、System、Information、BusinessScope/Directory/Action/Produce/Change/Back；支持 RuleView/Rule 多 DataSource、公共枚举绑定与 API required/min/max/length/regex/enum/expression 校验；不负责编写业务实现代码。
+description: 将已确认的软件需求、业务模型和业务流程转换为规范驱动的 DEC canonical YAML，并依据 DEC 文档规则做字段、引用与业务语义校验，再确定性生成兼容 DEC Runtime/Compiler 的 XML。适用于 DataSource、Enum、Data、View、RuleView、API、System、Information、BusinessScope/Directory/Action/Produce/Change/Back；支持 RuleView/Rule 多 DataSource、公共枚举绑定与带错误信息的 API transport 校验；业务状态组合必须建模到 RuleView/Information/Business；不负责编写业务实现代码。
 ---
 
 # dec-design
@@ -44,7 +44,7 @@ description: 将已确认的软件需求、业务模型和业务流程转换为�
 - canonical YAML 写入后必须运行 `scripts/validate_dec_yaml.py`；
 - XML 读取/导入：只允许 `scripts/xml_to_yaml.py <xml> --stdout|--check`，需要持久化迁移时使用 `-o`；
 - 外部 XML 变更同步：只允许 `scripts/sync_xml_to_yaml.py <changed.xml> --existing <canonical.yaml> ...`；该脚本做 projection/diff/merge/validation/rollback；
-- XML 写入/覆盖：只允许 `scripts/yaml_to_xml.py <yaml> -o <xml>`；需要给用户/外部工具编辑的 XML 应增加 `--emit-id-comments`；
+- XML 写入/覆盖：只允许 `scripts/yaml_to_xml.py <yaml> -o <xml>`；`--emit-id-comments` 的使用边界统一遵循 [`references/yaml-to-xml.md`](references/yaml-to-xml.md)；
 - Skill/Agent 自己仍禁止直接修改 generated XML；只有**用户或外部系统已经修改的 XML**可以作为 `sync_xml_to_yaml.py` 的受控输入。
 
 禁止 Skill/Agent 使用 `cat`、`sed`、文本编辑器、shell 重定向、临时 Python/YAML/XML parser 或其他 ad-hoc 方式直接读取、创建、修改、覆盖 `.yaml/.yml/.xml`。脚本内部的文件访问属于允许实现。
@@ -58,6 +58,7 @@ description: 将已确认的软件需求、业务模型和业务流程转换为�
 3. **设计与实现分离**：YAML 表达业务/架构语义，不嵌入 Java/Spring/MyBatis/Kafka SDK 类名等实现细节。
 4. **Fail closed**：未知字段、无法解析引用、互斥语义冲突、当前 grammar 无法表达的能力必须失败或登记 `DESIGN_GAP`。
 5. **稳定设计 ID**：需实现、Review、测试或追踪的节点应有稳定 `id`；ID 默认不输出为 XML 属性。
+   生成交接资料时同时保留节点在 YAML 中的稳定路径；同一节点的 XML 定位由 YAML→XML converter 派生，不能另行命名或维护。
 6. **精确引用**：大小写敏感；禁止 fuzzy match、同名猜测和静默 fallback。
 7. **DataSource 是统一外部能力边界**：数据库、NoSQL、MQ、文件、第三方系统、HTTP/gRPC 微服务都可作为 DataSource；不另造平行 Service DSL。
 8. **P3 ownership 优先**：Information 归属 System；BusinessScope 只通过 system-qualified InformationKey 编排。
@@ -72,7 +73,7 @@ description: 将已确认的软件需求、业务模型和业务流程转换为�
 | `data` | `datas` | 数据模型、外部数据映射、Column 枚举绑定 | `templates/data.yaml` |
 | `view` | `views` | 业务模型、one-to-one / one-to-many | `templates/view.yaml` |
 | `rule` | `ruleViews` | RuleView/Rule、code/desc、默认与特定 DataSource、可选 API | `templates/rule.yaml` |
-| `api` | `apis` | URL、Method、required/min/max/length/regex/enum/expression、返回值 | `templates/api.yaml` |
+| `api` | `apis` | URL、Method、required/min/max/length/regex/enum、带 message 的 transport 校验、返回值 | `templates/api.yaml` |
 | `systems` | `systems` | System ownership、Information、ModelAccess | `templates/systems.yaml` |
 | `business` | `business.directories` | Directory/Dependency/Action/Produce/Change/Back | `templates/business.yaml` |
 
@@ -84,6 +85,7 @@ description: 将已确认的软件需求、业务模型和业务流程转换为�
 
 - 输入可以是需求、业务模型、流程、现有 DEC YAML/XML、架构约束；
 - 输出是 canonical DEC YAML、generated XML、`DESIGN_GAP`、验证结果和实现交接 Design IDs；
+- 实现交接应包含 Design ID、YAML 文件与节点路径；实现侧可据此生成对应 XML 定位和代码索引，支持从设计快速跳转到代码；
 - 禁止创建或修改业务实现代码；
 - 外部编排器如需组合，只能消费本 Skill 的公开产物，不能改变 YAML authority、validator 或 Converter 规则；
 - 本 Skill 不读取、调用或要求安装任何外部研发流程 Skill。
@@ -137,8 +139,8 @@ python3 scripts/validate_dec_yaml.py design
 - 多行 `expression/ruleData/changeData/process` 使用 `|`；
 - Rule canonical 类型使用 `dsl`，不要新写历史 `grammer`；
 - RuleView 必须有 `code`，推荐 `desc`；`dataSource` 是子 Rule 默认数据源，Rule 自身 `dataSource` 可覆盖；`apiRef` 可选；
-- 公共枚举使用独立 `kind: enum`；每个枚举项必须有具体 `value`；Data Column 与 API 字段通过 `relEnum` 绑定，XML 输出 `rel-enum`；Information `changeData` 写入 enum-bound property 时，值必须存在于该 Enum；
-- API 使用独立 `kind: api` 描述 URL、HTTP method、required、length、enum/relEnum、request-level expression 与 response；
+- 公共枚举使用独立 `kind: enum`；每个枚举项必须有 Java `Integer` 语义的 YAML 整数 `value`（`-2147483648..2147483647`），禁止带引号数字、浮点数、布尔值和越界值；Data Column 与 API 字段通过 `relEnum` 绑定，XML 输出 `rel-enum`；Information `changeData` 写入 enum-bound property 时，值必须存在于该 Enum；
+- API 使用独立 `kind: api` 描述 URL、HTTP method、required、length、enum/relEnum、带 `message` 的 transport 校验与 response；纯传输层组合约束才使用 request-level expression；订单状态、库存、权限等业务条件必须放 RuleView/Information/Business；
 - 数据源 command canonical 字段使用 `cmd`，不要新写历史 `sql`；
 - 不引入主规范之外的字段。
 
@@ -179,7 +181,7 @@ python3 scripts/sync_xml_to_yaml.py <changed.xml> \
   --report <sync-report.json>
 ```
 
-规则：只把 XML 可表达的变化合并回 YAML；保留 YAML-only metadata 与既有 Design ID；实体删除默认阻塞，必须显式 `--allow-delete`；无 `dec-id` 的歧义 rename 必须 fail closed。需要外部编辑的 XML 应由 `yaml_to_xml.py --emit-id-comments` 生成。同步成功后重新由 YAML 生成 XML，不形成双主。详见 `references/xml-yaml-sync.md`。
+规则：只把 XML 可表达的变化合并回 YAML；保留 YAML-only metadata 与既有 Design ID；实体删除默认阻塞，必须显式 `--allow-delete`；无 `dec-id` 的歧义 rename 必须 fail closed。同步流程详见 [`references/xml-yaml-sync.md`](references/xml-yaml-sync.md)，其中的 XML 生成选项遵循 [`references/yaml-to-xml.md`](references/yaml-to-xml.md)。
 
 ### Step 6：生成/检查 XML
 
@@ -195,19 +197,21 @@ python3 scripts/yaml_to_xml.py <file-or-dir> --check
 python3 scripts/yaml_to_xml.py <yaml-dir> -o <generated-xml-dir>
 ```
 
-XML 格式必须遵守 `references/xml-compatibility-spec.md` 路由到的 `references/xml-mapping/*.md` 分片。Skill/Agent 生成后不得手工修补 XML。若 XML 将交给用户/外部工具修改，推荐 `--emit-id-comments`；外部变更回流只能走 `sync_xml_to_yaml.py`。
+XML 格式必须遵守 `references/xml-compatibility-spec.md` 路由到的 `references/xml-mapping/*.md` 分片。Skill/Agent 生成后不得手工修补 XML。`--emit-id-comments` 的快照与外部编辑策略、以及 `examples/generated-xml/` 的无注释命令，统一见 [`references/yaml-to-xml.md`](references/yaml-to-xml.md)。
 
 ### Step 6.5：生成 HTML 设计文档（按需）
 
 需要生成可阅读、可跳转的 DEC 设计文档时：
 
 ```sh
-python3 scripts/render_dec_graph.py <yaml-file-or-dir> -o <business.html>
+python3 scripts/render_dec_graph.py <yaml-file-or-dir> -o <generated-html-dir>
 ```
 
 一次生成 Business Directory、按 System 拆分的 Information dependency、每个 System 的聚合设计页，以及 DataSource、Data、View、RuleView、API、System、Enum、Overview HTML。**View / RuleView / API / Enum / Information 必须以 System 作为首要人工导航入口**：System → View → RuleView，并在 System 内列出 Enum、API、Information；全局类型页仅作为稳定交叉链接/检索目标。所有引用应转换为相对跳转链接。Business / Information 图支持缩放、平移、节点拖动与连线跟随。Information 依赖箭头固定为“依赖者 → 被依赖者”；Business depend 固定为“Directory → prerequisite Information”，case 目标不得再声明 depend。
 
 **所有 DEC HTML 必须由该脚本创建。禁止手工新建或编辑后继续维护；canonical YAML 有修改时，重新运行脚本并覆盖原 HTML。** HTML 永远只是派生文档。详见 `references/design-html-generation.md` 与 `references/business-visualization.md`.
+
+如果仓库跟踪了由本次 YAML 派生的 HTML（包括本包 `examples/generated-html/`），须在同次修改中重生成并检查漂移；不要只更新 YAML/XML。
 
 ### Step 7：Compiler / Runtime 验证
 
@@ -246,7 +250,7 @@ countNotEmpty(ruleRef, ruleData, expression) == 1
 - RuleView `code` 必填且唯一，`desc` 用于快速理解；
 - RuleView `dataSource` 是默认值，Rule `dataSource` 是特定覆盖；二者都引用 Config DataSource；
 - DataSource 可以是 MySQL/Redis/MongoDB/第三方系统/微服务等统一外部能力；
-- API 支持 required、数值 `min/max`、长度 `minLength/maxLength`、`regex`、inline enum、公共 `relEnum` 与 request-level `expression`；
+- API 支持 required、数值 `min/max`、长度 `minLength/maxLength`、`regex`、inline enum、公共 `relEnum` 与纯传输层 request-level `expression`；字段校验生成的 Bean Validation 注解必须带 `message`（显式或确定性默认值）；业务组合条件不得进入 DTO；
 - `relEnum` 必须解析到公共 Enum，且不得与同字段内联 enum values 双主；
 - Path 参数必须与 URL `{name}` 一一对应并 `required: true`；
 - API response `modelRef` 存在时必须引用 View；
@@ -295,6 +299,7 @@ Back 绑定在明确 subDirectory relation 上，返回时逐级执行补偿，�
 - Design ID 无重复；
 - `validate_dec_yaml.py` 通过；
 - `yaml_to_xml.py --check` 通过；
+- 仓库跟踪的相关 XML/HTML 派生产物已按各自约定命令重生成且无漂移；修改本 Skill 管辖的源文件后，`scripts/check_manifest.py` 通过；
 - canonical YAML 与 generated XML 均未被直接手工读写；所有 YAML/XML I/O 均可追溯到 Skill 脚本；
 - generated XML 未被 Skill/Agent 手工编辑；若存在用户/外部系统 XML 变更，已通过 `sync_xml_to_yaml.py` 受控同步且无未决 conflict；
 - 要求的 Compiler/Runtime 验证通过，或明确记录未运行及原因；
@@ -327,6 +332,6 @@ Back 绑定在明确 subDirectory relation 上，返回时逐级执行补偿，�
 
 - `Data.system` 与 `View.system` 是归属事实；System HTML 必须从脚本生成 Data / View→RuleView / Enum / API / Information 导航。
 - 所有 System 必须统一输出到 `system/<system>/`；每个 System（含 common）目录内包含：`index.html`, `data.html`, `views.html`, `ruleviews.html`, `apis.html`, `enums.html`, `information.html`。禁止在 HTML 根目录直接创建 `<system>/`，以避免 System 名称与 `directory/`、`system/` 等保留目录冲突。
-- Directory 首页必须列出 Business Directory Maps，详细图输出到 `directory/`。
+- 站点使用不绑定单一流程的 `index.html`、`directories.html`、`systems.html` 等共享页；Directory 首页列出全部 Business Directory Maps，详细图输出到 `directory/<business>.html`。Change 箭头必须连接实际可见、可点击的目标节点，详情保留目标 Information/process。
 - View Property `desc` 应用于业务说明；View HTML 的字段类型必须从 Data property 解析，Enum 必须从 Data Column `relEnum` 解析并链接，禁止手工复制不一致的 type/enum。
 - 所有 HTML 仍必须由 `scripts/render_dec_graph.py` 创建或覆盖，禁止手工维护。

@@ -18,6 +18,10 @@ python3 scripts/yaml_to_xml.py path/to/dec-yaml \
 
 目录层级会保留，扩展名改为 `.xml`。
 
+### 统一的 `--emit-id-comments` 策略
+
+本包 `examples/generated-xml/` 以及其他版本控制的生成快照，按上述命令维护，**不加** `--emit-id-comments`。只有 XML 要交给用户或外部系统编辑、并计划通过 `sync_xml_to_yaml.py` 回流时，才增加该标志。两种输出模式不得混用在同一快照中；注释只用于 Design ID 追踪，不改变 Runtime 语义。
+
 ## 3. 只检查
 
 ```sh
@@ -44,7 +48,7 @@ python3 scripts/yaml_to_xml.py order.yaml \
 <!-- dec-id: DATA-ORDER -->
 ```
 
-ID 注释仅用于追踪，不改变 Runtime 语义。**如果 XML 将交给用户或外部系统继续修改，并计划将变更同步回 YAML，应使用 `--emit-id-comments`，以便 rename/identity 可以无歧义匹配。**
+该策略也适用于目录批量转换；需要 rename/identity 无歧义回流时，必须保留 `dec-id` 注释。
 
 ## 6. Kind → XML 根节点
 
@@ -102,6 +106,6 @@ YAML RuleView/Rule dataSource → XML dataSource
 
 历史 XML 首次导入使用 `scripts/xml_to_yaml.py`，详见 `references/xml-to-yaml.md`。
 
-如果 XML 是从现有 YAML 派生后，被用户/外部系统修改，再需要回流到 existing YAML，必须使用 `scripts/sync_xml_to_yaml.py`，详见 `references/xml-yaml-sync.md`。这类 XML 建议始终使用 `--emit-id-comments` 生成。
+如果 XML 是从现有 YAML 派生后，被用户/外部系统修改，再需要回流到 existing YAML，必须使用 `scripts/sync_xml_to_yaml.py`，详见 `references/xml-yaml-sync.md`；这类 XML 按本节统一策略生成。
 
 两种场景都不改变 YAML 的唯一权威地位。

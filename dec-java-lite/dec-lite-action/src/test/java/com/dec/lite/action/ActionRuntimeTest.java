@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,6 +54,25 @@ class ActionRuntimeTest {
         assertEquals(ActionStatus.SUCCESS, results.get(1).status());
         assertEquals(2L, context.model().read("status"));
         assertEquals(RecognitionResult.Status.TRUE, engine.evaluate(new InformationKey("payment", "paymentInfo"), context.model()).status());
+    }
+
+    @Test
+    void collectedCustomActionsAreUniqueAndRegistryIsFrozen() throws Exception {
+        ActionDefinition sms = new BusinessActionParser().parse(new DecYamlParser().parse(resourceDirectory())).stream()
+                .filter(action -> action.name().equals("smsNotify")).findFirst().orElseThrow();
+        CustomAction provider = new CustomAction() {
+            public String name() { return "smsNotify"; }
+            public void execute(ActionExecutionContext context) { }
+        };
+        CustomActionRegistry registry = CustomActionRegistry.from(List.of(provider));
+        assertSame(provider, registry.require(sms));
+        assertThrows(IllegalStateException.class, () -> registry.register(provider));
+        assertThrows(IllegalArgumentException.class, () -> CustomActionRegistry.from(List.of(provider, provider)));
+        assertThrows(IllegalStateException.class, () -> CustomActionRegistry.from(List.of()).require(sms));
+        assertThrows(IllegalArgumentException.class, () -> CustomActionRegistry.from(List.of(new CustomAction() {
+            public String name() { return null; }
+            public void execute(ActionExecutionContext context) { }
+        })));
     }
 
     @Test
@@ -157,8 +177,8 @@ class ActionRuntimeTest {
                 })
                 .register("payment", "OrderInfo", "hasPaymentInfo", invocation -> bool(invocation.context().read("payInfo.id"), "payment.paymentInfo"))
                 .register("payment", "OrderInfo", "hasPayResult", invocation -> bool(invocation.context().read("payInfo.resultCode"), "payment.hasResult"))
-                .register("payment", "OrderInfo", "isPaySuccess", invocation -> boolEquals(invocation.context().read("payInfo.resultCode"), "SUCCESS", "payment.success"))
-                .register("payment", "OrderInfo", "isPayError", invocation -> boolEquals(invocation.context().read("payInfo.resultCode"), "ERROR", "payment.error"))
+                .register("payment", "OrderInfo", "isPaySuccess", invocation -> boolEquals(invocation.context().read("payInfo.resultCode"), 1, "payment.success"))
+                .register("payment", "OrderInfo", "isPayError", invocation -> boolEquals(invocation.context().read("payInfo.resultCode"), 2, "payment.error"))
                 .register("order", "OrderInfo", "isWaitPay", invocation -> boolEquals(invocation.context().read("status"), 1L, "order.waitPay"));
     }
 

@@ -1,0 +1,29 @@
+version: dec/v1
+kind: systems
+systems:
+- id: SYS-EXPENSE
+  name: expense
+  dataRefs:
+  - expense
+  viewRefs:
+  - ExpenseInfo
+  information:
+  - id: INFO-EXPENSE-DRAFT
+    name: draft
+    viewRef: ExpenseInfo
+    ruleData: status = 0
+    changeData: 'status : 0;'
+  - id: INFO-EXPENSE-SUBMITTED
+    name: submitted
+    viewRef: ExpenseInfo
+    ruleData: status = 1
+    changeData: 'status : 1;'
+  - id: INFO-EXPENSE-APPROVED
+    name: approved
+    viewRef: ExpenseInfo
+    ruleData: status = 2
+    changeData: 'status : 2;'
+  - id: INFO-EXPENSE-ELIGIBLE
+    name: eligible
+    viewRef: ExpenseInfo
+    ruleData: amount <= 1000 and reviewerEnabled = true

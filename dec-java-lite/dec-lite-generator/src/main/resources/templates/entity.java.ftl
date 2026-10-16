@@ -6,9 +6,10 @@ import ${import};
 </#list>
 </#list>
 
-/** DEC ${designId} from ${designSource}. */
+/** DEC ${designId}; YAML ${designSource}#${designPath}; XML ${designXml} data[name=${designName}]. */
 public class ${className} {
 <#list fields as field>
+    /** YAML ${designSource}#${designPath}.properties.${field.name}; XML ${designXml} property[name=${field.name}]. */
     private ${field.type} ${field.name};
 </#list>
 

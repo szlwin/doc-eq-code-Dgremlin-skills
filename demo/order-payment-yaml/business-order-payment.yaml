@@ -7,7 +7,7 @@ business:
   directories:
   - id: DIR-ORDERED
     name: ordered
-    informationRef: order.ordered
+    informationRef: common.ordered
     modelRef: OrderInfo
     isRoot: true
     actions:
@@ -21,7 +21,7 @@ business:
         informationRef: order.ordered
   - id: DIR-PAYING
     name: paying
-    informationRef: order.paying
+    informationRef: common.paying
     modelRef: OrderInfo
     subDirectories:
     - rel: ordered

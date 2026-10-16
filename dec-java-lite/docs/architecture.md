@@ -18,4 +18,4 @@ DEC XML ────────┘                                │
 
 运行语义分属 [Information](information-engine.md)、[Action](action-runtime.md)、[Directory](directory-runtime.md)、[Query](query-runtime.md) 和 [事务](session-transaction-runtime.md)。Directory Back 是一次新的业务路径。Query 使用有界候选集和 PreparedStatement；跨物理路由的原子事务被拒绝。
 
-生成器从同一 `DecProject` 中读取 Config/Data/View/API/Enum，运行时从 Rule/System/Business 编译配置，不存在第二套 declaration 引擎。生成 Java 的漂移由 `GeneratorPipelineTest` 校验。
+生成器从同一 `DecProject` 中读取 Config/Data/View/API/Enum，并把 System Information 与 Business Directory 投影为只读导航类；运行时仍从 Rule/System/Business 编译并执行配置，不存在第二套 declaration 引擎。生成 Java 的漂移由 `GeneratorPipelineTest` 校验。

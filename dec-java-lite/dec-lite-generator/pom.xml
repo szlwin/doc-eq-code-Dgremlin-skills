@@ -12,6 +12,17 @@
   <dependencies>
     <dependency>
       <groupId>com.dec</groupId>
+      <artifactId>dec-lite-directory</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.dec</groupId>
+      <artifactId>dec-lite-information</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.dec</groupId>
       <artifactId>dec-lite-core</artifactId>
       <version>${project.version}</version>
     </dependency>

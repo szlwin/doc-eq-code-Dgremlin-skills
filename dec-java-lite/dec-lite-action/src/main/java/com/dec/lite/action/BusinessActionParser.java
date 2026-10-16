@@ -13,36 +13,44 @@ import java.util.Map;
 /** Compiles canonical business Directory actions without creating a second runtime model. */
 public final class BusinessActionParser {
     public List<ActionDefinition> parse(DecProject project) {
-        List<ActionDefinition> result = new ArrayList<>();
+        return parseByBusiness(project).values().stream().flatMap(List::stream).toList();
+    }
+
+    public Map<String, List<ActionDefinition>> parseByBusiness(DecProject project) {
+        Map<String, List<ActionDefinition>> result = new LinkedHashMap<>();
         for (DecDocument document : project.getDocuments()) {
             if (document.kind() != DecKind.BUSINESS) continue;
             Map<String, Object> business = map(document.root().get("business"), "business");
+            String businessId = text(business, "id", "business");
+            List<ActionDefinition> actions = new ArrayList<>();
             for (Object raw : list(business.get("directories"), "business.directories")) {
-                parseDirectory(map(raw, "directory"), document, result);
+                parseDirectory(map(raw, "directory"), document, businessId, actions);
             }
+            if (result.putIfAbsent(businessId, List.copyOf(actions)) != null)
+                throw new ActionExecutionException("duplicate Business Design ID: " + businessId);
         }
-        return List.copyOf(result);
+        return java.util.Collections.unmodifiableMap(result);
     }
 
-    private void parseDirectory(Map<String, Object> directory, DecDocument document, List<ActionDefinition> result) {
+    private void parseDirectory(Map<String, Object> directory, DecDocument document, String businessId, List<ActionDefinition> result) {
         String owner = text(directory, "name", "directory");
         List<InformationKey> dependencies = informationList(directory.get("dependencies"), "directory.dependencies");
         InformationKey target = optionalInformation(directory.get("informationRef"), "directory.informationRef");
         InformationKey change = null;
         if (directory.get("change") instanceof Map<?, ?> rawChange) change = optionalInformation(map(rawChange, "directory.change").get("informationRef"), "directory.change.informationRef");
-        for (Object raw : listOrEmpty(directory.get("actions"))) result.add(action(map(raw, "action"), owner, dependencies, target, change, document));
+        for (Object raw : listOrEmpty(directory.get("actions"))) result.add(action(map(raw, "action"), owner, dependencies, target, change, document, businessId));
         for (Object raw : listOrEmpty(directory.get("subDirectories"))) {
             Map<String, Object> child = map(raw, "subDirectory");
             Object back = child.get("back");
             if (back instanceof Map<?, ?> backMap) {
                 String rel = text(child, "rel", "subDirectory");
-                for (Object action : listOrEmpty(map(backMap, "back").get("actions"))) result.add(action(map(action, "back.action"), owner + ".back." + rel, dependencies, target, change, document));
+                for (Object action : listOrEmpty(map(backMap, "back").get("actions"))) result.add(action(map(action, "back.action"), owner + ".back." + rel, dependencies, target, change, document, businessId));
             }
         }
     }
 
     private static ActionDefinition action(Map<String, Object> value, String owner, List<InformationKey> dependencies,
-                                           InformationKey target, InformationKey change, DecDocument document) {
+                                           InformationKey target, InformationKey change, DecDocument document, String businessId) {
         String id = text(value, "id", "action");
         String name = text(value, "name", "action");
         if (value.containsKey("ref-rule") || value.containsKey("refRule") || value.containsKey("rule-ref"))
@@ -59,7 +67,7 @@ public final class BusinessActionParser {
         if (payloadValue instanceof Map<?, ?>) payload.putAll(map(payloadValue, "action.payload"));
         if (value.containsKey("viewRef")) payload.put("viewRef", value.get("viewRef"));
         return new ActionDefinition(id, name, owner, system, rule, custom, dependencies, target, change, produces, payload,
-                optional(value, "failurePolicy"), document.source());
+                optional(value, "failurePolicy"), document.source(), businessId);
     }
 
     private static ProduceDefinition produce(Map<String, Object> value, DecDocument document) {

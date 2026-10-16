@@ -10,7 +10,7 @@ public record ActionDefinition(String id, String name, String ownerDirectory, St
                                String customType, List<InformationKey> dependencies, InformationKey targetInformation,
                                InformationKey changeInformation,
                                List<ProduceDefinition> produces, Map<String, Object> payload,
-                               String failurePolicy, Path source) {
+                               String failurePolicy, Path source, String businessId) {
     public ActionDefinition {
         if (id == null || id.isBlank()) throw new IllegalArgumentException("Action id is required");
         if (name == null || name.isBlank()) throw new IllegalArgumentException("Action name is required");
@@ -20,6 +20,14 @@ public record ActionDefinition(String id, String name, String ownerDirectory, St
         payload = Map.copyOf(payload == null ? Map.of() : payload);
         failurePolicy = failurePolicy == null || failurePolicy.isBlank() ? "fail-fast" : failurePolicy;
         if (source == null) throw new IllegalArgumentException("Action source is required");
+    }
+    /** Compatibility for standalone Actions without a Business binding. */
+    public ActionDefinition(String id, String name, String ownerDirectory, String systemRef, String ruleRef,
+                            String customType, List<InformationKey> dependencies, InformationKey targetInformation,
+                            InformationKey changeInformation, List<ProduceDefinition> produces, Map<String, Object> payload,
+                            String failurePolicy, Path source) {
+        this(id, name, ownerDirectory, systemRef, ruleRef, customType, dependencies, targetInformation,
+                changeInformation, produces, payload, failurePolicy, source, null);
     }
     public ActionDefinition(String id, String name, String ownerDirectory, String systemRef, String ruleRef,
                             String customType, List<InformationKey> dependencies, InformationKey targetInformation,

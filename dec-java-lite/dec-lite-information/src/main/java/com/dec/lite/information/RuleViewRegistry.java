@@ -2,7 +2,6 @@ package com.dec.lite.information;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,6 +34,11 @@ public final class RuleViewRegistry {
     }
 
     private final Map<RuleViewKey, Evaluator> evaluators = new ConcurrentHashMap<>();
+    private record RuleReference(String system, String ruleRef) { }
+    private record Resolution(RuleViewKey key, boolean ambiguous) { }
+
+    // Built during registration; multiple views for the same system/rule remain ambiguous.
+    private final Map<RuleReference, Resolution> resolutions = new ConcurrentHashMap<>();
     private volatile boolean frozen;
 
     public synchronized RuleViewRegistry register(String system, String viewRef, String ruleRef, Evaluator evaluator) {
@@ -43,6 +47,8 @@ public final class RuleViewRegistry {
         RuleViewKey key = new RuleViewKey(system, viewRef, ruleRef);
         Evaluator previous = evaluators.putIfAbsent(key, evaluator);
         if (previous != null) throw new InformationCompilationException("duplicate RuleView evaluator: " + key);
+        resolutions.compute(new RuleReference(system, ruleRef), (ignored, previousResolution) ->
+                previousResolution == null ? new Resolution(key, false) : new Resolution(null, true));
         return this;
     }
     public synchronized RuleViewRegistry freeze() { frozen = true; return this; }
@@ -69,43 +75,26 @@ public final class RuleViewRegistry {
     /** Resolve an action's system + ruleRef only when that pair is unambiguous. */
     public RecognitionResult invoke(String system, String ruleRef, ModelContext context,
                                     Map<String, Object> payload, MutationSet mutations) {
-        RuleViewKey match = null;
-        for (RuleViewKey key : evaluators.keySet()) {
-            if (key.system().equals(system) && key.ruleRef().equals(ruleRef)) {
-                if (match != null) return RecognitionResult.error(context.version(), "ambiguous RuleView action: " + system + "." + ruleRef);
-                match = key;
-            }
-        }
-        if (match == null) return RecognitionResult.unresolved(context.version(), "no system-scoped RuleView evaluator registered for " + system + "." + ruleRef);
-        return invoke(match, context, payload, mutations);
+        return invoke(system, ruleRef, context, payload, mutations, new LinkedHashMap<>(), null);
     }
 
     public RecognitionResult invoke(String system, String ruleRef, ModelContext context,
                                     Map<String, Object> payload, MutationSet mutations,
                                     Map<String, Object> produced) {
-        RuleViewKey match = null;
-        for (RuleViewKey key : evaluators.keySet()) {
-            if (key.system().equals(system) && key.ruleRef().equals(ruleRef)) {
-                if (match != null) return RecognitionResult.error(context.version(), "ambiguous RuleView action: " + system + "." + ruleRef);
-                match = key;
-            }
-        }
-        if (match == null) return RecognitionResult.unresolved(context.version(), "no system-scoped RuleView evaluator registered for " + system + "." + ruleRef);
-        return invoke(match, context, payload, mutations, null, produced, null);
+        return invoke(system, ruleRef, context, payload, mutations, produced, null);
     }
 
     public RecognitionResult invoke(String system, String ruleRef, ModelContext context,
                                     Map<String, Object> payload, MutationSet mutations,
                                     Map<String, Object> produced, TransactionScope transaction) {
-        RuleViewKey match = null;
-        for (RuleViewKey key : evaluators.keySet()) {
-            if (key.system().equals(system) && key.ruleRef().equals(ruleRef)) {
-                if (match != null) return RecognitionResult.error(context.version(), "ambiguous RuleView action: " + system + "." + ruleRef);
-                match = key;
-            }
-        }
-        if (match == null) return RecognitionResult.unresolved(context.version(), "no system-scoped RuleView evaluator registered for " + system + "." + ruleRef);
-        return invoke(match, context, payload, mutations, null, produced, transaction);
+        Resolution resolution = resolve(system, ruleRef);
+        if (resolution == null) return RecognitionResult.unresolved(context.version(), "no system-scoped RuleView evaluator registered for " + system + "." + ruleRef);
+        if (resolution.ambiguous()) return RecognitionResult.error(context.version(), "ambiguous RuleView action: " + system + "." + ruleRef);
+        return invoke(resolution.key(), context, payload, mutations, null, produced, transaction);
+    }
+
+    private Resolution resolve(String system, String ruleRef) {
+        return resolutions.get(new RuleReference(system, ruleRef));
     }
 
     private RecognitionResult invoke(RuleViewKey key, ModelContext context, Map<String, Object> payload,

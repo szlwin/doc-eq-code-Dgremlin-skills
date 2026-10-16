@@ -1,99 +1,99 @@
 # DEC Design ID → Code Index
 
-Source YAML is authoritative. Search its listed filename and Design ID to compare the design with generated Java. Runtime-managed nodes are compiled from design files and have no generated Java class.
+YAML is the authoritative source; XML is the derived view. Search the listed source, path and Design ID to compare the design with generated Java. System Information and Business flow classes are read-only design projections used as named references by application code. They preserve recognition, materialization, ordered actions, Produce and Back declarations; execution remains in the DEC runtime.
 
-| Design ID | YAML file | Kind | Generated Java |
-| --- | --- | --- | --- |
-| `ACT-CONFIRM-PAY-ERROR` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-CONFIRM-PAY-SUCCESS` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-RECEIVE-PAY-RESULT` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-RECORD-PAY-ERROR` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-RESET-PAY-RESULT` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-SAVE-ORDER` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-SMS-NOTIFY` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ACT-START-PAY` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `API-ORDER-SUBMIT` | `api-order.yaml` | api | [SubmitOrderController.java](src/main/java/com/example/order/controller/SubmitOrderController.java), [SubmitOrderService.java](src/main/java/com/example/order/service/SubmitOrderService.java) |
-| `API-PARAM-ORDER-ID` | `api-order.yaml` | api | [SubmitOrderController.java](src/main/java/com/example/order/controller/SubmitOrderController.java) |
-| `API-PARAM-REMARK` | `api-order.yaml` | api | [SubmitOrderRequest.java](src/main/java/com/example/order/dto/SubmitOrderRequest.java) |
-| `API-PARAM-STATUS` | `api-order.yaml` | api | [SubmitOrderRequest.java](src/main/java/com/example/order/dto/SubmitOrderRequest.java) |
-| `API-PARAM-TYPE` | `api-order.yaml` | api | [SubmitOrderRequest.java](src/main/java/com/example/order/dto/SubmitOrderRequest.java) |
-| `BUS-ORDER-PAYMENT` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `DATA-ORDER` | `data-order.yaml` | data | [Order.java](src/main/java/com/example/order/entity/Order.java), [OrderDao.java](src/main/java/com/example/order/dao/OrderDao.java), [OrderMapper.java](src/main/java/com/example/order/mapper/OrderMapper.java) |
-| `DATA-ORDER-DETAIL` | `data-order.yaml` | data | [OrderDetail.java](src/main/java/com/example/order/entity/OrderDetail.java), [OrderDetailDao.java](src/main/java/com/example/order/dao/OrderDetailDao.java), [OrderDetailMapper.java](src/main/java/com/example/order/mapper/OrderDetailMapper.java) |
-| `DATA-PAY` | `data-order.yaml` | data | [Pay.java](src/main/java/com/example/order/entity/Pay.java), [PayDao.java](src/main/java/com/example/order/dao/PayDao.java), [PayMapper.java](src/main/java/com/example/order/mapper/PayMapper.java) |
-| `DATA-PAY-DETAIL` | `data-order.yaml` | data | [PayDetail.java](src/main/java/com/example/order/entity/PayDetail.java), [PayDetailDao.java](src/main/java/com/example/order/dao/PayDetailDao.java), [PayDetailMapper.java](src/main/java/com/example/order/mapper/PayDetailMapper.java) |
-| `DATA-USER` | `data-order.yaml` | data | [User.java](src/main/java/com/example/order/entity/User.java), [UserDao.java](src/main/java/com/example/order/dao/UserDao.java), [UserMapper.java](src/main/java/com/example/order/mapper/UserMapper.java) |
-| `DIR-ERROR` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `DIR-ORDERED` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `DIR-PAY-RESULT` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `DIR-PAYING` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `DIR-SUCCESS` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `ENUM-ORDER-STATUS` | `enum-common.yaml` | enum | [OrderStatus.java](src/main/java/com/example/order/enums/OrderStatus.java) |
-| `ENUM-ORDER-TYPE` | `enum-common.yaml` | enum | [OrderType.java](src/main/java/com/example/order/enums/OrderType.java) |
-| `ENUM-PAY-RESULT-CODE` | `enum-common.yaml` | enum | [PayResultCode.java](src/main/java/com/example/order/enums/PayResultCode.java) |
-| `ENUM-PAYMENT-STATUS` | `enum-common.yaml` | enum | [PaymentStatus.java](src/main/java/com/example/order/enums/PaymentStatus.java) |
-| `ENUM-VALUE-ORDER-STATUS-ERROR` | `enum-common.yaml` | enum | [OrderStatus.java](src/main/java/com/example/order/enums/OrderStatus.java) |
-| `ENUM-VALUE-ORDER-STATUS-PAYING` | `enum-common.yaml` | enum | [OrderStatus.java](src/main/java/com/example/order/enums/OrderStatus.java) |
-| `ENUM-VALUE-ORDER-STATUS-SUCCESS` | `enum-common.yaml` | enum | [OrderStatus.java](src/main/java/com/example/order/enums/OrderStatus.java) |
-| `ENUM-VALUE-ORDER-STATUS-WAIT-PAY` | `enum-common.yaml` | enum | [OrderStatus.java](src/main/java/com/example/order/enums/OrderStatus.java) |
-| `ENUM-VALUE-ORDER-TYPE-NORMAL` | `enum-common.yaml` | enum | [OrderType.java](src/main/java/com/example/order/enums/OrderType.java) |
-| `ENUM-VALUE-ORDER-TYPE-PREORDER` | `enum-common.yaml` | enum | [OrderType.java](src/main/java/com/example/order/enums/OrderType.java) |
-| `ENUM-VALUE-PAY-RESULT-ERROR` | `enum-common.yaml` | enum | [PayResultCode.java](src/main/java/com/example/order/enums/PayResultCode.java) |
-| `ENUM-VALUE-PAY-RESULT-SUCCESS` | `enum-common.yaml` | enum | [PayResultCode.java](src/main/java/com/example/order/enums/PayResultCode.java) |
-| `ENUM-VALUE-PAYMENT-STATUS-INIT` | `enum-common.yaml` | enum | [PaymentStatus.java](src/main/java/com/example/order/enums/PaymentStatus.java) |
-| `ENUM-VALUE-PAYMENT-STATUS-PROCESSING` | `enum-common.yaml` | enum | [PaymentStatus.java](src/main/java/com/example/order/enums/PaymentStatus.java) |
-| `INFO-COMMON-PAY-ERROR` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-COMMON-PAY-SUCCESS` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-ORDER-ORDERED` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-ORDER-PAY-ERROR-STATUS` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-ORDER-PAY-SUCCESS-STATUS` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-ORDER-PAYABLE` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-ORDER-PAYING` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-ORDER-WAIT-PAY` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-PAYMENT-COMPLETED` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-PAYMENT-ERROR` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-PAYMENT-HAS-RESULT` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-PAYMENT-INFO` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-PAYMENT-SUCCESS` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-USER-ACTIVATED` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-USER-CERTIFIED` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `INFO-USER-EFFECTIVE` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `PROD-ORDER` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `PROD-PAY-ERROR` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `PROD-PAY-RESULT` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `PROD-PAYMENT-INFO` | `business-order-payment.yaml` | business | DEC Runtime / application binding |
-| `RULE-CONFIRM-PAY-ERROR` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RULE-CONFIRM-PAY-SUCCESS` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RULE-HAS-PAY-RESULT` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-HAS-PAYMENT-INFO` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-INSERT-DETAIL` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RULE-INSERT-ORDER` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RULE-INSERT-PAY` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-IS-PAY-ERROR` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-IS-PAY-SUCCESS` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-ORDER-IS-WAIT-PAY` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RULE-RECEIVE-PAY-RESULT` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-RECORD-PAY-ERROR` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-RESET-PAY-RESULT` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RULE-USER-IS-ACTIVATED` | `rule-user.yaml` | rule | DEC Runtime / application binding |
-| `RULE-USER-IS-CERTIFIED` | `rule-user.yaml` | rule | DEC Runtime / application binding |
-| `RV-CONFIRM-PAY-ERROR` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RV-CONFIRM-PAY-SUCCESS` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RV-HAS-PAY-RESULT` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-HAS-PAYMENT-INFO` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-IS-PAY-ERROR` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-IS-PAY-SUCCESS` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-ORDER-IS-WAIT-PAY` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RV-PAY` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-RECEIVE-PAY-RESULT` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-RECORD-PAY-ERROR` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-RESET-PAY-RESULT` | `rule-payment.yaml` | rule | DEC Runtime / application binding |
-| `RV-SAVE-ORDER` | `rule-order.yaml` | rule | DEC Runtime / application binding |
-| `RV-USER-IS-ACTIVATED` | `rule-user.yaml` | rule | DEC Runtime / application binding |
-| `RV-USER-IS-CERTIFIED` | `rule-user.yaml` | rule | DEC Runtime / application binding |
-| `SYS-COMMON` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `SYS-ORDER` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `SYS-PAYMENT` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `SYS-USER` | `systems-order.yaml` | systems | DEC Runtime / application binding |
-| `VIEW-ORDER-INFO` | `view-order.yaml` | view | [OrderInfo.java](src/main/java/com/example/order/view/OrderInfo.java) |
-| `VIEW-USER-INFO` | `view-order.yaml` | view | [UserInfo.java](src/main/java/com/example/order/view/UserInfo.java) |
+| Design ID | YAML source | XML source | Kind | Generated Java |
+| --- | --- | --- | --- | --- |
+| `ACT-CONFIRM-PAY-ERROR` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-CONFIRM-PAY-ERROR]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-CONFIRM-PAY-ERROR]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-CONFIRM-PAY-SUCCESS` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-SUCCESS].actions[id=ACT-CONFIRM-PAY-SUCCESS]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-SUCCESS].actions[id=ACT-CONFIRM-PAY-SUCCESS]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-RECEIVE-PAY-RESULT` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT].actions[id=ACT-RECEIVE-PAY-RESULT]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT].actions[id=ACT-RECEIVE-PAY-RESULT]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-RECORD-PAY-ERROR` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-RECORD-PAY-ERROR]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-RECORD-PAY-ERROR]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-RESET-PAY-RESULT` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT].subDirectories.back.actions[id=ACT-RESET-PAY-RESULT]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT].subDirectories.back.actions[id=ACT-RESET-PAY-RESULT]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-SAVE-ORDER` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ORDERED].actions[id=ACT-SAVE-ORDER]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ORDERED].actions[id=ACT-SAVE-ORDER]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-SMS-NOTIFY` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-SMS-NOTIFY]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-SMS-NOTIFY]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ACT-START-PAY` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAYING].actions[id=ACT-START-PAY]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAYING].actions[id=ACT-START-PAY]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `API-ORDER-SUBMIT` | `api-order.yaml#apis[id=API-ORDER-SUBMIT]` | `api-order.xml#apis[id=API-ORDER-SUBMIT]` | api | [OrdersController.java](src/main/java/com/example/order/order/controller/OrdersController.java), [OrdersService.java](src/main/java/com/example/order/order/service/OrdersService.java) |
+| `API-PARAM-ORDER-ID` | `api-order.yaml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-ORDER-ID]` | `api-order.xml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-ORDER-ID]` | api | [OrdersController.java](src/main/java/com/example/order/order/controller/OrdersController.java) |
+| `API-PARAM-REMARK` | `api-order.yaml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-REMARK]` | `api-order.xml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-REMARK]` | api | [SubmitOrderRequest.java](src/main/java/com/example/order/order/dto/SubmitOrderRequest.java) |
+| `API-PARAM-STATUS` | `api-order.yaml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-STATUS]` | `api-order.xml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-STATUS]` | api | [SubmitOrderRequest.java](src/main/java/com/example/order/order/dto/SubmitOrderRequest.java) |
+| `API-PARAM-TYPE` | `api-order.yaml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-TYPE]` | `api-order.xml#apis[id=API-ORDER-SUBMIT].request.params[id=API-PARAM-TYPE]` | api | [SubmitOrderRequest.java](src/main/java/com/example/order/order/dto/SubmitOrderRequest.java) |
+| `BUS-ORDER-PAYMENT` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `DATA-ORDER` | `data-order.yaml#datas[id=DATA-ORDER]` | `data-order.xml#datas[id=DATA-ORDER]` | data | [Order.java](src/main/java/com/example/order/order/entity/Order.java), [OrderDao.java](src/main/java/com/example/order/order/dao/OrderDao.java), [OrderMapper.java](src/main/java/com/example/order/order/mapper/OrderMapper.java) |
+| `DATA-ORDER-DETAIL` | `data-order.yaml#datas[id=DATA-ORDER-DETAIL]` | `data-order.xml#datas[id=DATA-ORDER-DETAIL]` | data | [OrderDetail.java](src/main/java/com/example/order/order/entity/OrderDetail.java), [OrderDetailDao.java](src/main/java/com/example/order/order/dao/OrderDetailDao.java), [OrderDetailMapper.java](src/main/java/com/example/order/order/mapper/OrderDetailMapper.java) |
+| `DATA-PAY` | `data-order.yaml#datas[id=DATA-PAY]` | `data-order.xml#datas[id=DATA-PAY]` | data | [Pay.java](src/main/java/com/example/order/payment/entity/Pay.java), [PayDao.java](src/main/java/com/example/order/payment/dao/PayDao.java), [PayMapper.java](src/main/java/com/example/order/payment/mapper/PayMapper.java) |
+| `DATA-PAY-DETAIL` | `data-order.yaml#datas[id=DATA-PAY-DETAIL]` | `data-order.xml#datas[id=DATA-PAY-DETAIL]` | data | [PayDetail.java](src/main/java/com/example/order/payment/entity/PayDetail.java), [PayDetailDao.java](src/main/java/com/example/order/payment/dao/PayDetailDao.java), [PayDetailMapper.java](src/main/java/com/example/order/payment/mapper/PayDetailMapper.java) |
+| `DATA-USER` | `data-order.yaml#datas[id=DATA-USER]` | `data-order.xml#datas[id=DATA-USER]` | data | [User.java](src/main/java/com/example/order/user/entity/User.java), [UserDao.java](src/main/java/com/example/order/user/dao/UserDao.java), [UserMapper.java](src/main/java/com/example/order/user/mapper/UserMapper.java) |
+| `DIR-ERROR` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `DIR-ORDERED` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ORDERED]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ORDERED]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `DIR-PAY-RESULT` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `DIR-PAYING` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAYING]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAYING]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `DIR-SUCCESS` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-SUCCESS]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-SUCCESS]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `ENUM-ORDER-STATUS` | `enum-common.yaml#enums[id=ENUM-ORDER-STATUS]` | `enum-common.xml#enums[id=ENUM-ORDER-STATUS]` | enum | [OrderStatus.java](src/main/java/com/example/order/order/enums/OrderStatus.java) |
+| `ENUM-ORDER-TYPE` | `enum-common.yaml#enums[id=ENUM-ORDER-TYPE]` | `enum-common.xml#enums[id=ENUM-ORDER-TYPE]` | enum | [OrderType.java](src/main/java/com/example/order/order/enums/OrderType.java) |
+| `ENUM-PAY-RESULT-CODE` | `enum-common.yaml#enums[id=ENUM-PAY-RESULT-CODE]` | `enum-common.xml#enums[id=ENUM-PAY-RESULT-CODE]` | enum | [PayResultCode.java](src/main/java/com/example/order/payment/enums/PayResultCode.java) |
+| `ENUM-PAYMENT-STATUS` | `enum-common.yaml#enums[id=ENUM-PAYMENT-STATUS]` | `enum-common.xml#enums[id=ENUM-PAYMENT-STATUS]` | enum | [PaymentStatus.java](src/main/java/com/example/order/payment/enums/PaymentStatus.java) |
+| `ENUM-VALUE-ORDER-STATUS-ERROR` | `enum-common.yaml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-ERROR]` | `enum-common.xml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-ERROR]` | enum | [OrderStatus.java](src/main/java/com/example/order/order/enums/OrderStatus.java) |
+| `ENUM-VALUE-ORDER-STATUS-PAYING` | `enum-common.yaml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-PAYING]` | `enum-common.xml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-PAYING]` | enum | [OrderStatus.java](src/main/java/com/example/order/order/enums/OrderStatus.java) |
+| `ENUM-VALUE-ORDER-STATUS-SUCCESS` | `enum-common.yaml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-SUCCESS]` | `enum-common.xml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-SUCCESS]` | enum | [OrderStatus.java](src/main/java/com/example/order/order/enums/OrderStatus.java) |
+| `ENUM-VALUE-ORDER-STATUS-WAIT-PAY` | `enum-common.yaml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-WAIT-PAY]` | `enum-common.xml#enums[id=ENUM-ORDER-STATUS].values[id=ENUM-VALUE-ORDER-STATUS-WAIT-PAY]` | enum | [OrderStatus.java](src/main/java/com/example/order/order/enums/OrderStatus.java) |
+| `ENUM-VALUE-ORDER-TYPE-NORMAL` | `enum-common.yaml#enums[id=ENUM-ORDER-TYPE].values[id=ENUM-VALUE-ORDER-TYPE-NORMAL]` | `enum-common.xml#enums[id=ENUM-ORDER-TYPE].values[id=ENUM-VALUE-ORDER-TYPE-NORMAL]` | enum | [OrderType.java](src/main/java/com/example/order/order/enums/OrderType.java) |
+| `ENUM-VALUE-ORDER-TYPE-PREORDER` | `enum-common.yaml#enums[id=ENUM-ORDER-TYPE].values[id=ENUM-VALUE-ORDER-TYPE-PREORDER]` | `enum-common.xml#enums[id=ENUM-ORDER-TYPE].values[id=ENUM-VALUE-ORDER-TYPE-PREORDER]` | enum | [OrderType.java](src/main/java/com/example/order/order/enums/OrderType.java) |
+| `ENUM-VALUE-PAY-RESULT-ERROR` | `enum-common.yaml#enums[id=ENUM-PAY-RESULT-CODE].values[id=ENUM-VALUE-PAY-RESULT-ERROR]` | `enum-common.xml#enums[id=ENUM-PAY-RESULT-CODE].values[id=ENUM-VALUE-PAY-RESULT-ERROR]` | enum | [PayResultCode.java](src/main/java/com/example/order/payment/enums/PayResultCode.java) |
+| `ENUM-VALUE-PAY-RESULT-SUCCESS` | `enum-common.yaml#enums[id=ENUM-PAY-RESULT-CODE].values[id=ENUM-VALUE-PAY-RESULT-SUCCESS]` | `enum-common.xml#enums[id=ENUM-PAY-RESULT-CODE].values[id=ENUM-VALUE-PAY-RESULT-SUCCESS]` | enum | [PayResultCode.java](src/main/java/com/example/order/payment/enums/PayResultCode.java) |
+| `ENUM-VALUE-PAYMENT-STATUS-INIT` | `enum-common.yaml#enums[id=ENUM-PAYMENT-STATUS].values[id=ENUM-VALUE-PAYMENT-STATUS-INIT]` | `enum-common.xml#enums[id=ENUM-PAYMENT-STATUS].values[id=ENUM-VALUE-PAYMENT-STATUS-INIT]` | enum | [PaymentStatus.java](src/main/java/com/example/order/payment/enums/PaymentStatus.java) |
+| `ENUM-VALUE-PAYMENT-STATUS-PROCESSING` | `enum-common.yaml#enums[id=ENUM-PAYMENT-STATUS].values[id=ENUM-VALUE-PAYMENT-STATUS-PROCESSING]` | `enum-common.xml#enums[id=ENUM-PAYMENT-STATUS].values[id=ENUM-VALUE-PAYMENT-STATUS-PROCESSING]` | enum | [PaymentStatus.java](src/main/java/com/example/order/payment/enums/PaymentStatus.java) |
+| `INFO-COMMON-PAY-ERROR` | `systems-order.yaml#systems[id=SYS-COMMON].information[id=INFO-COMMON-PAY-ERROR]` | `systems-order.xml#systems[id=SYS-COMMON].information[id=INFO-COMMON-PAY-ERROR]` | systems | [CommonInformation.java](src/main/java/com/example/order/common/information/CommonInformation.java) |
+| `INFO-COMMON-PAY-SUCCESS` | `systems-order.yaml#systems[id=SYS-COMMON].information[id=INFO-COMMON-PAY-SUCCESS]` | `systems-order.xml#systems[id=SYS-COMMON].information[id=INFO-COMMON-PAY-SUCCESS]` | systems | [CommonInformation.java](src/main/java/com/example/order/common/information/CommonInformation.java) |
+| `INFO-ORDER-ORDERED` | `systems-order.yaml#systems[id=SYS-ORDER].information[id=INFO-ORDER-ORDERED]` | `systems-order.xml#systems[id=SYS-ORDER].information[id=INFO-ORDER-ORDERED]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `INFO-ORDER-PAY-ERROR-STATUS` | `systems-order.yaml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAY-ERROR-STATUS]` | `systems-order.xml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAY-ERROR-STATUS]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `INFO-ORDER-PAY-SUCCESS-STATUS` | `systems-order.yaml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAY-SUCCESS-STATUS]` | `systems-order.xml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAY-SUCCESS-STATUS]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `INFO-ORDER-PAYABLE` | `systems-order.yaml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAYABLE]` | `systems-order.xml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAYABLE]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `INFO-ORDER-PAYING` | `systems-order.yaml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAYING]` | `systems-order.xml#systems[id=SYS-ORDER].information[id=INFO-ORDER-PAYING]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `INFO-ORDER-WAIT-PAY` | `systems-order.yaml#systems[id=SYS-ORDER].information[id=INFO-ORDER-WAIT-PAY]` | `systems-order.xml#systems[id=SYS-ORDER].information[id=INFO-ORDER-WAIT-PAY]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `INFO-PAYMENT-COMPLETED` | `systems-order.yaml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-COMPLETED]` | `systems-order.xml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-COMPLETED]` | systems | [PaymentInformation.java](src/main/java/com/example/order/payment/information/PaymentInformation.java) |
+| `INFO-PAYMENT-ERROR` | `systems-order.yaml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-ERROR]` | `systems-order.xml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-ERROR]` | systems | [PaymentInformation.java](src/main/java/com/example/order/payment/information/PaymentInformation.java) |
+| `INFO-PAYMENT-HAS-RESULT` | `systems-order.yaml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-HAS-RESULT]` | `systems-order.xml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-HAS-RESULT]` | systems | [PaymentInformation.java](src/main/java/com/example/order/payment/information/PaymentInformation.java) |
+| `INFO-PAYMENT-INFO` | `systems-order.yaml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-INFO]` | `systems-order.xml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-INFO]` | systems | [PaymentInformation.java](src/main/java/com/example/order/payment/information/PaymentInformation.java) |
+| `INFO-PAYMENT-SUCCESS` | `systems-order.yaml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-SUCCESS]` | `systems-order.xml#systems[id=SYS-PAYMENT].information[id=INFO-PAYMENT-SUCCESS]` | systems | [PaymentInformation.java](src/main/java/com/example/order/payment/information/PaymentInformation.java) |
+| `INFO-USER-ACTIVATED` | `systems-order.yaml#systems[id=SYS-USER].information[id=INFO-USER-ACTIVATED]` | `systems-order.xml#systems[id=SYS-USER].information[id=INFO-USER-ACTIVATED]` | systems | [UserInformation.java](src/main/java/com/example/order/user/information/UserInformation.java) |
+| `INFO-USER-CERTIFIED` | `systems-order.yaml#systems[id=SYS-USER].information[id=INFO-USER-CERTIFIED]` | `systems-order.xml#systems[id=SYS-USER].information[id=INFO-USER-CERTIFIED]` | systems | [UserInformation.java](src/main/java/com/example/order/user/information/UserInformation.java) |
+| `INFO-USER-EFFECTIVE` | `systems-order.yaml#systems[id=SYS-USER].information[id=INFO-USER-EFFECTIVE]` | `systems-order.xml#systems[id=SYS-USER].information[id=INFO-USER-EFFECTIVE]` | systems | [UserInformation.java](src/main/java/com/example/order/user/information/UserInformation.java) |
+| `PROD-ORDER` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ORDERED].actions[id=ACT-SAVE-ORDER].produces[id=PROD-ORDER]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ORDERED].actions[id=ACT-SAVE-ORDER].produces[id=PROD-ORDER]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `PROD-PAY-ERROR` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-RECORD-PAY-ERROR].produces[id=PROD-PAY-ERROR]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-ERROR].actions[id=ACT-RECORD-PAY-ERROR].produces[id=PROD-PAY-ERROR]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `PROD-PAY-RESULT` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT].actions[id=ACT-RECEIVE-PAY-RESULT].produces[id=PROD-PAY-RESULT]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAY-RESULT].actions[id=ACT-RECEIVE-PAY-RESULT].produces[id=PROD-PAY-RESULT]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `PROD-PAYMENT-INFO` | `business-order-payment.yaml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAYING].actions[id=ACT-START-PAY].produces[id=PROD-PAYMENT-INFO]` | `business-order-payment.xml#business[id=BUS-ORDER-PAYMENT].directories[id=DIR-PAYING].actions[id=ACT-START-PAY].produces[id=PROD-PAYMENT-INFO]` | business | [OrderPaymentFlow.java](src/main/java/com/example/order/business/OrderPaymentFlow.java) |
+| `RULE-CONFIRM-PAY-ERROR` | `rule-order.yaml#ruleViews[id=RV-CONFIRM-PAY-ERROR].rules[id=RULE-CONFIRM-PAY-ERROR]` | `rule-order.xml#ruleViews[id=RV-CONFIRM-PAY-ERROR].rules[id=RULE-CONFIRM-PAY-ERROR]` | rule | DEC Runtime / application binding |
+| `RULE-CONFIRM-PAY-SUCCESS` | `rule-order.yaml#ruleViews[id=RV-CONFIRM-PAY-SUCCESS].rules[id=RULE-CONFIRM-PAY-SUCCESS]` | `rule-order.xml#ruleViews[id=RV-CONFIRM-PAY-SUCCESS].rules[id=RULE-CONFIRM-PAY-SUCCESS]` | rule | DEC Runtime / application binding |
+| `RULE-HAS-PAY-RESULT` | `rule-payment.yaml#ruleViews[id=RV-HAS-PAY-RESULT].rules[id=RULE-HAS-PAY-RESULT]` | `rule-payment.xml#ruleViews[id=RV-HAS-PAY-RESULT].rules[id=RULE-HAS-PAY-RESULT]` | rule | DEC Runtime / application binding |
+| `RULE-HAS-PAYMENT-INFO` | `rule-payment.yaml#ruleViews[id=RV-HAS-PAYMENT-INFO].rules[id=RULE-HAS-PAYMENT-INFO]` | `rule-payment.xml#ruleViews[id=RV-HAS-PAYMENT-INFO].rules[id=RULE-HAS-PAYMENT-INFO]` | rule | DEC Runtime / application binding |
+| `RULE-INSERT-DETAIL` | `rule-order.yaml#ruleViews[id=RV-SAVE-ORDER].rules[id=RULE-INSERT-DETAIL]` | `rule-order.xml#ruleViews[id=RV-SAVE-ORDER].rules[id=RULE-INSERT-DETAIL]` | rule | DEC Runtime / application binding |
+| `RULE-INSERT-ORDER` | `rule-order.yaml#ruleViews[id=RV-SAVE-ORDER].rules[id=RULE-INSERT-ORDER]` | `rule-order.xml#ruleViews[id=RV-SAVE-ORDER].rules[id=RULE-INSERT-ORDER]` | rule | DEC Runtime / application binding |
+| `RULE-INSERT-PAY` | `rule-payment.yaml#ruleViews[id=RV-PAY].rules[id=RULE-INSERT-PAY]` | `rule-payment.xml#ruleViews[id=RV-PAY].rules[id=RULE-INSERT-PAY]` | rule | DEC Runtime / application binding |
+| `RULE-IS-PAY-ERROR` | `rule-payment.yaml#ruleViews[id=RV-IS-PAY-ERROR].rules[id=RULE-IS-PAY-ERROR]` | `rule-payment.xml#ruleViews[id=RV-IS-PAY-ERROR].rules[id=RULE-IS-PAY-ERROR]` | rule | DEC Runtime / application binding |
+| `RULE-IS-PAY-SUCCESS` | `rule-payment.yaml#ruleViews[id=RV-IS-PAY-SUCCESS].rules[id=RULE-IS-PAY-SUCCESS]` | `rule-payment.xml#ruleViews[id=RV-IS-PAY-SUCCESS].rules[id=RULE-IS-PAY-SUCCESS]` | rule | DEC Runtime / application binding |
+| `RULE-ORDER-IS-WAIT-PAY` | `rule-order.yaml#ruleViews[id=RV-ORDER-IS-WAIT-PAY].rules[id=RULE-ORDER-IS-WAIT-PAY]` | `rule-order.xml#ruleViews[id=RV-ORDER-IS-WAIT-PAY].rules[id=RULE-ORDER-IS-WAIT-PAY]` | rule | DEC Runtime / application binding |
+| `RULE-RECEIVE-PAY-RESULT` | `rule-payment.yaml#ruleViews[id=RV-RECEIVE-PAY-RESULT].rules[id=RULE-RECEIVE-PAY-RESULT]` | `rule-payment.xml#ruleViews[id=RV-RECEIVE-PAY-RESULT].rules[id=RULE-RECEIVE-PAY-RESULT]` | rule | DEC Runtime / application binding |
+| `RULE-RECORD-PAY-ERROR` | `rule-payment.yaml#ruleViews[id=RV-RECORD-PAY-ERROR].rules[id=RULE-RECORD-PAY-ERROR]` | `rule-payment.xml#ruleViews[id=RV-RECORD-PAY-ERROR].rules[id=RULE-RECORD-PAY-ERROR]` | rule | DEC Runtime / application binding |
+| `RULE-RESET-PAY-RESULT` | `rule-payment.yaml#ruleViews[id=RV-RESET-PAY-RESULT].rules[id=RULE-RESET-PAY-RESULT]` | `rule-payment.xml#ruleViews[id=RV-RESET-PAY-RESULT].rules[id=RULE-RESET-PAY-RESULT]` | rule | DEC Runtime / application binding |
+| `RULE-USER-IS-ACTIVATED` | `rule-user.yaml#ruleViews[id=RV-USER-IS-ACTIVATED].rules[id=RULE-USER-IS-ACTIVATED]` | `rule-user.xml#ruleViews[id=RV-USER-IS-ACTIVATED].rules[id=RULE-USER-IS-ACTIVATED]` | rule | DEC Runtime / application binding |
+| `RULE-USER-IS-CERTIFIED` | `rule-user.yaml#ruleViews[id=RV-USER-IS-CERTIFIED].rules[id=RULE-USER-IS-CERTIFIED]` | `rule-user.xml#ruleViews[id=RV-USER-IS-CERTIFIED].rules[id=RULE-USER-IS-CERTIFIED]` | rule | DEC Runtime / application binding |
+| `RV-CONFIRM-PAY-ERROR` | `rule-order.yaml#ruleViews[id=RV-CONFIRM-PAY-ERROR]` | `rule-order.xml#ruleViews[id=RV-CONFIRM-PAY-ERROR]` | rule | DEC Runtime / application binding |
+| `RV-CONFIRM-PAY-SUCCESS` | `rule-order.yaml#ruleViews[id=RV-CONFIRM-PAY-SUCCESS]` | `rule-order.xml#ruleViews[id=RV-CONFIRM-PAY-SUCCESS]` | rule | DEC Runtime / application binding |
+| `RV-HAS-PAY-RESULT` | `rule-payment.yaml#ruleViews[id=RV-HAS-PAY-RESULT]` | `rule-payment.xml#ruleViews[id=RV-HAS-PAY-RESULT]` | rule | DEC Runtime / application binding |
+| `RV-HAS-PAYMENT-INFO` | `rule-payment.yaml#ruleViews[id=RV-HAS-PAYMENT-INFO]` | `rule-payment.xml#ruleViews[id=RV-HAS-PAYMENT-INFO]` | rule | DEC Runtime / application binding |
+| `RV-IS-PAY-ERROR` | `rule-payment.yaml#ruleViews[id=RV-IS-PAY-ERROR]` | `rule-payment.xml#ruleViews[id=RV-IS-PAY-ERROR]` | rule | DEC Runtime / application binding |
+| `RV-IS-PAY-SUCCESS` | `rule-payment.yaml#ruleViews[id=RV-IS-PAY-SUCCESS]` | `rule-payment.xml#ruleViews[id=RV-IS-PAY-SUCCESS]` | rule | DEC Runtime / application binding |
+| `RV-ORDER-IS-WAIT-PAY` | `rule-order.yaml#ruleViews[id=RV-ORDER-IS-WAIT-PAY]` | `rule-order.xml#ruleViews[id=RV-ORDER-IS-WAIT-PAY]` | rule | DEC Runtime / application binding |
+| `RV-PAY` | `rule-payment.yaml#ruleViews[id=RV-PAY]` | `rule-payment.xml#ruleViews[id=RV-PAY]` | rule | DEC Runtime / application binding |
+| `RV-RECEIVE-PAY-RESULT` | `rule-payment.yaml#ruleViews[id=RV-RECEIVE-PAY-RESULT]` | `rule-payment.xml#ruleViews[id=RV-RECEIVE-PAY-RESULT]` | rule | DEC Runtime / application binding |
+| `RV-RECORD-PAY-ERROR` | `rule-payment.yaml#ruleViews[id=RV-RECORD-PAY-ERROR]` | `rule-payment.xml#ruleViews[id=RV-RECORD-PAY-ERROR]` | rule | DEC Runtime / application binding |
+| `RV-RESET-PAY-RESULT` | `rule-payment.yaml#ruleViews[id=RV-RESET-PAY-RESULT]` | `rule-payment.xml#ruleViews[id=RV-RESET-PAY-RESULT]` | rule | DEC Runtime / application binding |
+| `RV-SAVE-ORDER` | `rule-order.yaml#ruleViews[id=RV-SAVE-ORDER]` | `rule-order.xml#ruleViews[id=RV-SAVE-ORDER]` | rule | DEC Runtime / application binding |
+| `RV-USER-IS-ACTIVATED` | `rule-user.yaml#ruleViews[id=RV-USER-IS-ACTIVATED]` | `rule-user.xml#ruleViews[id=RV-USER-IS-ACTIVATED]` | rule | DEC Runtime / application binding |
+| `RV-USER-IS-CERTIFIED` | `rule-user.yaml#ruleViews[id=RV-USER-IS-CERTIFIED]` | `rule-user.xml#ruleViews[id=RV-USER-IS-CERTIFIED]` | rule | DEC Runtime / application binding |
+| `SYS-COMMON` | `systems-order.yaml#systems[id=SYS-COMMON]` | `systems-order.xml#systems[id=SYS-COMMON]` | systems | [CommonInformation.java](src/main/java/com/example/order/common/information/CommonInformation.java) |
+| `SYS-ORDER` | `systems-order.yaml#systems[id=SYS-ORDER]` | `systems-order.xml#systems[id=SYS-ORDER]` | systems | [OrderInformation.java](src/main/java/com/example/order/order/information/OrderInformation.java) |
+| `SYS-PAYMENT` | `systems-order.yaml#systems[id=SYS-PAYMENT]` | `systems-order.xml#systems[id=SYS-PAYMENT]` | systems | [PaymentInformation.java](src/main/java/com/example/order/payment/information/PaymentInformation.java) |
+| `SYS-USER` | `systems-order.yaml#systems[id=SYS-USER]` | `systems-order.xml#systems[id=SYS-USER]` | systems | [UserInformation.java](src/main/java/com/example/order/user/information/UserInformation.java) |
+| `VIEW-ORDER-INFO` | `view-order.yaml#views[id=VIEW-ORDER-INFO]` | `view-order.xml#views[id=VIEW-ORDER-INFO]` | view | [OrderInfo.java](src/main/java/com/example/order/order/view/OrderInfo.java) |
+| `VIEW-USER-INFO` | `view-order.yaml#views[id=VIEW-USER-INFO]` | `view-order.xml#views[id=VIEW-USER-INFO]` | view | [UserInfo.java](src/main/java/com/example/order/user/view/UserInfo.java) |

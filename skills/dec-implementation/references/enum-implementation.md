@@ -27,6 +27,7 @@ DEC Enum
 如果 Runtime 已能直接消费 Enum XML/YAML，Binding 使用 `runtimeManaged`。否则可以生成/维护语言 Enum，但必须：
 
 - 名称映射可技术化，业务 `value/name` 不变；
+- `value` 的实现类型必须为 `Integer`；序列化、反序列化、持久化转换和 API 参数都使用该整数值，不得退化为字符串或枚举常量名；
 - 序列化/反序列化使用 `value`；
 - 数据库存储/外部接口值与 YAML 相同；
 - 未知值处理策略显式测试，不得静默映射到其他值。

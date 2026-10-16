@@ -95,6 +95,8 @@ every(orderDetailList, status : 4);]]></change-data>
       <information name="error" view-ref="OrderInfo" rule-ref="isPayError"/>
       <!-- dec-id: INFO-PAYMENT-COMPLETED -->
       <information name="completed" expression="payment.success&#10;or&#10;payment.error&#10;"/>
+      <!-- dec-id: INFO-PAYMENT-PROCESSING -->
+      <information name="processing" view-ref="OrderInfo" rule-data="payInfo.status = 1"/>
     </information-info>
     <model-access-info>
       <model-access model-ref="OrderInfo">
@@ -114,6 +116,10 @@ every(orderDetailList, status : 4);]]></change-data>
       <information name="paySuccess" expression="payment.success&#10;and&#10;order.paySuccessStatus&#10;"/>
       <!-- dec-id: INFO-COMMON-PAY-ERROR -->
       <information name="payError" expression="payment.error&#10;and&#10;order.payErrorStatus&#10;"/>
+      <!-- dec-id: INFO-COMMON-ORDERED -->
+      <information name="ordered" expression="order.ordered and not payment.paymentInfo"/>
+      <!-- dec-id: INFO-COMMON-PAYING -->
+      <information name="paying" expression="order.paying and payment.paymentInfo and payment.processing and not payment.hasResult"/>
     </information-info>
   </system>
 </systems>

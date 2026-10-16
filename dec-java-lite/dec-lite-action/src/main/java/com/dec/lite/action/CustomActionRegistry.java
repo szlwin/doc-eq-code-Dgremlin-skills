@@ -8,9 +8,17 @@ public final class CustomActionRegistry {
     private final Map<String, CustomAction> actions = new ConcurrentHashMap<>();
     private volatile boolean frozen;
 
+    /** Assemble an application-scoped registry from provider instances, then seal registration. */
+    public static CustomActionRegistry from(Collection<? extends CustomAction> providers) {
+        if (providers == null) throw new IllegalArgumentException("Custom Action providers are required");
+        CustomActionRegistry registry = new CustomActionRegistry();
+        providers.forEach(registry::register);
+        return registry.freeze();
+    }
+
     public synchronized CustomActionRegistry register(CustomAction action) {
         if (frozen) throw new IllegalStateException("Custom Action registry is frozen");
-        if (action == null || action.name().isBlank()) throw new IllegalArgumentException("Custom Action with name is required");
+        if (action == null || action.name() == null || action.name().isBlank()) throw new IllegalArgumentException("Custom Action with name is required");
         if (actions.putIfAbsent(action.name(), action) != null) throw new IllegalArgumentException("duplicate Custom Action: " + action.name());
         return this;
     }

@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 
 /** Session-owned, thread-confined transaction boundary; only one physical route is atomic. */
 public final class TransactionCoordinator implements ActionTransaction, AutoCloseable {
-    public enum State { IDLE, ACTIVE, COMMITTED, ROLLED_BACK, FAILED, CLOSED }
+    public enum State { IDLE, ACTIVE, COMMITTED, EXTERNAL_PENDING, ROLLBACK_ONLY, ROLLED_BACK, FAILED, CLOSED }
     private final TransactionPolicy policy;
     private final ActionTransaction delegate;
     private final Map<String, TransactionResource> resources = new LinkedHashMap<>();
@@ -27,6 +27,8 @@ public final class TransactionCoordinator implements ActionTransaction, AutoClos
     public TransactionCoordinator(TransactionPolicy policy, ActionTransaction delegate) {
         this.policy = policy == null ? TransactionPolicy.REQUIRED : policy;
         this.delegate = delegate;
+        if (this.policy == TransactionPolicy.EXTERNAL && delegate == null)
+            throw new IllegalArgumentException("EXTERNAL requires a transaction participant");
     }
     public synchronized Scope begin() {
         if (state == State.CLOSED) throw failure("session transaction is closed", null);
@@ -97,6 +99,17 @@ public final class TransactionCoordinator implements ActionTransaction, AutoClos
                 closeResources();
                 throw failure("transaction is rollback-only", null);
             }
+            if (policy == TransactionPolicy.EXTERNAL) {
+                try {
+                    delegate.commit(); // participant validates only; physical completion belongs to the caller
+                    state = State.EXTERNAL_PENDING;
+                    events.add(new TransactionEvent("external", "EXTERNAL_PENDING", "awaiting owner completion"));
+                } catch (RuntimeException validationFailure) {
+                    rollbackResources("external participation failed");
+                    throw failure("external transaction participation failed", validationFailure);
+                } finally { closeResources(); }
+                return;
+            }
             try {
                 if (policy == TransactionPolicy.REQUIRED) {
                     for (Map.Entry<String, TransactionResource> entry : resources.entrySet()) {
@@ -118,7 +131,7 @@ public final class TransactionCoordinator implements ActionTransaction, AutoClos
                 for (ExternalEffect effect : externalEffects)
                     events.add(new TransactionEvent(activeRoute, "EXTERNAL_IN_DOUBT", effect.key()));
                 state = State.FAILED;
-                throw failure("transaction commit failed", failure);
+                throw failure("transaction commit failed; outcome is unknown", failure);
             } finally { closeResources(); }
         }
     }
@@ -144,13 +157,17 @@ public final class TransactionCoordinator implements ActionTransaction, AutoClos
                 catch (RuntimeException exception) { failed = true; events.add(new TransactionEvent("legacy", "ROLLBACK_FAILED", exception.getMessage())); }
             }
         }
+        if (policy == TransactionPolicy.EXTERNAL) {
+            try { delegate.rollback(); events.add(new TransactionEvent("external", "EXTERNAL_ROLLBACK_ONLY", reason)); }
+            catch (RuntimeException exception) { failed = true; events.add(new TransactionEvent("external", "ROLLBACK_FAILED", exception.getMessage())); }
+        }
         for (int index = externalEffects.size() - 1; index >= 0; index--) {
             ExternalEffect effect = externalEffects.get(index);
             if (effect.compensation() == null) { failed = true; events.add(new TransactionEvent(activeRoute, "UNCOMPENSATED", effect.key())); continue; }
             try { effect.compensation().run(); events.add(new TransactionEvent(activeRoute, "COMPENSATED", effect.key())); }
             catch (RuntimeException exception) { failed = true; events.add(new TransactionEvent(activeRoute, "COMPENSATION_FAILED", effect.key() + ": " + exception.getMessage())); }
         }
-        state = failed ? State.FAILED : State.ROLLED_BACK;
+        state = failed ? State.FAILED : policy == TransactionPolicy.EXTERNAL ? State.ROLLBACK_ONLY : State.ROLLED_BACK;
     }
     private void closeResources() {
         for (Map.Entry<String, TransactionResource> entry : resources.entrySet()) {

@@ -32,7 +32,7 @@ python3 scripts/validate_binding.py \
   --design path/to/dec-yaml \
   --binding examples/implementation-binding.yaml
 
-# 交付前要求所有 Design ID 都有绑定；非 Runtime 实现还要求测试
+# 交付前要求所有 Design ID 都有绑定；已实现的 Runtime/代码节点都要求测试
 python3 scripts/validate_binding.py \
   --design path/to/dec-yaml \
   --binding implementation-binding.yaml \
@@ -55,3 +55,6 @@ python3 scripts/xml_io.py read path/to/generated.xml
 ```
 
 禁止直接打开、拼接或手工修改 YAML/XML。`dec-implementation` 不写 DEC XML；需要重建 XML 时使用设计侧正式 YAML→XML converter。
+
+
+可信度检查使用 `--require-symbols`（需要 JDK 21）与 `--require-evidence`；后者的证据必须由 `scripts/run_binding_verification.py` 包装真实测试生成。`--require-ready` 同时要求当前符号/测试证据有效且所有 Binding 为 VERIFIED，详见 [Binding 规范](references/implementation-binding.md)。

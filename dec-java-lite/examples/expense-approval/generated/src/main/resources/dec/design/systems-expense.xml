@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<systems>
+  <!-- dec-id: SYS-EXPENSE -->
+  <system name="expense">
+    <data-info>
+      <data-ref name="expense"/>
+    </data-info>
+    <view-info>
+      <view-ref name="ExpenseInfo"/>
+    </view-info>
+    <information-info>
+      <!-- dec-id: INFO-EXPENSE-DRAFT -->
+      <information name="draft" view-ref="ExpenseInfo" rule-data="status = 0">
+        <change-data><![CDATA[status : 0;]]></change-data>
+      </information>
+      <!-- dec-id: INFO-EXPENSE-SUBMITTED -->
+      <information name="submitted" view-ref="ExpenseInfo" rule-data="status = 1">
+        <change-data><![CDATA[status : 1;]]></change-data>
+      </information>
+      <!-- dec-id: INFO-EXPENSE-APPROVED -->
+      <information name="approved" view-ref="ExpenseInfo" rule-data="status = 2">
+        <change-data><![CDATA[status : 2;]]></change-data>
+      </information>
+      <!-- dec-id: INFO-EXPENSE-ELIGIBLE -->
+      <information name="eligible" view-ref="ExpenseInfo" rule-data="amount &lt;= 1000 and reviewerEnabled = true"/>
+    </information-info>
+  </system>
+</systems>

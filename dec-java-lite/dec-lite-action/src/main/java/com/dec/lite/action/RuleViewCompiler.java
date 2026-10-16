@@ -44,9 +44,14 @@ public final class RuleViewCompiler {
     }
 
     public RuleViewRegistry register(DecProject project, DataOperationAdapter adapter) {
+        return bind(compile(project), adapter);
+    }
+
+    /** Bind immutable compiled rules to one request adapter; never cache the resulting registry globally. */
+    public RuleViewRegistry bind(Map<RuleViewKey, CompiledRuleView> compiled, DataOperationAdapter adapter) {
         RuleViewRegistry registry = new RuleViewRegistry();
         RuleViewInterpreter interpreter = new RuleViewInterpreter(adapter);
-        for (CompiledRuleView view : compile(project).values()) {
+        for (CompiledRuleView view : Map.copyOf(compiled).values()) {
             RuleViewKey key = view.key();
             registry.register(key.system(), key.viewRef(), key.ruleRef(), invocation -> interpreter.execute(view, invocation));
         }

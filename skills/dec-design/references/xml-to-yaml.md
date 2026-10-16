@@ -51,13 +51,7 @@ python3 scripts/xml_to_yaml.py order.xml -o order.yaml --id-mode none
 
 推荐使用默认 `auto`。
 
-如果 XML 是这样生成的：
-
-```sh
-python3 scripts/yaml_to_xml.py order.yaml \
-  -o order.xml \
-  --emit-id-comments
-```
+如果 XML 按 [`yaml-to-xml.md`](yaml-to-xml.md) 的外部编辑策略生成了 Design ID 注释，
 
 则反向转换时会优先恢复：
 
@@ -182,7 +176,7 @@ Generated XML
 但需要注意：
 
 1. 普通 Runtime XML 中没有的设计元数据无法凭空恢复，例如原始 `id`、`notes`、`description`；
-2. `--emit-id-comments` 可以保留 Design ID，但不会恢复其他未写入 XML 的 metadata；
+2. Design ID 注释可以保留节点身份，但不会恢复其他未写入 XML 的 metadata；
 3. XML 导入成功不代表旧 XML 的业务设计本身正确；
 4. XML → YAML 是首次迁移能力，**不是把 XML 提升为新的权威源**；已有 YAML 的外部 XML 变更必须使用 `sync_xml_to_yaml.py` 安全合并；
 5. 转换后应以 canonical YAML 为准，后续 XML 只由 `yaml_to_xml.py` 派生。

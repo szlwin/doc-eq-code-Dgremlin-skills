@@ -30,9 +30,9 @@ orm-config.yaml
 - Custom Action：`smsNotify`；
 - Back：支付结果返回 paying 时执行 `resetPayResult`。
 
-生成的 XML 位于 `generated-xml/`，只作为对照和 Runtime/Compiler compatibility artifact，不作为编辑源。
+生成的 XML 位于 `generated-xml/`，只作为对照和 Runtime/Compiler compatibility artifact，不作为编辑源。此快照按下方的无注释命令生成；需要外部编辑并回流的 XML，遵循 [`references/yaml-to-xml.md`](../references/yaml-to-xml.md) 的外部编辑策略。
 
-HTML 设计站点位于 `generated-html/`：`order-payment.html` 是 Directory 首页，列出 Business Directory Maps；详细图位于 `directory/order-payment.html`。所有 System 统一位于 `generated-html/system/` 下；例如 `system/user/`、`system/order/`、`system/payment/`、`system/common/`。每个 System 目录包含 `index.html`、`data.html`、`views.html`、`ruleviews.html`、`apis.html`、`enums.html`、`information.html`。System 首页按 Data、View → RuleView、Enum、API、Information 导航。根目录保留全局技术索引作为兼容/跨系统索引。所有 HTML 必须由 `render_dec_graph.py` 重新生成并覆盖，禁止手工维护。
+HTML 设计站点位于 `generated-html/`：`directories.html` 是 Directory 首页，列出 Business Directory Maps；详细图位于 `directory/order-payment.html`。所有 System 统一位于 `generated-html/system/` 下；例如 `system/user/`、`system/order/`、`system/payment/`、`system/common/`。每个 System 目录包含 `index.html`、`data.html`、`views.html`、`ruleviews.html`、`apis.html`、`enums.html`、`information.html`。System 首页按 Data、View → RuleView、Enum、API、Information 导航。根目录保留全局技术索引作为兼容/跨系统索引。所有 HTML 必须由 `render_dec_graph.py` 重新生成并覆盖，禁止手工维护。
 
 示例 `OrderStatus` 明确定义 `1/2/3/4`，并通过 Data Column `relEnum` 与 Information `changeData` 对齐；validator 会校验 change 写入的具体值确实存在于 Enum。Business `success/error` 是 `role: case` 目标，因此不再重复声明 `dependencies`。
 
@@ -41,7 +41,7 @@ HTML 设计站点位于 `generated-html/`：`order-payment.html` 是 Directory �
 ```sh
 python3 ../scripts/validate_dec_yaml.py .
 python3 ../scripts/yaml_to_xml.py . -o generated-xml
-python3 ../scripts/render_dec_graph.py . -o generated-html/order-payment.html
+python3 ../scripts/render_dec_graph.py . -o generated-html
 ```
 
 反向迁移已有 XML：
