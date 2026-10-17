@@ -617,12 +617,29 @@ def info_detail_html(info: Mapping[str, Any], pages: Mapping[str, str], cat: Map
     return "".join(parts)
 
 
-def action_detail_html(action: Mapping[str, Any], pages: Mapping[str, str]) -> str:
+def action_data_sources(action: Mapping[str, Any], business: Mapping[str, Any], cat: Mapping[str, Any]) -> List[Tuple[str, Any, str]]:
+    ruleview = cat.get("ruleviews", {}).get(str(action.get("ruleRef")), {})
+    rules = [r for r in as_list(ruleview.get("rules")) if isinstance(r, Mapping)]
+    result = []
+    for rule in rules or [{}]:
+        choices = [(action.get("dataSource"), "Action"), (rule.get("dataSource"), "Rule"),
+                   (ruleview.get("dataSource"), "RuleView"), (business.get("dataSource"), "Business")]
+        source, origin = next(((source, origin) for source, origin in choices if source), (None, "未配置"))
+        result.append((str(rule.get("name") or action.get("name") or ""), source, origin))
+    return result
+
+
+def action_detail_html(action: Mapping[str, Any], pages: Mapping[str, str], business=None, cat=None) -> str:
     parts=["<div class='inspector-section'><h4>Action</h4><dl class='kv'>",
            f"<dt>Name</dt><dd>{h(action.get('name'))}</dd>",f"<dt>Design ID</dt><dd>{h(action.get('id') or '—')}</dd>"]
     if action.get("systemRef"): parts += ["<dt>System</dt><dd>",link(pages,"system",action.get("systemRef")),"</dd>"]
     if action.get("ruleRef"): parts += ["<dt>RuleView</dt><dd>",link(pages,"ruleview",action.get("ruleRef")),"</dd>"]
     else: parts += ["<dt>Type</dt><dd><span class='badge em'>Custom Action</span></dd>"]
+    parts.append(f"<dt>Action DataSource</dt><dd>{link(pages,'datasource',action['dataSource']) if action.get('dataSource') else '未覆盖'}</dd>")
+    if business is not None:
+        parts.append(f"<dt>Business 默认 DataSource</dt><dd>{link(pages,'datasource',business['dataSource']) if business.get('dataSource') else '未配置'}</dd>")
+        for rule, source, origin in action_data_sources(action, business, cat or {}):
+            parts.append(f"<dt>{h(rule)} · 有效 DataSource</dt><dd>{link(pages,'datasource',source) if source else '未配置'} · {h(origin)}</dd>")
     parts.append("</dl></div>")
     prods=[p for p in as_list(action.get("produces")) if isinstance(p,Mapping)]
     if prods:
@@ -634,7 +651,7 @@ def action_detail_html(action: Mapping[str, Any], pages: Mapping[str, str]) -> s
     return "".join(parts)
 
 
-def directory_detail_html(d: Mapping[str, Any], pages: Mapping[str, str]) -> str:
+def directory_detail_html(d: Mapping[str, Any], pages: Mapping[str, str], business=None, cat=None) -> str:
     rows=[("Design ID",d.get("id")),("Name",d.get("name")),("Type",d.get("type") or "normal"),("Root","yes" if d.get("isRoot") else "no"),
           ("Information",link(pages,"info",d.get("informationRef"))),("Model / View",link(pages,"view",d.get("modelRef")))]
     parts=["<div class='inspector-section'><h4>Directory</h4><dl class='kv'>"+"".join(f"<dt>{h(k)}</dt><dd>{v if isinstance(v,str) and v.startswith('<') else h(v)}</dd>" for k,v in rows if v not in (None,""))+"</dl></div>"]
@@ -643,7 +660,7 @@ def directory_detail_html(d: Mapping[str, Any], pages: Mapping[str, str]) -> str
     acts=[x for x in as_list(d.get("actions")) if isinstance(x,Mapping)]
     if acts:
         parts.append("<div class='inspector-section'><h4>Actions</h4>")
-        for a in acts: parts.append(action_detail_html(a,pages))
+        for a in acts: parts.append(action_detail_html(a,pages,business,cat))
         parts.append("</div>")
     ch=d.get("change")
     if isinstance(ch,Mapping):
@@ -995,7 +1012,10 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
             aid=f"action:{name}:{i}"; ax,ay=x+25+i*115,y+120
             parts.append(_edge_path(x+90,y+70,ax+36,ay,kind="action",label="",source_id=f"dir:{name}",target_id=aid))
             inner=f'<circle cx="{ax+36}" cy="{ay+36}" r="36" class="action-node"/><text x="{ax+36}" y="{ay+40}" text-anchor="middle" class="node-detail">{h(a.get("name"))}</text>'
-            parts.append(_interactive_group(aid,inner)); templates.append(f'<template class="node-template" data-detail-id="{h(aid)}">{action_detail_html(a,pages)}</template>')
+            routes = action_data_sources(a, business, cat)
+            route_label = "DS: " + ", ".join(dict.fromkeys(str(source or "未配置") for _, source, _ in routes))
+            inner += f'<text x="{ax+36}" y="{ay+88}" text-anchor="middle" class="node-detail">{h(route_label)}</text>'
+            parts.append(_interactive_group(aid,inner)); templates.append(f'<template class="node-template" data-detail-id="{h(aid)}">{action_detail_html(a,pages,business,cat)}</template>')
             for j,p in enumerate([p for p in as_list(a.get("produces")) if isinstance(p,Mapping) and p.get("ref")]):
                 pid=f"produce:{name}:{i}:{j}"; px,py=ax-6+j*145,ay+105
                 parts.append(_edge_path(ax+36,ay+72,px+68,py,kind="produce",label="PRODUCE",source_id=aid,target_id=pid))
@@ -1027,7 +1047,7 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
         # directory last so it visually sits above edges
         desc=str(d.get("informationRef") or "Directory")
         inner=f'<rect x="{x}" y="{y}" width="180" height="70" rx="9" class="dir-node" filter="url(#soft-shadow)"/>'+_svg_text_lines(x+90,y+27,name,max_chars=18,max_lines=1)+f'<text x="{x+90}" y="{y+53}" text-anchor="middle" class="node-detail">{h(desc)}</text>'
-        parts.append(_interactive_group(f"dir:{name}",inner,anchor("directory",name))); templates.append(f'<template class="node-template" data-detail-id="dir:{h(name)}">{directory_detail_html(d,pages)}</template>')
+        parts.append(_interactive_group(f"dir:{name}",inner,anchor("directory",name))); templates.append(f'<template class="node-template" data-detail-id="dir:{h(name)}">{directory_detail_html(d,pages,business,cat)}</template>')
     parts.append("</svg>")
     return "".join(parts),"".join(templates)
 
@@ -1035,7 +1055,21 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
 def render_business_map_detail(b: Mapping[str,Any], cat: Mapping[str,Any], pages: Mapping[str,str], docs: Sequence[Tuple[Path,Mapping[str,Any]]]) -> str:
     svg,templates=article_business_graph(b,cat,pages)
     parts=[html_start(f"Business Directory Map · {b.get('name')}",str(b.get('desc') or ''),pages,"business")]
+    default_source = link(pages, "datasource", b["dataSource"]) if b.get("dataSource") else "未配置"
+    parts.append(f"<div class='panel'><h2>流程默认 DataSource：{default_source}</h2><p>优先级：Action → Rule → RuleView → Business。逻辑名称在执行时绑定已注册的 DEC 适配器。</p></div>")
     parts.append(f"<div class='panel'><div class='legend'><span><i class='swatch dir'></i>Directory</span><span><i class='swatch act'></i>Action</span><span><i class='swatch dep'></i>Dependency</span><span><i class='swatch prod'></i>Produce</span><span><i class='swatch change'></i>Change</span><span>BACK = 反向虚线</span></div><div class='notice'>滚轮或 ＋/－ 缩放；拖动空白区域平移；拖动节点重新布局，连线自动跟随。点击节点在右侧查看结构化详情；点击依赖 Information 或四向 ＋ 可逐级展开组合条件与规则，再次点击收起。</div><div class='graph-layout'><div class='graph-canvas'>{toolbar()}<div class='graph-wrap'>{svg}</div></div><aside class='inspector'><h3>Directory detail</h3><div class='inspector-body'><div class='muted'>点击图中节点查看详细信息。</div></div></aside>{templates}</div></div>")
+    parts.append("<div class='panel'><h2>Action 数据源（含 Back）</h2><div class='card-grid'>")
+    for directory in as_list(b.get("directories")):
+        if not isinstance(directory, Mapping): continue
+        for action in as_list(directory.get("actions")):
+            if isinstance(action, Mapping):
+                parts.append(f"<article class='card'><h3>{h(directory.get('name'))}</h3>{action_detail_html(action,pages,b,cat)}</article>")
+        for sub in as_list(directory.get("subDirectories")):
+            if not isinstance(sub, Mapping) or not isinstance(sub.get("back"), Mapping): continue
+            for action in as_list(sub["back"].get("actions")):
+                if isinstance(action, Mapping):
+                    parts.append(f"<article class='card'><h3>Back {h(sub['back'].get('name'))}</h3>{action_detail_html(action,pages,b,cat)}</article>")
+    parts.append("</div></div>")
     return "".join(parts)+html_end(docs)
 
 
@@ -1046,7 +1080,7 @@ def render_business_html(cat: Mapping[str,Any], pages: Mapping[str,str], docs: S
     for b in cat["businesses"]:
         target=f"directory/{slug(b.get('name'))}.html"
         dirs=len([d for d in as_list(b.get('directories')) if isinstance(d,Mapping)])
-        parts.append(f"<a class='card' style='text-decoration:none;color:inherit' href='{h(target)}'><h2>{h(b.get('name'))}</h2><p>{h(b.get('desc') or '')}</p><div class='meta'><span class='badge'>Directories {dirs}</span></div><p class='xref'>Open Business Directory Map →</p></a>")
+        parts.append(f"<a class='card' style='text-decoration:none;color:inherit' href='{h(target)}'><h2>{h(b.get('name'))}</h2><p>{h(b.get('desc') or '')}</p><div class='meta'><span class='badge'>Directories {dirs}</span><span class='badge'>DataSource {h(b.get('dataSource') or '未配置')}</span></div><p class='xref'>Open Business Directory Map →</p></a>")
     parts.append("</div></div>")
     return "".join(parts)+html_end(docs)
 

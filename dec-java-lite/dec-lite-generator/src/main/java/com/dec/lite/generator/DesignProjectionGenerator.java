@@ -53,6 +53,7 @@ final class DesignProjectionGenerator {
                 Map<String, Object> model = common(basePackage, document, business);
                 model.put("package", basePackage + ".business");
                 model.put("className", className(text(business, "name")) + "Flow");
+                model.put("dataSource", literal(business.get("dataSource")));
                 List<Map<String, Object>> nodes = new ArrayList<>();
                 for (Object raw : list(business.get("directories"))) {
                     Map<String, Object> directory = map(raw);
@@ -122,6 +123,7 @@ final class DesignProjectionGenerator {
         for (Object value : list(raw)) {
             Map<String, Object> action = map(value);
             Map<String, Object> item = node(document, action);
+            item.put("dataSource", literal(action.get("dataSource")));
             item.put("system", literal(action.get("systemRef")));
             item.put("rule", literal(action.get("ruleRef")));
             item.put("customType", literal(action.get("ruleRef") == null

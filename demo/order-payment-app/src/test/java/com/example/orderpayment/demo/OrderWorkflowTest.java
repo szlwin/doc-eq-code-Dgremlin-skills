@@ -19,6 +19,8 @@ import com.example.orderpayment.payment.action.SmsSender;
 import com.example.orderpayment.business.OrderPaymentListener;
 import com.example.orderpayment.payment.action.SmsNotifyAction;
 import com.dec.lite.action.ActionListenerContext;
+import com.dec.lite.action.DataSourceAdapter;
+import com.example.orderpayment.order.view.OrderInfo;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
+@org.springframework.context.annotation.Import(OrderWorkflowTest.AdapterTestConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class OrderWorkflowTest {
     @Autowired LocalOrderStoreFactory storeFactory;
@@ -51,6 +54,25 @@ class OrderWorkflowTest {
     @org.springframework.boot.test.mock.mockito.SpyBean OrderDao orderDao;
     @org.springframework.boot.test.mock.mockito.SpyBean OrderPaymentListener flowListener;
     @org.springframework.boot.test.mock.mockito.SpyBean SmsNotifyAction smsAction;
+    @Autowired AdapterProbe adapterProbe;
+
+    static class AdapterProbe {
+        final java.util.List<String> rules = new java.util.concurrent.CopyOnWriteArrayList<>();
+        boolean fail;
+    }
+    @org.springframework.boot.test.context.TestConfiguration(proxyBeanMethods = false)
+    static class AdapterTestConfiguration {
+        @org.springframework.context.annotation.Bean AdapterProbe adapterProbe() { return new AdapterProbe(); }
+        @org.springframework.context.annotation.Bean DataSourceAdapter alternateDataSource(
+                @org.springframework.beans.factory.annotation.Qualifier("localOrderDataSource") DataSourceAdapter local, AdapterProbe probe) {
+            return new DataSourceAdapter("alternate", (rule, invocation) -> {
+                probe.rules.add(rule.id());
+                var result = local.operations().execute(rule, invocation);
+                if (probe.fail) throw new IllegalStateException("alternative adapter failed after write");
+                return result;
+            });
+        }
+    }
 
     @BeforeEach
     void clearDatabase() {
@@ -361,8 +383,10 @@ class OrderWorkflowTest {
         workflow.startPayment(131L);
         doAnswer(invocation -> {
             ActionListenerContext context = invocation.getArgument(0);
-            assertEquals(131, ((Number) context.read("id")).intValue());
-            assertEquals(2, ((Number) context.read("payInfo.resultCode")).intValue());
+            OrderInfo order = context.view(OrderInfo.class);
+            assertEquals("OrderInfo", context.viewRef());
+            assertEquals(131, order.getId());
+            assertEquals(PayResultCode.ERROR, order.getPayInfo().getResultCode());
             assertTrue(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
             verifyNoInteractions(smsSender);
             invocation.callRealMethod(); return null;
@@ -422,6 +446,74 @@ class OrderWorkflowTest {
 
     private static boolean smsEvent(ActionListenerContext context) {
         return context != null && "ACT-SMS-NOTIFY".equals(context.action().id());
+    }
+
+    @Test void listenerReadsTypedViewBeforeAndAfterResultAction() {
+        workflow.submitOrder(request(1), 141L);
+        workflow.startPayment(141L);
+        doAnswer(invocation -> {
+            ActionListenerContext context = invocation.getArgument(0);
+            OrderInfo before = context.view(OrderInfo.class);
+            assertNull(before.getPayInfo().getResultCode());
+            before.setRemark("detached snapshot");
+            assertEquals("demo-order", context.view(OrderInfo.class).getRemark());
+            return invocation.callRealMethod();
+        }).when(flowListener).before(argThat(c -> c != null && "ACT-RECEIVE-PAY-RESULT".equals(c.action().id())));
+        doAnswer(invocation -> {
+            ActionListenerContext context = invocation.getArgument(0);
+            assertEquals(PayResultCode.SUCCESS, context.view(OrderInfo.class).getPayInfo().getResultCode());
+            return invocation.callRealMethod();
+        }).when(flowListener).after(argThat(c -> c != null && "ACT-RECEIVE-PAY-RESULT".equals(c.action().id())), any());
+        assertEquals("demo-order", workflow.receivePaymentResult(141L, PayResultCode.SUCCESS).getRemark());
+    }
+
+    @Test void manuallyInjectedAdapterIsSelectedPerExecutionAndPerLogicalSource() {
+        var selected = new java.util.HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES);
+        selected.put("data1", "alternate");
+        workflow.submitOrder(request(1), 142L, selected);
+        workflow.startPayment(142L, selected);
+        workflow.receivePaymentResult(142L, PayResultCode.ERROR, selected);
+        assertEquals(List.of("RULE-INSERT-ORDER", "RULE-INSERT-DETAIL", "RULE-RECEIVE-PAY-RESULT"), adapterProbe.rules);
+        // paymentService/mongo1 retain their separately selected local implementation.
+        assertEquals(OrderStatus.PAY_ERROR, workflow.getOrder(142L, selected).getStatus());
+        adapterProbe.rules.clear();
+        workflow.submitOrder(request(1), 143L);
+        assertTrue(adapterProbe.rules.isEmpty(), "The earlier request must not change default routing");
+    }
+
+    @Test void designDataSourcesDriveInheritedAndOverriddenRoutes() {
+        assertEquals("data1", OrderPaymentFlow.DATA_SOURCE);
+        assertNull(OrderPaymentFlow.ORDERED.actions().get(0).dataSource());
+        assertEquals("data1", OrderPaymentFlow.ORDERED.actions().get(0).resolveDataSource(null));
+        assertEquals("paymentService", OrderPaymentFlow.PAYING.actions().get(0).dataSource());
+        assertEquals("mongo1", OrderPaymentFlow.ERROR.actions().get(0).dataSource());
+        assertEquals("data1", OrderPaymentFlow.PAY_RESULT.edges().get(0).backActions().get(0).dataSource());
+        var selected = new java.util.HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES);
+        selected.put("paymentService", "alternate"); selected.put("mongo1", "alternate");
+        workflow.submitOrder(request(1), 146L, selected);
+        assertTrue(adapterProbe.rules.isEmpty(), "saveOrder inherits the flow's local data1");
+        workflow.startPayment(146L, selected);
+        workflow.receivePaymentResult(146L, PayResultCode.ERROR, selected);
+        assertEquals(List.of("RULE-INSERT-PAY", "RULE-RECORD-PAY-ERROR"), adapterProbe.rules);
+        assertEquals(OrderStatus.PAYING, workflow.backToPaying(146L, selected).getStatus());
+    }
+
+    @Test void selectedAdapterFailureRollsBackItsWrite() {
+        workflow.submitOrder(request(1), 144L); workflow.startPayment(144L);
+        var selected = new java.util.HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES); selected.put("data1", "alternate");
+        adapterProbe.fail = true;
+        assertConflict(() -> workflow.receivePaymentResult(144L, PayResultCode.ERROR, selected));
+        assertEquals(List.of("RULE-RECEIVE-PAY-RESULT"), adapterProbe.rules);
+        assertEquals(OrderStatus.PAYING, workflow.getOrder(144L).getStatus());
+        assertNull(workflow.getOrder(144L).getPayInfo().getResultCode());
+        verifyNoInteractions(smsSender);
+    }
+
+    @Test void invalidDataSourceSelectionFailsBeforeCreatingData() {
+        var invalid = new java.util.HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES); invalid.put("data1", "not-registered");
+        assertThrows(IllegalArgumentException.class, () -> workflow.submitOrder(request(1), 145L, invalid));
+        assertThrows(IllegalArgumentException.class, () -> workflow.submitOrder(request(1), 145L, java.util.Map.of("data1", "local")));
+        assertNull(store().orders().find(145L)); assertNull(store().users().find(1L));
     }
 
     private void assertFlowEvents(List<String> actionIds) {

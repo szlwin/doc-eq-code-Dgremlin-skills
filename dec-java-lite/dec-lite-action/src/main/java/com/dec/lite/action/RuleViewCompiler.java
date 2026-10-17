@@ -31,11 +31,17 @@ public final class RuleViewCompiler {
                 for (Object item : list(view.get("rules"), "ruleView.rules")) {
                     Map<String, Object> rule = map(item, "rule");
                     String type = text(rule, "type", "rule");
+                    if (type.equals("grammer")) type = "dsl";
+                    validate(rule, type);
                     if (!List.of("check", "checkPattern", "checkData", "checkDataPattern", "insert", "update", "delete", "get", "query", "dsl").contains(type)) throw new ActionExecutionException("unsupported Rule type: " + type);
                     rules.add(new CompiledRule(text(rule, "id", "rule"), text(rule, "name", "rule"), type,
-                            optional(rule, "property"), optional(rule, "pattern"), optional(rule, "process"),
-                            optional(rule, "dataSource") != null ? optional(rule, "dataSource") : optional(view, "dataSource")));
+                            optional(rule, "property"), optional(rule, "pattern"), alias(rule, "process", "grammer"),
+                            optional(rule, "dataSource") != null ? optional(rule, "dataSource") : optional(view, "dataSource"),
+                            alias(rule, "cmd", "sql"), error(rule),
+                            rule.get("customer") == null ? Map.of() : map(rule.get("customer"), "rule.customer")));
                 }
+                if (rules.stream().map(CompiledRule::name).distinct().count() != rules.size())
+                    throw new ActionExecutionException("duplicate Rule name in " + key);
                 if (rules.isEmpty()) throw new ActionExecutionException("RuleView requires at least one rule: " + key);
                 if (result.putIfAbsent(key, new CompiledRuleView(key, text(view, "id", "ruleView"), rules)) != null) throw new ActionExecutionException("duplicate RuleView: " + key);
             }
@@ -44,18 +50,66 @@ public final class RuleViewCompiler {
     }
 
     public RuleViewRegistry register(DecProject project, DataOperationAdapter adapter) {
-        return bind(compile(project), adapter);
+        var actions = new BusinessActionParser().parse(project);
+        var recognitionRules = new com.dec.lite.information.InformationParser().parse(project).definitions().values().stream()
+                .filter(d -> d.ruleRef() != null).map(d -> new RuleViewKey(d.key().system(), d.viewRef(), d.ruleRef()))
+                .collect(java.util.stream.Collectors.toSet());
+        return bind(compile(project), adapter, actions, businessDataSource(project), recognitionRules);
     }
 
     /** Bind immutable compiled rules to one request adapter; never cache the resulting registry globally. */
     public RuleViewRegistry bind(Map<RuleViewKey, CompiledRuleView> compiled, DataOperationAdapter adapter) {
-        RuleViewRegistry registry = new RuleViewRegistry();
+        return bind(compiled, adapter, List.of(), null);
+    }
+
+    public RuleViewRegistry bind(Map<RuleViewKey, CompiledRuleView> compiled, DataOperationAdapter adapter,
+                                 List<ActionDefinition> actions, String defaultDataSource) {
+        return bind(compiled, adapter, actions, defaultDataSource, compiled.keySet());
+    }
+    public RuleViewRegistry bind(Map<RuleViewKey, CompiledRuleView> compiled, DataOperationAdapter adapter,
+                                 List<ActionDefinition> actions, String defaultDataSource, java.util.Set<RuleViewKey> recognitionRules) {
+        if (adapter instanceof DataSourceSelection selection) selection.validate(compiled.values(), actions, defaultDataSource, recognitionRules);
+        RuleViewRegistry registry = new RuleViewRegistry(defaultDataSource);
         RuleViewInterpreter interpreter = new RuleViewInterpreter(adapter);
         for (CompiledRuleView view : Map.copyOf(compiled).values()) {
             RuleViewKey key = view.key();
             registry.register(key.system(), key.viewRef(), key.ruleRef(), invocation -> interpreter.execute(view, invocation));
         }
         return registry;
+    }
+
+    /** A DirectoryWorkflowRunner owns one Business; do not guess a default across flows. */
+    public static String businessDataSource(DecProject project) {
+        var businesses = project.getDocuments().stream().filter(d -> d.kind() == DecKind.BUSINESS).toList();
+        if (businesses.size() > 1) throw new ActionExecutionException("Select one Business per workflow runner");
+        return businesses.isEmpty() ? null : optional(map(businesses.get(0).root().get("business"), "business"), "dataSource");
+    }
+
+    private static void validate(Map<String, Object> rule, String type) {
+        String name = text(rule, "name", "rule");
+        if (List.of("check", "checkData", "checkDataPattern", "insert", "update", "get", "query").contains(type))
+            text(rule, "property", "Rule " + name);
+        if (List.of("check", "checkData", "checkPattern", "checkDataPattern").contains(type))
+            text(rule, "pattern", "Rule " + name);
+        if (type.equals("delete") && optional(rule, "property") == null && alias(rule, "cmd", "sql") == null)
+            throw new ActionExecutionException("delete requires property or cmd: " + name);
+        if (type.equals("dsl") && alias(rule, "process", "grammer") == null)
+            throw new ActionExecutionException("dsl requires process: " + name);
+        if (type.equals("check") || type.equals("checkData")) RuleChecks.validate(text(rule, "pattern", name));
+        if (type.equals("checkPattern") || type.equals("checkDataPattern")) RuleExpression.compile(text(rule, "pattern", name));
+        if (type.equals("dsl")) RuleDsl.compile(alias(rule, "process", "grammer"));
+    }
+    private static String alias(Map<String, Object> rule, String canonical, String legacy) {
+        String value = optional(rule, canonical), old = optional(rule, legacy);
+        if (value != null && old != null && !value.equals(old))
+            throw new ActionExecutionException("conflicting Rule fields: " + canonical + "/" + legacy);
+        return value != null ? value : old;
+    }
+    private static CompiledRule.RuleError error(Map<String, Object> rule) {
+        if (rule.get("error") == null) return null;
+        Map<String, Object> error = map(rule.get("error"), "rule.error");
+        return new CompiledRule.RuleError(text(error, "code", "rule.error"), text(error, "message", "rule.error"),
+                error.get("level") == null ? null : String.valueOf(error.get("level")));
     }
 
     private static Map<String, String> owners(DecProject project) {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<business-config name="order-payment" desc="订单创建、支付发起、支付结果处理的跨 System 业务流程">
+<business-config name="order-payment" desc="订单创建、支付发起、支付结果处理的跨 System 业务流程" dataSource="data1">
   <!-- dec-id: BUS-ORDER-PAYMENT -->
   <directory-info>
     <!-- dec-id: DIR-ORDERED -->
@@ -25,7 +25,7 @@
       </dependency-info>
       <action-info>
         <!-- dec-id: ACT-START-PAY -->
-        <action name="startPay" system-ref="payment" rule-ref="pay">
+        <action name="startPay" system-ref="payment" rule-ref="pay" dataSource="paymentService">
           <produce-info>
             <!-- dec-id: PROD-PAYMENT-INFO -->
             <produce ref="PaymentInfo" information-ref="payment.paymentInfo"/>
@@ -41,7 +41,7 @@
           <back name="returnPaying">
             <action-info>
               <!-- dec-id: ACT-RESET-PAY-RESULT -->
-              <action name="resetPayResult" system-ref="payment" rule-ref="resetPayResult"/>
+              <action name="resetPayResult" system-ref="payment" rule-ref="resetPayResult" dataSource="data1"/>
             </action-info>
           </back>
         </subdirectory>
@@ -70,7 +70,7 @@
     <directory name="error" information-ref="common.payError" model-ref="OrderInfo">
       <action-info>
         <!-- dec-id: ACT-RECORD-PAY-ERROR -->
-        <action name="recordPyaError" system-ref="payment" rule-ref="recordPyaError">
+        <action name="recordPyaError" system-ref="payment" rule-ref="recordPyaError" dataSource="mongo1">
           <produce-info>
             <!-- dec-id: PROD-PAY-ERROR -->
             <produce ref="PyaError"/>

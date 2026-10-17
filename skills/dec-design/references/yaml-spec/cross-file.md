@@ -35,7 +35,7 @@ System.InformationKey = System.name + "." + Information.name
 
 规则：
 
-- Rule 的有效 DataSource = Rule override → RuleView default → Runtime/project default。
+- Action 外部 Rule 的有效 DataSource = Action override → Rule override → RuleView default → Business default；Information 识别没有 Action override。Business/Action（含 Back）的 dataSource 也必须解析到 Config。
 - RuleView `code` 在设计域内唯一，用于快速查找；`name` 仍是 ruleRef 引用键。
 - `relEnum` 必须精确解析 Enum name；绑定公共 Enum 后不得再维护同字段内联 enum values。
 - API `system`、RuleView `apiRef`、response `modelRef` 必须精确解析，禁止模糊匹配。

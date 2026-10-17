@@ -47,9 +47,10 @@ ruleViews:
 
 ```text
 effectiveDataSource(rule) =
-    rule.dataSource if present
+    action.dataSource if present (执行 Action 时)
+    else rule.dataSource if present
     else ruleView.dataSource if present
-    else runtime/project default
+    else business.dataSource
 ```
 
 因此 RuleView 可以默认使用 MySQL，而某条 Rule 单独覆盖为 Redis、MongoDB、第三方系统或微服务。DataSource 是统一抽象，不因协议/存储类型创建平行 Rule 模型。
@@ -109,3 +110,28 @@ error:
 ```
 
 存在 `error` 时 `code/message` 必填，`level` 可选。
+
+## 6. 原始模型与 dec-java-lite 能力边界
+
+原始 `RuleDefineInfo` 保存 name/type/property/grammer/errorInfo/customerInfo；`RuleCheckInfo` 保存 pattern，`RuleCheckData/RuleCheckDataPattern` 保存 sql/pattern，`RuleExecuteInfo` 保存 sql。规范转换必须完整保留这些字段：`process ↔ customer-process`、`cmd ↔ sql`、`error ↔ error-info`、`customer ↔ customer-info`。`customer` 对应原始 `Map<String,String>`，只能使用平铺的字符串值；数字须显式写为字符串，禁止嵌套对象/列表被静默字符串化。
+
+选择 dec-java-lite 时，设计校验通过不等于所有历史表达式可执行。Runtime 编译阶段检查下列语法；不支持的表达式报告 capability/design gap，不能在 Service 复制条件绕过：
+
+- `check/checkData`：支持以 `;` 连接的 `NOTNULL/NULL/EQUAL/NOTEQUAL/GREATER/GREATEREQUAL/LESS/LESSEQUAL`，二元校验用 `:` 接常量，字符串加引号，例如 `NOTNULL;NOTEQUAL:2`。
+- `checkPattern/checkDataPattern`：支持字段路径、列表下标、字段比较、数字算术、括号、短路布尔运算、`exists/every/any`；`checkDataPattern` 对查询返回的每行在临时别名上下文中校验，空结果为 FALSE，不将别名写回 View。
+- `checkData` 必须真实读源后校验返回对象，空结果按 null 校验；不能用当前 View 中已有的非空字段冒充数据库存在。集合目标的逐项读取/匹配由适配器兑现，不能漏查部分项目后报告全部通过。
+- `dsl` 支持模型赋值、`#变量`、`if ... then ... else ...`、算术、`every(list, field : expression)` 和 `error("code","message") : predicate`。临时变量限一次 RuleView 调用；写入由 Runtime 追踪。
+- `get/query/insert/update/delete` 需要真实 DataSource adapter；`cmd` 是传给驱动的设计命令，框架不会把 DEC 逻辑 SQL 自动视作可直接执行的 JDBC SQL。
+
+历史 santr/smarter 的集合过滤、`.sum`、`.compute` 及其他校验器未全部迁移，不能宣称完整兼容；Information/Query 自身的表达式语法没有因此扩大。无驱动、缺路由或未支持的语法必须明确失败。
+
+### 原 DEC MySQL 的操作组合
+
+原 DEC Runtime 接受 dsl/grammer，内部统一为 grammer。MySQL 已提供带 SQL insert 和无 SQL query 转换器，但设计仍需遵守其具体语法与目标约束：
+
+- 带 SQL insert 使用 `insert into <View或关联属性> (<View字段...>) values (...)`，支持单行 VALUES、#参数路径、标量字面量、NULL/DEFAULT。View→Data→物理表列两级映射不能跳过，参数必须绑定；不支持的 SQL 扩展必须报错，不能转成原生 SQL 执行。
+- 目标为集合时逐项执行 insert，#参数引用当前元素；单对象可引用完整模型路径。每项主键回填到其 View 字段。
+- 无 SQL query 的 Rule.property 必须是直接 one-to-many 属性，由声明的父键和子外键生成等值条件；空结果清空集合，父键缺失失败。不能将已有集合字段当成筛选条件，也不能静默全表读取。
+- 低层 BaseData query 以非空属性组合 AND 条件，NullData 表示 IS NULL，至少提供一个条件。需要排序、联表或全表查询时使用显式 SQL。
+
+checkDataPattern 的 property 在原解析器中保留作元数据；SQL 使用完整模型参数，property 不自动限制查询范围。上述能力属于原 DEC MySQL 驱动；dec-java-lite 的 RuleDataAccess 仍由应用提供实际驱动，不能因原项目的 MySQL 回归通过而声称 lite 已自动接入同一数据库能力。

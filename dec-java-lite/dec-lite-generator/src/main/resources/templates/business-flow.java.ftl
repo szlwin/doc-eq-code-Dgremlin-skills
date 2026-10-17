@@ -1,6 +1,6 @@
 <#macro actions values>
 List.of(<#list values as action>
-                        new ActionNode(${action.id}, ${action.name}, ${action.source}, ${action.system}, ${action.rule}, ${action.customType},
+                        new ActionNode(${action.id}, ${action.name}, ${action.source}, ${action.system}, ${action.rule}, ${action.customType}, ${action.dataSource}, DATA_SOURCE,
                                 List.of(<#list action.produces as produce>new ProduceNode(${produce.id}, ${produce.ref}, ${produce.information})<#sep>, </#list>))<#sep>,</#list>)</#macro>
 package ${package};
 
@@ -13,6 +13,7 @@ public final class ${className} {
     public static final String ID = ${id};
     public static final String NAME = ${name};
     public static final String SOURCE = ${source};
+    public static final String DATA_SOURCE = ${dataSource};
 
 <#list nodes as directory>
     public static final DirectoryNode ${directory.symbol} = new DirectoryNode(

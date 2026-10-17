@@ -151,3 +151,7 @@ subDirectories:
 ```
 
 ---
+
+### DataSource 映射
+
+`business.dataSource` → `<business-config dataSource="...">`；普通与 Back `actions[].dataSource` → `<action dataSource="...">`。字段可省略，显式提供时必须为非空逻辑名称。YAML/XML 双向转换和受控同步必须保留声明，不能把继承结果展开写回每个 Action；继承优先级见 YAML Business 规范。

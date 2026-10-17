@@ -12,7 +12,7 @@ bindings:
     symbol: OrdersServiceImpl#submitOrder
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
-    symbol: OrderWorkflow#submitOrder
+    symbol: OrderWorkflow#submitOrder(SubmitOrderRequest, Long)
   notes: Local demo API executes canonical Directory workflow through a generated controller and an application binding.
   tests:
   - module: order-payment-app
@@ -73,11 +73,28 @@ bindings:
   strategy: REUSE
   status: VERIFIED
   notes: Executed by DEC Runtime. One OrderPaymentListener binds BUS-ORDER-PAYMENT and receives all executed Action events,
-    including success/error branches and Back Actions. Duplicate flow listener registration is rejected.
+    including success/error branches and Back Actions. Duplicate flow listener registration is rejected. Listener typed View
+    snapshots reuse the flow ModelCodec. Named DEC DataSource implementations are manually injected and selected by logical
+    source per execution; this does not reroute application DAO/JDBC resources.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#listenerReadsTypedViewBeforeAndAfterResultAction
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#manuallyInjectedAdapterIsSelectedPerExecutionAndPerLogicalSource
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#selectedAdapterFailureRollsBackItsWrite
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#invalidDataSourceSelectionFailsBeforeCreatingData
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
   implementation:
@@ -87,6 +104,12 @@ bindings:
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/config/ActionListenerConfiguration.java
     symbol: ActionListenerConfiguration#actionListenerRegistry
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/workflow/OrderDataSourceConfiguration.java
+    symbol: OrderDataSourceConfiguration#localOrderDataSource
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/config/DataSourceAdapterConfiguration.java
+    symbol: DataSourceAdapterConfiguration#dataSourceAdapterRegistry
 - designId: DIR-ORDERED
   strategy: REUSE
   status: VERIFIED
@@ -105,6 +128,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: PROD-ORDER
@@ -135,6 +161,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: PROD-PAYMENT-INFO
@@ -165,6 +194,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: ACT-RECEIVE-PAY-RESULT
@@ -225,6 +257,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: PROD-PAY-ERROR
@@ -1102,6 +1137,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
+    symbol: OrderWorkflowTest#listenerReadsTypedViewBeforeAndAfterResultAction
 - designId: API-PARAM-USER-ID
   strategy: CREATE
   status: VERIFIED
@@ -1174,7 +1212,7 @@ bindings:
     symbol: OrdersServiceImpl#startPayment
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
-    symbol: OrderWorkflow#startPayment
+    symbol: OrderWorkflow#startPayment(Long)
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1207,7 +1245,7 @@ bindings:
     symbol: OrdersServiceImpl#receivePaymentResult
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
-    symbol: OrderWorkflow#receivePaymentResult
+    symbol: OrderWorkflow#receivePaymentResult(Long, PayResultCode)
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1252,7 +1290,7 @@ bindings:
     symbol: OrdersServiceImpl#backToPaying
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
-    symbol: OrderWorkflow#backToPaying
+    symbol: OrderWorkflow#backToPaying(Long)
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
@@ -1285,7 +1323,7 @@ bindings:
     symbol: OrdersServiceImpl#getOrder
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java
-    symbol: OrderWorkflow#getOrder
+    symbol: OrderWorkflow#getOrder(Long)
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java

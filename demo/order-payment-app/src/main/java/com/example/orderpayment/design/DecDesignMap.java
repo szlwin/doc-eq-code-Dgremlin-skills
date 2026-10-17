@@ -31,8 +31,11 @@ public final class DecDesignMap {
 
     /** customType is the registry key for a Custom Action; null for a RuleView Action. */
     public record ActionNode(String id, String name, String source, String systemRef, String ruleRef, String customType,
-                             List<ProduceNode> produces) {
+                             String dataSource, String businessDataSource, List<ProduceNode> produces) {
         public ActionNode { produces = List.copyOf(produces); }
+        public String resolveDataSource(String ruleSource) {
+            return dataSource != null ? dataSource : ruleSource != null ? ruleSource : businessDataSource;
+        }
         public boolean isCustom() { return customType != null; }
     }
 

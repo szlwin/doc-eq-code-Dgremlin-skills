@@ -20,7 +20,6 @@ ruleViews:
     type: insert
     property: orderDetailList
   code: SAVE_ORDER
-  dataSource: data1
 - id: RV-ORDER-IS-WAIT-PAY
   name: isWaitPay
   desc: 判断订单是否等待支付

@@ -9,6 +9,7 @@ public final class OrderPaymentFlow {
     public static final String ID = "BUS-ORDER-PAYMENT";
     public static final String NAME = "order-payment";
     public static final String SOURCE = "business-order-payment.yaml#root.business";
+    public static final String DATA_SOURCE = "data1";
 
     public static final DirectoryNode ORDERED = new DirectoryNode(
             "DIR-ORDERED", "ordered", "business-order-payment.yaml#root.business.directories[0]", "normal",
@@ -16,7 +17,7 @@ public final class OrderPaymentFlow {
             List.of(),
             List.of(),
             List.of(
-                        new ActionNode("ACT-SAVE-ORDER", "saveOrder", "business-order-payment.yaml#root.business.directories[0].actions[0]", "order", "save-Order", null,
+                        new ActionNode("ACT-SAVE-ORDER", "saveOrder", "business-order-payment.yaml#root.business.directories[0].actions[0]", "order", "save-Order", null, null, DATA_SOURCE,
                                 List.of(new ProduceNode("PROD-ORDER", "OrderInfo", "order.ordered")))),
             null);
 
@@ -27,7 +28,7 @@ public final class OrderPaymentFlow {
             List.of(
                     new DirectoryEdge("ordered", "execution", null, null, List.of())),
             List.of(
-                        new ActionNode("ACT-START-PAY", "startPay", "business-order-payment.yaml#root.business.directories[1].actions[0]", "payment", "pay", null,
+                        new ActionNode("ACT-START-PAY", "startPay", "business-order-payment.yaml#root.business.directories[1].actions[0]", "payment", "pay", null, "paymentService", DATA_SOURCE,
                                 List.of(new ProduceNode("PROD-PAYMENT-INFO", "PaymentInfo", "payment.paymentInfo")))),
             "order.paying");
 
@@ -37,12 +38,12 @@ public final class OrderPaymentFlow {
             List.of(),
             List.of(
                     new DirectoryEdge("paying", "execution", null, "returnPaying", List.of(
-                        new ActionNode("ACT-RESET-PAY-RESULT", "resetPayResult", "business-order-payment.yaml#root.business.directories[2].subDirectories[0].back.actions[0]", "payment", "resetPayResult", null,
+                        new ActionNode("ACT-RESET-PAY-RESULT", "resetPayResult", "business-order-payment.yaml#root.business.directories[2].subDirectories[0].back.actions[0]", "payment", "resetPayResult", null, "data1", DATA_SOURCE,
                                 List.of()))),
                     new DirectoryEdge("success", "case", "payment.success", null, List.of()),
                     new DirectoryEdge("error", "case", "payment.error", null, List.of())),
             List.of(
-                        new ActionNode("ACT-RECEIVE-PAY-RESULT", "receivePayResult", "business-order-payment.yaml#root.business.directories[2].actions[0]", "payment", "receivePayResult", null,
+                        new ActionNode("ACT-RECEIVE-PAY-RESULT", "receivePayResult", "business-order-payment.yaml#root.business.directories[2].actions[0]", "payment", "receivePayResult", null, null, DATA_SOURCE,
                                 List.of(new ProduceNode("PROD-PAY-RESULT", "PayResult", "payment.hasResult")))),
             null);
 
@@ -52,7 +53,7 @@ public final class OrderPaymentFlow {
             List.of(),
             List.of(),
             List.of(
-                        new ActionNode("ACT-CONFIRM-PAY-SUCCESS", "confirmPaySuccess", "business-order-payment.yaml#root.business.directories[3].actions[0]", "order", "confirmPaySuccess", null,
+                        new ActionNode("ACT-CONFIRM-PAY-SUCCESS", "confirmPaySuccess", "business-order-payment.yaml#root.business.directories[3].actions[0]", "order", "confirmPaySuccess", null, null, DATA_SOURCE,
                                 List.of())),
             "order.paySuccessStatus");
 
@@ -62,11 +63,11 @@ public final class OrderPaymentFlow {
             List.of(),
             List.of(),
             List.of(
-                        new ActionNode("ACT-RECORD-PAY-ERROR", "recordPyaError", "business-order-payment.yaml#root.business.directories[4].actions[0]", "payment", "recordPyaError", null,
+                        new ActionNode("ACT-RECORD-PAY-ERROR", "recordPyaError", "business-order-payment.yaml#root.business.directories[4].actions[0]", "payment", "recordPyaError", null, "mongo1", DATA_SOURCE,
                                 List.of(new ProduceNode("PROD-PAY-ERROR", "PyaError", null))),
-                        new ActionNode("ACT-SMS-NOTIFY", "smsNotify", "business-order-payment.yaml#root.business.directories[4].actions[1]", null, null, "smsNotify",
+                        new ActionNode("ACT-SMS-NOTIFY", "smsNotify", "business-order-payment.yaml#root.business.directories[4].actions[1]", null, null, "smsNotify", null, DATA_SOURCE,
                                 List.of()),
-                        new ActionNode("ACT-CONFIRM-PAY-ERROR", "confirmPayError", "business-order-payment.yaml#root.business.directories[4].actions[2]", "order", "confirmPayError", null,
+                        new ActionNode("ACT-CONFIRM-PAY-ERROR", "confirmPayError", "business-order-payment.yaml#root.business.directories[4].actions[2]", "order", "confirmPayError", null, null, DATA_SOURCE,
                                 List.of())),
             "order.payErrorStatus");
 

@@ -9,6 +9,7 @@ public final class ExpenseApprovalFlow {
     public static final String ID = "BUS-EXPENSE";
     public static final String NAME = "expense-approval";
     public static final String SOURCE = "business-expense.yaml#root.business";
+    public static final String DATA_SOURCE = null;
 
     public static final DirectoryNode DRAFT = new DirectoryNode(
             "DIR-EXPENSE-DRAFT", "draft", "business-expense.yaml#root.business.directories[0]", "normal",
@@ -25,7 +26,7 @@ public final class ExpenseApprovalFlow {
             List.of(
                     new DirectoryEdge("draft", "execution", null, null, List.of())),
             List.of(
-                        new ActionNode("ACT-EXPENSE-SUBMITTED", "recordSubmitted", "business-expense.yaml#root.business.directories[1].actions[0]", "expense", null, "recordSubmitted",
+                        new ActionNode("ACT-EXPENSE-SUBMITTED", "recordSubmitted", "business-expense.yaml#root.business.directories[1].actions[0]", "expense", null, "recordSubmitted", null, DATA_SOURCE,
                                 List.of())),
             "expense.submitted");
 
@@ -36,7 +37,7 @@ public final class ExpenseApprovalFlow {
             List.of(
                     new DirectoryEdge("submitted", "execution", null, null, List.of())),
             List.of(
-                        new ActionNode("ACT-EXPENSE-APPROVED", "recordApproved", "business-expense.yaml#root.business.directories[2].actions[0]", "expense", null, "recordApproved",
+                        new ActionNode("ACT-EXPENSE-APPROVED", "recordApproved", "business-expense.yaml#root.business.directories[2].actions[0]", "expense", null, "recordApproved", null, DATA_SOURCE,
                                 List.of())),
             "expense.approved");
 

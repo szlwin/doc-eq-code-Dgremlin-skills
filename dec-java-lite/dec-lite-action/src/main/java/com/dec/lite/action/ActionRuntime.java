@@ -16,6 +16,8 @@ public final class ActionRuntime {
     private final CustomActionRegistry customActions;
     private final ProduceVerifier produceVerifier;
     private final ActionListenerRegistry listeners;
+    private final ActionViewBinding viewBinding;
+    private final DataOperationAdapter dataAdapter;
 
     public ActionRuntime(RuleViewRegistry ruleViews, CustomActionRegistry customActions) {
         this(ruleViews, customActions, java.time.Clock.systemUTC());
@@ -31,6 +33,18 @@ public final class ActionRuntime {
 
     public ActionRuntime(RuleViewRegistry ruleViews, CustomActionRegistry customActions,
                          ActionListenerRegistry listeners, java.time.Clock clock) {
+        this(ruleViews, customActions, listeners, clock, null);
+    }
+
+    public ActionRuntime(RuleViewRegistry ruleViews, CustomActionRegistry customActions,
+                         ActionListenerRegistry listeners, java.time.Clock clock, ActionViewBinding viewBinding) {
+        this(ruleViews, customActions, listeners, clock, viewBinding, null);
+    }
+    public ActionRuntime(RuleViewRegistry ruleViews, CustomActionRegistry customActions,
+                         ActionListenerRegistry listeners, java.time.Clock clock, ActionViewBinding viewBinding,
+                         DataOperationAdapter dataAdapter) {
+        this.dataAdapter = dataAdapter;
+        this.viewBinding = viewBinding;
         this.clock = java.util.Objects.requireNonNull(clock, "clock");
         this.listeners = java.util.Objects.requireNonNull(listeners, "listeners");
         this.ruleViews = new RuleViewActionInvoker(ruleViews);
@@ -54,9 +68,11 @@ public final class ActionRuntime {
             ActionExecutionContext execution = new ActionExecutionContext(context.informationEngine(),
                     context.model().copyWithGuard(path -> context.accessPolicy().checkWrite(action.systemRef(), path)),
                     context.payload(), context.deadline(), context.transaction(),
-                    context.transactionOwner(), context.applyDirectoryChange(), context.accessPolicy());
+                    context.transactionOwner(), context.applyDirectoryChange(), context.accessPolicy(), action.defaultDataSource(),
+                    !action.isRuleView() && action.defaultDataSource() != null && dataAdapter instanceof DataSourceSelection selected
+                            ? selected.adapter(action.defaultDataSource()) : dataAdapter);
             checkDeadline(action, context);
-            ActionListenerContext listenerContext = new ActionListenerContext(action, execution, mutations);
+            ActionListenerContext listenerContext = new ActionListenerContext(action, execution, mutations, viewBinding);
             notifyListener(action, listenerContext, execution, null, trace);
             RecognitionResult ruleResult = null;
             if (action.isRuleView()) {

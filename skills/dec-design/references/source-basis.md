@@ -60,3 +60,5 @@
 - 具体映射位于 `xml-mapping/*.md`。
 
 读取规则是“common + 当前 kind + 必要依赖”，而不是全量加载。
+
+Business/Action 的可选 `dataSource` 是流程默认与动作覆盖扩展；必须同步维护 Schema、引用校验、YAML/XML 转换、Runtime 和 HTML。

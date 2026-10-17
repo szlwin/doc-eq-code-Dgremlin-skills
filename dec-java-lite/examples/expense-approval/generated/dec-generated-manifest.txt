@@ -4,6 +4,7 @@ src/main/java/com/example/expenses/GeneratedApplication.java
 src/main/java/com/example/expenses/business/ExpenseApprovalFlow.java
 src/main/java/com/example/expenses/config/ActionListenerConfiguration.java
 src/main/java/com/example/expenses/config/CustomActionConfiguration.java
+src/main/java/com/example/expenses/config/DataSourceAdapterConfiguration.java
 src/main/java/com/example/expenses/design/DecDesignMap.java
 src/main/java/com/example/expenses/expense/dao/ExpenseDao.java
 src/main/java/com/example/expenses/expense/entity/Expense.java

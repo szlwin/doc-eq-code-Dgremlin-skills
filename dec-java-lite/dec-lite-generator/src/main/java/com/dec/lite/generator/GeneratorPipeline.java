@@ -52,6 +52,8 @@ public final class GeneratorPipeline {
                     javaPath(context.basePackage() + ".config", "CustomActionConfiguration.java"), generated);
             writer.writeTemplate(target, "action-listener-configuration.java.ftl", Map.of("package", context.basePackage() + ".config"),
                     javaPath(context.basePackage() + ".config", "ActionListenerConfiguration.java"), generated);
+            writer.writeTemplate(target, "datasource-adapter-configuration.java.ftl", Map.of("package", context.basePackage() + ".config"),
+                    javaPath(context.basePackage() + ".config", "DataSourceAdapterConfiguration.java"), generated);
             for (DesignProjectionGenerator.Source source : context.projections()) {
                 writer.writeTemplate(target, source.template(), source.model(), source.path(), generated);
             }

@@ -3,6 +3,8 @@ import com.dec.lite.directory.WorkflowTransaction;
 import com.dec.lite.spring.SpringWorkflowTransactions;
 import com.dec.lite.action.CustomActionRegistry;
 import com.dec.lite.action.ActionListenerRegistry;
+import com.dec.lite.action.DataSourceAdapterRegistry;
+import com.dec.lite.action.DataSourceSelection;
 import com.dec.lite.directory.DirectoryWorkflowException;
 import com.dec.lite.directory.DirectoryExecutionException;
 import jakarta.validation.Validator;
@@ -17,7 +19,6 @@ import com.example.orderpayment.order.store.LocalOrderStore;
 import com.example.orderpayment.order.store.LocalOrderStoreFactory;
 import com.example.orderpayment.order.view.OrderViewAssembler;
 import com.example.orderpayment.user.entity.User;
-import com.example.orderpayment.payment.adapter.LocalPaymentErrorAdapter;
 import com.example.orderpayment.payment.enums.PayResultCode;
 import com.example.orderpayment.order.view.OrderInfo;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,9 @@ import java.util.Map;
 public class OrderWorkflow {
     private final LocalOrderStore store;
     private final Validator validator;
-    private final LocalPaymentErrorAdapter paymentErrors;
+    public static final Map<String, String> DEFAULT_DATA_SOURCES = Map.of(
+            OrderPaymentFlow.DATA_SOURCE, "local", "paymentService", "local", "mongo1", "local");
+    private final DataSourceAdapterRegistry dataSources;
     private final DirectoryWorkflowRunner runtime;
     private final WorkflowTransaction transaction = SpringWorkflowTransactions.externallyManaged();
     private final CustomActionRegistry customActions;
@@ -43,10 +46,10 @@ public class OrderWorkflow {
     private final DecViewModelBridge bridge = new DecViewModelBridge();
 
     public OrderWorkflow(LocalOrderStoreFactory storeFactory, CustomActionRegistry customActions,
-                         LocalPaymentErrorAdapter paymentErrors, Validator validator, ActionListenerRegistry listeners) {
+                         DataSourceAdapterRegistry dataSources, Validator validator, ActionListenerRegistry listeners) {
         this.validator = validator;
         this.store = storeFactory.create();
-        this.paymentErrors = paymentErrors;
+        this.dataSources = dataSources;
         this.customActions = customActions;
         runtime = new DirectoryWorkflowRunner(new DecXmlParser().parseClasspath(OrderWorkflow.class.getClassLoader(), "dec/design-files.txt"), customActions, listeners);
     }
@@ -54,6 +57,12 @@ public class OrderWorkflow {
     /** API-ORDER-SUBMIT → DIR-ORDERED / ACT-SAVE-ORDER; status/type are checked by RV-SAVE-ORDER. */
     @Transactional
     public OrderInfo submitOrder(SubmitOrderRequest request, Long orderId) {
+        return submitOrder(request, orderId, DEFAULT_DATA_SOURCES);
+    }
+
+    @Transactional
+    public OrderInfo submitOrder(SubmitOrderRequest request, Long orderId, Map<String, String> selection) {
+        DataSourceSelection rules = runtime.selectDataSources(dataSources, selection);
         requireId(orderId);
         if (store.orders().find(orderId) != null)
             throw failure(HttpStatus.CONFLICT, "Order already exists: " + orderId);
@@ -78,39 +87,57 @@ public class OrderWorkflow {
             user.setCertified(1);
             store.users().insert(user);
         }
-        return advance(orderId, true, assembler.draft(order, detail, user), OrderPaymentFlow.ORDERED.name(), null, false);
+        return advance(orderId, true, assembler.draft(order, detail, user), OrderPaymentFlow.ORDERED.name(), null, false, rules);
     }
 
     /** API-ORDER-START-PAYMENT → DIR-PAYING / ACT-START-PAY. */
     @Transactional
-    public OrderInfo startPayment(Long orderId) {
+    public OrderInfo startPayment(Long orderId) { return startPayment(orderId, DEFAULT_DATA_SOURCES); }
+
+    @Transactional
+    public OrderInfo startPayment(Long orderId, Map<String, String> selection) {
+        DataSourceSelection rules = runtime.selectDataSources(dataSources, selection);
         requireOrderForUpdate(orderId);
-        return advance(orderId, false, assembler.read(store, orderId), OrderPaymentFlow.PAYING.name(), null, false);
+        return advance(orderId, false, assembler.read(store, orderId), OrderPaymentFlow.PAYING.name(), null, false, rules);
     }
 
     /** API-ORDER-RECEIVE-PAYMENT-RESULT → DIR-PAY-RESULT and its selected case. */
     @Transactional
     public OrderInfo receivePaymentResult(Long orderId, PayResultCode resultCode) {
+        return receivePaymentResult(orderId, resultCode, DEFAULT_DATA_SOURCES);
+    }
+
+    @Transactional
+    public OrderInfo receivePaymentResult(Long orderId, PayResultCode resultCode, Map<String, String> selection) {
+        DataSourceSelection rules = runtime.selectDataSources(dataSources, selection);
         if (resultCode == null) throw failure(HttpStatus.BAD_REQUEST, "resultCode is required");
         requireOrderForUpdate(orderId);
-        return advance(orderId, false, assembler.read(store, orderId), OrderPaymentFlow.PAY_RESULT.name(), resultCode, false);
+        return advance(orderId, false, assembler.read(store, orderId), OrderPaymentFlow.PAY_RESULT.name(), resultCode, false, rules);
     }
 
     /** API-ORDER-BACK-TO-PAYING → ACT-RESET-PAY-RESULT. */
     @Transactional
-    public OrderInfo backToPaying(Long orderId) {
+    public OrderInfo backToPaying(Long orderId) { return backToPaying(orderId, DEFAULT_DATA_SOURCES); }
+
+    @Transactional
+    public OrderInfo backToPaying(Long orderId, Map<String, String> selection) {
+        DataSourceSelection rules = runtime.selectDataSources(dataSources, selection);
         requireOrderForUpdate(orderId);
-        return advance(orderId, false, assembler.read(store, orderId), OrderPaymentFlow.PAYING.name(), null, true);
+        return advance(orderId, false, assembler.read(store, orderId), OrderPaymentFlow.PAYING.name(), null, true, rules);
     }
 
     /** API-ORDER-GET → VIEW-ORDER-INFO assembled through the generated DAOs. */
     @Transactional(readOnly = true)
-    public OrderInfo getOrder(Long orderId) {
+    public OrderInfo getOrder(Long orderId) { return getOrder(orderId, DEFAULT_DATA_SOURCES); }
+
+    @Transactional(readOnly = true)
+    public OrderInfo getOrder(Long orderId, Map<String, String> selection) {
+        DataSourceSelection rules = runtime.selectDataSources(dataSources, selection);
         requireOrder(orderId);
         OrderInfo persisted = assembler.read(store, orderId);
         try {
             runtime.recognizeDirectory(bridge.toModel(persisted),
-                    new LocalRuleAdapter(store, bridge, assembler, paymentErrors));
+                    rules);
             return persisted;
         } catch (DirectoryExecutionException failure) {
             throw failure(HttpStatus.CONFLICT, failure.getMessage());
@@ -118,9 +145,8 @@ public class OrderWorkflow {
     }
 
     private OrderInfo advance(Long orderId, boolean creating,
-                              OrderInfo view, String target, PayResultCode resultCode, boolean back) {
+                              OrderInfo view, String target, PayResultCode resultCode, boolean back, DataSourceSelection rules) {
         try {
-            var rules = new LocalRuleAdapter(store, bridge, assembler, paymentErrors);
             String current = creating ? null : runtime.recognizeDirectory(bridge.toModel(view), rules);
             runtime.requireSingleStep(current, target, back);
             return runtime.advance(view, current, target, back,

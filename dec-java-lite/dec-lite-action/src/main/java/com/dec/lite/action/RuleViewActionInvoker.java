@@ -13,6 +13,6 @@ public final class RuleViewActionInvoker {
         java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>(context.payload());
         payload.putAll(action.payload());
         return registry.invoke(action.systemRef(), action.ruleRef(), context.model(), payload, mutations,
-                context.mutableProduced(), context.transaction());
+                context.mutableProduced(), context.transaction(), action.dataSource(), action.businessDataSource());
     }
 }

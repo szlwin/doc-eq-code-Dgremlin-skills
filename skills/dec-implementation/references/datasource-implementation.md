@@ -79,3 +79,45 @@ Runner 必须显式选择事务模式，不传空 `ActionTransaction`、不以 `
 ## 4. 结构化数据边界
 
 如果 DataSource 返回 Object/List/JSON，而 canonical grammar 尚未批准对应结构，不在实现层擅自加 YAML 字段或长期塞 JSON 字符串；返回 `DESIGN_GAP`。
+
+## 5. 手动注入 DEC 数据源适配器与执行选择
+
+使用 `DataSourceAdapter(name, DataOperationAdapter)` 注册具名实现，生成的 `config.DataSourceAdapterConfiguration` 收集这些 Spring Bean，构建不可变 `DataSourceAdapterRegistry`。非 Spring 使用 `DataSourceAdapterRegistry.from(List.of(...))`。实现名属于工程配置，不写入 canonical YAML。
+
+每次调用用 `registry.select(Map.of("data1", "tenant-a", "mongo1", "error-store", ...))` 生成独立的 `DataSourceSelection`。左侧是设计中的逻辑 DataSource，右侧是注册的实现名；同一实现可服务多个逻辑源。传给 `DirectoryWorkflowRunner.selectDataSources(registry, selection)` 可在业务读写之前完成校验；返回值作为 DataOperationAdapter 交给 recognizeDirectory / advance / assertDirectoryMatches。也可使用带 registry+selection 的 advance 重载，或低层 RunRequest.withDataSources。
+
+有效逻辑名按 Action → Rule → RuleView → Business 解析；传给 adapter 的 CompiledRule 携带本次有效逻辑名，共享编译结果不变。一次选择覆盖流程所有外部操作（checkData/checkDataPattern/insert/update/delete/get/query），包括未走到的分支与 Back、Information 识别，以及显式 Business/Action 注册。未知实现、重复实现名、遗漏路由、未被设计引用的逻辑名均报错。缺少有效逻辑名的外部 Rule 不得静默选源。纯模型 check/DSL 不执行外部 adapter。
+
+Registry 不存储“当前数据源”，Selection 复制选择表，不使用全局或 ThreadLocal 切换。适配器实例若被复用应线程安全，不保存当前请求模型。Demo `OrderDataSourceConfiguration` 手动注册 local，Workflow 每个方法新增 selection 重载，原 API 使用显式 DEFAULT_DATA_SOURCES；这不会改动公开 HTTP 契约。
+
+这里切换的是 DEC 外部 Rule 的实现，不自动切换应用 DAO/JDBC 数据库，也不自动提供多资源原子提交。事务资源接入仍由原 adapter/WorkflowTransaction 契约负责；不能把未参与事务的远程操作宣称可回滚。Demo 替代实现测试复用已加入 Spring 事务的本地 DAO，验证写后失败回滚。
+
+测试覆盖按逻辑源分派、Rule override、未知/遗漏路由在执行前失败、并发选择隔离、默认选择不被前次请求污染及 adapter 失败回滚。Binding 为真实适配/装配符号与测试补充追踪并重新生成证据。
+
+### 流程默认与 Action 数据源
+
+`business.dataSource` 声明流程默认逻辑数据源；`actions[].dataSource` 显式覆盖当前 Action，包括 `subDirectories[].back.actions[]`。两者引用 Config 的 DataSource name，不填写 Java 类名、Bean 名或适配器实现名称。旧设计可以省略；新流程有外部操作时应明确默认值。
+
+有效路由按 **Action.dataSource → Rule.dataSource → RuleView.dataSource → Business.dataSource** 解析。Action 显式覆盖该 Action 调用的所有外部 Rule；未配置 Action 时保留 Rule/RuleView 多数据源语义。纯模型 check/dsl 不触发外部访问。Information 识别没有 Action 覆盖，使用 Rule → RuleView → Business；一次 Action 的选择不能泄漏给下一次 Action 或其他请求。
+
+Custom Action 没有 Rule 层级，使用 Action → Business。逻辑数据源与注册实现分离：设计确定逻辑名称，执行参数 `Map<逻辑名, 实现名>` 选择注册的 DEC 适配器；不改变 JDBC/DAO 路由。无有效数据源或缺少实现选择的外部操作必须失败；不得静默使用首个适配器。一个 Runner 装载一个 Business。
+
+Java 投影生成 `OrderPaymentFlow.DATA_SOURCE`，ActionNode 保留 `dataSource/businessDataSource`，`resolveDataSource(ruleSource)` 用于导航查看，实际执行由 Runtime 负责。`ActionDefinition` 同样保留声明及流程默认值；不要修改共享编译 Rule。框架在请求绑定阶段验证所需注册，之后才开启事务。
+
+```java
+// 注册实现（Spring 中可直接提供 DataSourceAdapter Bean）
+var registry = DataSourceAdapterRegistry.from(List.of(
+    new DataSourceAdapter("local", localAdapter),
+    new DataSourceAdapter("remote", remoteAdapter)));
+var selection = runner.selectDataSources(registry, Map.of(
+    "data1", "local", "paymentService", "remote", "mongo1", "local"));
+// 将 selection 传入本次 advance/run；Action.dataSource 决定逻辑路由。
+```
+
+Custom Action 中 `context.dataSource()` 取得 Action/Business 逻辑名称，`context.dataSourceAdapter()` 取得本次选择的适配器。通过适配器执行操作时继续传递当前模型、MutationSet 和 transaction；配置 dataSource 不会自动执行 Custom Action 业务逻辑。监听器可通过 `context.action().dataSource()` / `businessDataSource()` 查看声明；RuleView 可能包含多个 Rule 数据源，不能把单一默认值当作所有 Rule 的实际路由。短信提交后投递仍由独立发送实现负责。
+
+### dec-java-lite 的 Rule 驱动桥接
+
+原框架 `DataConnection.execute(ExecuteParam)` 的接入位置对应 `RuleDataAccess.execute(Request)`。用 `new DataSourceAdapter("implementation-name", new RuleDataAdapter(driver))` 注册。驱动读取 `request.rule().cmd()/customer()`、`request.target()` 和 `request.transaction()`；返回 `Result.read(rows)`、`Result.written(count)`，或含生成键的 Result。输入/返回行是不可变快照，模型合并由桥接层负责。
+
+`checkData` 发送 get，`checkDataPattern` 发送 query，二者都必须执行真实读取。针对集合的 checkData，驱动应逐项匹配全部目标并保留缺失语义，不能只返回命中的行造成误通过。命令翻译与安全参数绑定属于驱动；不要直接拼接 `#property` 或宣称任意 DEC SQL 都可直接执行。桥接层不创建数据库连接、不自动提交、不模拟远程资源可回滚。

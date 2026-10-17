@@ -12,6 +12,10 @@ Java 生成器从 DecProject 生成 `src/main/resources/dec/design-files.txt`。
 
 需要 Action 前后监听时，将生成配置收集的 `ActionListenerRegistry` 作为 Runner 构造参数传入；注册表在初始化时验证 Business Design ID 并拒绝同一流程重复绑定，并随 Runner 复用，监听上下文由 Runtime 按次创建。旧构造函数默认无监听器。详细时序与失败语义见 `rule-action-implementation.md`。
 
+`advance` 将本次 View 的 Java 类型与 ModelCodec 传入 ActionRuntime，监听器用 `context.view(ViewClass.class)` 获取当前模型快照；不缓存 View 实例。绑定的 modelRef 必须与流程各 Directory 一致；不能在混合 modelRef 的图中静默套用一个转换器。低层 `run` 可用 `withView(ActionViewBinding)` 显式绑定。
+
+手动注册 DEC 数据源适配器及按次选择实现见 `datasource-implementation.md`。使用同一个本次 `DataSourceSelection` 完成稳定状态识别、执行与最终回读校验，不在共享 Runner 上更改默认数据源。
+
 直接接入 RuleView 时使用 `compile(project)` 后按请求 `bind(compiled, adapter)`；旧 `register(project, adapter)` 每次都会编译，只用于兼容入口。不要缓存绑定后的 adapter、ModelContext、MutationSet、payload、InformationEngine、Session 或事务对象，也不要把它们保存在全局静态变量里。设计更新需创建新的 Runner；不允许旧编译结果继续代表新设计。
 
 复用范围仅是 canonical RuleView 编译结果，不暗示解释器的全部表达式/DSL 预编译。性能结论要有测量范围和数据；接线微测量不能推出数据库或端到端吞吐收益。
@@ -29,3 +33,5 @@ Store 复用不代表共享请求状态或事务；提交边界仍遵循 `dataso
 结构重构应对照已有生成产物；有意新增产物应说明差异。验证 JAR/classpath 加载、并发请求隔离和设计更新后的重新编译，更新 Demo、Binding 的符号与测试引用，并重新生成当前设计/代码的测试证据。
 
 业务正确性验证还应按风险选择 `scenario-validation.md` 中的并发、回调、集合和失败场景；不把单一路径通过作为通用性证明。
+
+流程的逻辑默认源读取 `business.dataSource`，每个 Action（包括 Back）的覆盖读取 `action.dataSource`；Runner 编译后保留不可变声明，请求级绑定选择。不要在工作流代码中复制逻辑路由表、改写共享 CompiledRule 或使用 ThreadLocal 切换。Custom Action 使用上下文取得本次默认逻辑源与适配器；数据源优先级见 `datasource-implementation.md`。

@@ -20,7 +20,7 @@ description: 根据已批准的 DEC canonical YAML 独立实现或修改真实�
 
 按需追加：
 
-- DataSource：`references/datasource-implementation.md`；
+- DataSource、手动适配器注册与按次选择实现：`references/datasource-implementation.md`；
 - Enum / `relEnum`：`references/enum-implementation.md`；Enum `value` 固定为 Integer，API/Entity/serializer 不得改成字符串；
 - API / RuleView.apiRef：`references/api-implementation.md`；
 - 框架通用性、并发、乱序、集合关系和失败场景验证：`references/scenario-validation.md`；
@@ -191,14 +191,15 @@ RuleView 与 Rule 的 DataSource 语义：
 
 ```text
 effectiveDataSource(rule) =
-  rule.dataSource
+  action.dataSource
+  else rule.dataSource
   else ruleView.dataSource
-  else runtime/project default
+  else business.dataSource
 ```
 
 不同 Rule 可以分别访问 MySQL、Redis、MongoDB、第三方系统或微服务。实现层必须通过统一 DataSource abstraction/adapter 落地，不得因底层类型不同复制一套业务 Rule。
 
-新增 DataSource type 时按 `datasource-implementation.md` 实现 `DataSource/DataConnection/ConvertContainer/DataConvertContainer/ExecuteContainer` 及必要 factory/registration。
+原框架扩展按 `datasource-implementation.md` 的 DataSource/DataConnection 等职责接入；dec-java-lite 使用 `RuleDataAccess` + `RuleDataAdapter` 及显式注册，不要求复制原始全局单例。
 
 ## 7. Enum / relEnum
 
@@ -287,3 +288,9 @@ Enum 也可以绑定：
 - Rule/Action/Produce：`references/rule-action-implementation.md`
 - Binding：`references/implementation-binding.md`
 - 符合性 Review：`references/conformance-review.md`
+
+### Business / Action DataSource
+
+实现流程默认与动作覆盖时，遵循 `references/datasource-implementation.md`：Action → Rule → RuleView → Business；普通和 Back Action 一致。设计声明逻辑名称，执行选择注册实现；生成投影和 HTML 应同时可追踪。不得把实现名称写进 canonical 设计，不得通过改写共享 Rule 或请求 payload 传递可信路由配置。
+
+Rule 实现必须完整保留 cmd/process/error/customer；checkData/checkDataPattern 必须实际读源，纳入执行前路由校验。使用 dec-java-lite 时先按 `references/rule-action-implementation.md` 检查表达式和驱动支持范围，不把“类型可解析”当成“语义全部实现”。

@@ -697,11 +697,11 @@ def _parse_systems(root: minidom.Element, ids: IdFactory) -> Dict[str, Any]:
 
 
 def _parse_action(action: minidom.Element, ids: IdFactory, parent: minidom.Element, directory_name: str, path: str) -> Dict[str, Any]:
-    _assert_attrs(action, {"name", "system-ref", "rule-ref"}, path)
+    _assert_attrs(action, {"name", "system-ref", "rule-ref", "dataSource"}, path)
     _assert_children(action, {"rule", "produce-info"}, path)
     name = _required_attr(action, "name", path)
     node: Dict[str, Any] = {"name": name}
-    for xml_name, yaml_name in (("system-ref", "systemRef"), ("rule-ref", "ruleRef")):
+    for xml_name, yaml_name in (("system-ref", "systemRef"), ("rule-ref", "ruleRef"), ("dataSource", "dataSource")):
         value = _attr(action, xml_name)
         if value is not None:
             node[yaml_name] = value
@@ -742,10 +742,12 @@ def _parse_action_info(parent: minidom.Element, ids: IdFactory, directory_name: 
 
 
 def _parse_business(root: minidom.Element, ids: IdFactory) -> Dict[str, Any]:
-    _assert_attrs(root, {"name", "desc"}, "business-config")
+    _assert_attrs(root, {"name", "desc", "dataSource"}, "business-config")
     _assert_children(root, {"directory-info"}, "business-config")
     name = _required_attr(root, "name", "business-config")
     business: Dict[str, Any] = {"name": name}
+    if _attr(root, "dataSource") is not None:
+        business["dataSource"] = _attr(root, "dataSource")
     desc = _attr(root, "desc")
     if desc is not None:
         business["desc"] = desc

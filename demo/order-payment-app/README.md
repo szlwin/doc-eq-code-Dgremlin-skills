@@ -65,3 +65,29 @@ curl -X POST http://localhost:8080/api/orders/101/payment/result \
 读取当前工作模型使用 `context.read(path)`，写入使用 `context.write(path, value)` 保留权限检查和变更追踪。监听器异常使流程失败并按事务契约回滚；实例不保存请求状态，不复制设计业务规则。after 仍在提交前，不等于短信已经送达；短信继续由 `SmsNotifyAction` 注册的 Spring 提交回调发送。
 
 框架接口与非 Spring 接入见 `../../dec-java-lite/docs/action-runtime.md`。
+
+## 类型化 View 与 DataSource 选择
+
+监听器可直接读取当前 Action 的 View：
+
+```java
+OrderInfo order = context.view(OrderInfo.class);
+```
+
+它由流程入口的 ModelCodec 自动转换，before/after 分别看到当前状态。返回值是快照；setter 不自动写回，需要修改时用 `context.write(path, value)`。
+
+`order.workflow.OrderDataSourceConfiguration` 手动注入名为 local 的 DEC 数据源适配器；增加其他实现时声明 `DataSourceAdapter` Bean，生成的配置会统一收集。Java 调用方可按本次执行选择实现：
+
+```java
+var selection = new HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES);
+selection.put("data1", "my-database-adapter"); // 需要先注册同名 DataSourceAdapter Bean
+workflow.receivePaymentResult(orderId, PayResultCode.SUCCESS, selection);
+```
+
+selection 左侧是设计逻辑数据源，右侧是适配器实现名。submitOrder/startPayment/receivePaymentResult/backToPaying/getOrder 均提供对应重载；原 HTTP API 继续使用默认选择。选择不改变下一次请求，缺失或错误路由在流程动作执行前拒绝。
+
+此功能只分派 DEC Rule 的外部数据操作，不自动更换应用 DAO 的 JDBC 数据库。自定义实现应遵循原有事务资源接入契约。
+
+### 流程默认与 Action 覆盖
+
+订单流程在 `business-order-payment.yaml` 声明默认 `dataSource: data1`。saveOrder 的 RuleView 不再重复配置，继承流程默认；startPay 显式使用 paymentService，recordPyaError 显式使用 mongo1，Back resetPayResult 显式使用 data1。优先级为 Action → Rule → RuleView → Business。逻辑名称仍通过工作流执行参数选择 `local` / 手工注册的其他实现。生成的 `OrderPaymentFlow.DATA_SOURCE` 与 ActionNode 可查看声明，`demo/design-html/directory/order-payment.html` 显示流程默认、Action 覆盖和逐 Rule 有效来源。

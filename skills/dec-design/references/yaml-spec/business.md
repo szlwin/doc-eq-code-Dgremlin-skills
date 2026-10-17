@@ -228,3 +228,11 @@ subDirectories:
 - 返回后父目录 Information 必须恢复/重新成立。
 
 ---
+
+### 流程默认与 Action 数据源
+
+`business.dataSource` 声明流程默认逻辑数据源；`actions[].dataSource` 显式覆盖当前 Action，包括 `subDirectories[].back.actions[]`。两者引用 Config 的 DataSource name，不填写 Java 类名、Bean 名或适配器实现名称。旧设计可以省略；新流程有外部操作时应明确默认值。
+
+有效路由按 **Action.dataSource → Rule.dataSource → RuleView.dataSource → Business.dataSource** 解析。Action 显式覆盖该 Action 调用的所有外部 Rule；未配置 Action 时保留 Rule/RuleView 多数据源语义。纯模型 check/dsl 不触发外部访问。Information 识别没有 Action 覆盖，使用 Rule → RuleView → Business；一次 Action 的选择不能泄漏给下一次 Action 或其他请求。
+
+Custom Action 没有 Rule 层级，使用 Action → Business。逻辑数据源与注册实现分离：设计确定逻辑名称，执行参数 `Map<逻辑名, 实现名>` 选择注册的 DEC 适配器；不改变 JDBC/DAO 路由。无有效数据源或缺少实现选择的外部操作必须失败；不得静默使用首个适配器。一个 Runner 装载一个 Business。

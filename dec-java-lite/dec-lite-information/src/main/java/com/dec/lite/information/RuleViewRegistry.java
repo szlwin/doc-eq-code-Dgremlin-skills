@@ -16,7 +16,15 @@ public final class RuleViewRegistry {
 
     public record Invocation(RuleViewKey key, InformationDefinition information, ModelContext context,
                              Map<String, Object> payload, MutationSet mutations, Map<String, Object> produced,
-                             TransactionScope transaction) {
+                             TransactionScope transaction, String dataSourceOverride, String defaultDataSource) {
+        public Invocation(RuleViewKey key, InformationDefinition information, ModelContext context,
+                          Map<String, Object> payload, MutationSet mutations, Map<String, Object> produced,
+                          TransactionScope transaction) {
+            this(key, information, context, payload, mutations, produced, transaction, null, null);
+        }
+        public String resolveDataSource(String ruleSource) {
+            return dataSourceOverride != null ? dataSourceOverride : ruleSource != null ? ruleSource : defaultDataSource;
+        }
         public Invocation(RuleViewKey key, InformationDefinition information, ModelContext context) {
             this(key, information, context, Map.of(), new MutationSet(), new LinkedHashMap<>(), new TransactionScope() { });
         }
@@ -40,6 +48,9 @@ public final class RuleViewRegistry {
     // Built during registration; multiple views for the same system/rule remain ambiguous.
     private final Map<RuleReference, Resolution> resolutions = new ConcurrentHashMap<>();
     private volatile boolean frozen;
+    private final String defaultDataSource;
+    public RuleViewRegistry() { this(null); }
+    public RuleViewRegistry(String defaultDataSource) { this.defaultDataSource = defaultDataSource; }
 
     public synchronized RuleViewRegistry register(String system, String viewRef, String ruleRef, Evaluator evaluator) {
         if (frozen) throw new IllegalStateException("RuleView registry is frozen");
@@ -87,10 +98,17 @@ public final class RuleViewRegistry {
     public RecognitionResult invoke(String system, String ruleRef, ModelContext context,
                                     Map<String, Object> payload, MutationSet mutations,
                                     Map<String, Object> produced, TransactionScope transaction) {
+        return invoke(system, ruleRef, context, payload, mutations, produced, transaction, null, defaultDataSource);
+    }
+
+    public RecognitionResult invoke(String system, String ruleRef, ModelContext context,
+                                    Map<String, Object> payload, MutationSet mutations,
+                                    Map<String, Object> produced, TransactionScope transaction,
+                                    String dataSourceOverride, String businessDataSource) {
         Resolution resolution = resolve(system, ruleRef);
         if (resolution == null) return RecognitionResult.unresolved(context.version(), "no system-scoped RuleView evaluator registered for " + system + "." + ruleRef);
         if (resolution.ambiguous()) return RecognitionResult.error(context.version(), "ambiguous RuleView action: " + system + "." + ruleRef);
-        return invoke(resolution.key(), context, payload, mutations, null, produced, transaction);
+        return invoke(resolution.key(), context, payload, mutations, null, produced, transaction, dataSourceOverride, businessDataSource);
     }
 
     private Resolution resolve(String system, String ruleRef) {
@@ -100,10 +118,17 @@ public final class RuleViewRegistry {
     private RecognitionResult invoke(RuleViewKey key, ModelContext context, Map<String, Object> payload,
                                      MutationSet mutations, InformationDefinition information,
                                      Map<String, Object> produced, TransactionScope transaction) {
+        return invoke(key, context, payload, mutations, information, produced, transaction, null, defaultDataSource);
+    }
+
+    private RecognitionResult invoke(RuleViewKey key, ModelContext context, Map<String, Object> payload,
+                                     MutationSet mutations, InformationDefinition information,
+                                     Map<String, Object> produced, TransactionScope transaction,
+                                     String dataSourceOverride, String businessDataSource) {
         Evaluator evaluator = evaluators.get(key);
         if (evaluator == null) return RecognitionResult.unresolved(context.version(), "no system-scoped RuleView evaluator registered for " + key);
         try {
-            RecognitionResult result = evaluator.evaluate(new Invocation(key, information, context, payload, mutations, produced, transaction));
+            RecognitionResult result = evaluator.evaluate(new Invocation(key, information, context, payload, mutations, produced, transaction, dataSourceOverride, businessDataSource));
             return result == null ? RecognitionResult.error(context.version(), "RuleView evaluator returned null for " + key) : result;
         } catch (SecurityException exception) {
             return RecognitionResult.error(context.version(), "ACCESS_DENIED " + key + ": " + exception.getMessage());

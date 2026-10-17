@@ -1,3 +1,10 @@
+## 2026-10-17 — Rule model compatibility
+
+- Document original Rule model field mapping and the supported dec-java-lite expression subset.
+- Require real reads for checkData/checkDataPattern; distinguish Runtime type support from driver integration.
+- Restrict customer metadata to flat string attributes and reject conflicting process/grammer aliases.
+- Add metadata/DSL round-trip and lossy-conversion regression tests; clarify Action → Rule → RuleView → Business routing.
+
 ## 2026-10-05 — Independent input boundaries and converter reliability
 
 - Add a generic input boundary reference for canonical YAML, legacy YAML, DEC XML and HTML recovery artifacts.

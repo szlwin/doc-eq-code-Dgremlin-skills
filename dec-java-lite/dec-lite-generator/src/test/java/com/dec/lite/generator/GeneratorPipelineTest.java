@@ -169,7 +169,7 @@ class GeneratorPipelineTest {
         Path output = Files.createTempDirectory("dec-generator-output-").resolve("project");
         GeneratorPipeline.GenerationResult result = new GeneratorPipeline().generate(project, output, "com.example.generated");
 
-        assertEquals(14, result.files().size());
+        assertEquals(15, result.files().size());
         String index = Files.readString(output.resolve("DEC-DESIGN-INDEX.md"));
         assertTrue(index.contains("| `DATA-ORDER` | `data.yaml#datas[id=DATA-ORDER]` | `data.xml#datas[id=DATA-ORDER]` | data |"));
         assertTrue(index.contains("[OrderDao.java](src/main/java/com/example/generated/common/dao/OrderDao.java)"));

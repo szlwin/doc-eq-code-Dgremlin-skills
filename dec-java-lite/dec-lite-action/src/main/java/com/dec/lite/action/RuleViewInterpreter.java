@@ -1,88 +1,89 @@
 package com.dec.lite.action;
 
-import com.dec.lite.information.ModelExpressionCompiler;
-import com.dec.lite.information.RecognitionResult;
-import com.dec.lite.information.RuleViewRegistry;
+import com.dec.lite.information.*;
+import java.util.*;
 
-import java.util.List;
-
-/** Ordered RuleView interpreter. External operations require an explicit adapter. */
+/** Ordered RuleView execution; data reads and writes are explicitly delegated to a DataSource. */
 public final class RuleViewInterpreter {
     private final DataOperationAdapter adapter;
-    private final ModelExpressionCompiler expressions = new ModelExpressionCompiler();
     public RuleViewInterpreter(DataOperationAdapter adapter) { this.adapter = adapter; }
 
     public RecognitionResult execute(CompiledRuleView view, RuleViewRegistry.Invocation invocation) {
-        for (CompiledRule rule : view.rules()) {
-            RecognitionResult result = evaluate(rule, invocation);
-            if (result == null) return RecognitionResult.error(invocation.context().version(), "Rule returned null: " + rule.name());
-            if (result.status() != RecognitionResult.Status.TRUE) return result;
+        Map<String,Object> variables = new LinkedHashMap<>();
+        for (CompiledRule definition : view.rules()) {
+            CompiledRule rule = definition.withDataSource(invocation.resolveDataSource(definition.dataSource()));
+            RecognitionResult result;
+            try {
+                result = evaluate(rule, invocation, variables);
+                if (result == null) result = RecognitionResult.error(invocation.context().version(), "Rule returned null: " + rule.name());
+            } catch (SecurityException denied) {
+                result = RecognitionResult.error(invocation.context().version(), "ACCESS_DENIED " + rule.id() + ": " + denied.getMessage());
+            } catch (RuleExpression.MissingValue missing) {
+                result = RecognitionResult.unresolved(invocation.context().version(), missing.getMessage());
+            } catch (RuntimeException failure) {
+                result = RecognitionResult.error(invocation.context().version(), "Rule " + rule.id() + " failed: " + failure.getMessage());
+            }
+            if (result.status() != RecognitionResult.Status.TRUE) return withError(rule, result);
         }
         return RecognitionResult.of(RecognitionResult.Status.TRUE, invocation.context().version(), view.key().toString());
     }
-
-    private RecognitionResult evaluate(CompiledRule rule, RuleViewRegistry.Invocation invocation) {
-        String version = invocation.context().version();
+    private RecognitionResult evaluate(CompiledRule rule, RuleViewRegistry.Invocation invocation, Map<String,Object> variables) {
         return switch (rule.type()) {
-            case "check", "checkData" -> check(rule, invocation);
-            case "checkPattern", "checkDataPattern" -> pattern(rule, invocation);
-            case "dsl" -> dsl(rule, invocation);
+            case "check" -> result(RuleChecks.test(invocation.context().read(rule.property()), rule.pattern()), rule, invocation);
+            case "checkPattern" -> result(RuleExpression.bool(RuleExpression.compile(rule.pattern()).evaluate(
+                    new RuleExpression.Scope(invocation.context().values(), variables))), rule, invocation);
+            case "checkData", "checkDataPattern" -> checkData(rule, invocation, variables);
+            case "dsl" -> {
+                RuleDsl.compile(rule.process()).execute(invocation, variables, "");
+                yield result(true, rule, invocation);
+            }
             case "insert", "update", "delete", "get", "query" -> {
-                if (invocation.information() != null && !List.of("get", "query").contains(rule.type())) yield RecognitionResult.error(version, "Information recognition cannot execute mutating Rule: " + rule.name());
-                if (adapter == null) yield RecognitionResult.error(version, "DataOperationAdapter is not registered for Rule " + rule.name());
+                if (invocation.information() != null && !Set.of("get", "query").contains(rule.type()))
+                    throw new ActionExecutionException("Information recognition cannot execute mutating Rule: " + rule.name());
+                requireAdapter(rule);
                 yield adapter.execute(rule, invocation);
             }
-            default -> RecognitionResult.error(version, "unsupported Rule type: " + rule.type());
+            default -> throw new ActionExecutionException("unsupported Rule type: " + rule.type());
         };
     }
-    private RecognitionResult check(CompiledRule rule, RuleViewRegistry.Invocation invocation) {
-        if (rule.property() == null || rule.pattern() == null) return RecognitionResult.error(invocation.context().version(), "check requires property and pattern: " + rule.name());
-        Object value = invocation.context().read(rule.property());
-        boolean success = switch (rule.pattern().toUpperCase()) {
-            case "NOTNULL" -> value != null;
-            case "NULL" -> value == null;
-            default -> false;
-        };
-        if (!rule.pattern().equalsIgnoreCase("NOTNULL") && !rule.pattern().equalsIgnoreCase("NULL")) return pattern(new CompiledRule(rule.id(), rule.name(), "checkPattern", null, rule.property() + " = " + rule.pattern(), null, rule.dataSource()), invocation);
-        return RecognitionResult.of(success ? RecognitionResult.Status.TRUE : RecognitionResult.Status.FALSE, invocation.context().version(), rule.property());
-    }
-    private RecognitionResult pattern(CompiledRule rule, RuleViewRegistry.Invocation invocation) {
-        if (rule.pattern() == null) return RecognitionResult.error(invocation.context().version(), "checkPattern requires pattern: " + rule.name());
-        String normalized = rule.pattern().replaceAll("(?<=\\s)=\\s*([A-Z][A-Z0-9_]*)\\b", "= '$1'");
-        return expressions.compile(normalized).evaluate(invocation.context());
-    }
-    private RecognitionResult dsl(CompiledRule rule, RuleViewRegistry.Invocation invocation) {
-        if (rule.process() == null) return RecognitionResult.error(invocation.context().version(), "dsl requires process: " + rule.name());
-        for (String statement : rule.process().split(";")) {
-            String value = statement.trim();
-            if (value.isEmpty()) continue;
-            if (value.startsWith("every(") && value.endsWith(")")) {
-                String inner = value.substring(6, value.length() - 1);
-                int comma = inner.indexOf(',');
-                if (comma < 0) return RecognitionResult.error(invocation.context().version(), "invalid every DSL: " + value);
-                String listPath = inner.substring(0, comma).trim();
-                Object raw = invocation.context().read(listPath);
-                if (!(raw instanceof List<?> list)) return RecognitionResult.error(invocation.context().version(), "every DSL path is not a list: " + listPath);
-                Assignment assignment = assignment(inner.substring(comma + 1));
-                for (int index = 0; index < list.size(); index++) invocation.write(listPath + "[" + index + "]." + assignment.path(), assignment.value());
-            } else {
-                Assignment assignment = assignment(value);
-                invocation.write(assignment.path(), assignment.value());
+    private RecognitionResult checkData(CompiledRule rule, RuleViewRegistry.Invocation invocation, Map<String,Object> variables) {
+        requireAdapter(rule);
+        // Read validation is transient: adapter and aliases cannot modify the working model or produced values.
+        ModelContext snapshot = invocation.context().copyWithGuard(path -> { throw new SecurityException("Data validation cannot write " + path); });
+        Map<String,Object> before = snapshot.values();
+        var read = new RuleViewRegistry.Invocation(invocation.key(), invocation.information(), snapshot, invocation.payload(),
+                new MutationSet(), new LinkedHashMap<>(), invocation.transaction(), invocation.dataSourceOverride(), invocation.defaultDataSource());
+        List<Map<String,Object>> rows = adapter.read(rule, read);
+        if (rows == null) throw new ActionExecutionException("DataSource read returned null rows: " + rule.id());
+        if (!snapshot.values().equals(before) || !read.produced().isEmpty() || !read.mutations().mutations().isEmpty())
+            throw new ActionExecutionException("DataSource read must not modify the model or produce data: " + rule.id());
+        if (rows.isEmpty()) return result(rule.type().equals("checkData") && RuleChecks.test(null, rule.pattern()), rule, invocation);
+        var expression = rule.type().equals("checkDataPattern") ? RuleExpression.compile(rule.pattern()) : null;
+        for (Map<String,Object> row : rows) {
+            if (row == null) throw new ActionExecutionException("DataSource read returned null row: " + rule.id());
+            boolean passed;
+            if (expression == null) passed = RuleChecks.test(row, rule.pattern());
+            else {
+                Map<String,Object> scope = new LinkedHashMap<>(invocation.context().values());
+                scope.putAll(row); // Legacy query aliases temporarily shadow same-named model fields.
+                passed = RuleExpression.bool(expression.evaluate(new RuleExpression.Scope(scope, variables)));
             }
+            if (!passed) return result(false, rule, invocation);
         }
-        return RecognitionResult.of(RecognitionResult.Status.TRUE, invocation.context().version(), rule.name());
+        return result(true, rule, invocation);
     }
-    private static Assignment assignment(String statement) {
-        int colon = statement.indexOf(':');
-        if (colon < 1) throw new ActionExecutionException("invalid DSL assignment: " + statement);
-        String raw = statement.substring(colon + 1).trim();
-        Object value;
-        if (raw.equalsIgnoreCase("null")) value = null;
-        else if (raw.equalsIgnoreCase("true") || raw.equalsIgnoreCase("false")) value = Boolean.valueOf(raw);
-        else if (raw.matches("-?\\d+")) value = Long.valueOf(raw);
-        else if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith("\"") && raw.endsWith("\""))) value = raw.substring(1, raw.length() - 1);
-        else throw new ActionExecutionException("unsupported DSL literal: " + raw);
-        return new Assignment(statement.substring(0, colon).trim(), value);
+    private void requireAdapter(CompiledRule rule) {
+        if (adapter == null) throw new ActionExecutionException("DataOperationAdapter is not registered for Rule " + rule.name());
     }
-    private record Assignment(String path, Object value) { }
+    private static RecognitionResult result(boolean passed, CompiledRule rule, RuleViewRegistry.Invocation invocation) {
+        return RecognitionResult.of(passed ? RecognitionResult.Status.TRUE : RecognitionResult.Status.FALSE, invocation.context().version(), rule.id());
+    }
+    private static RecognitionResult withError(CompiledRule rule, RecognitionResult result) {
+        if (rule.error() == null) return result;
+        var errors = new ArrayList<>(result.errors());
+        var error = rule.error();
+        errors.add("Rule " + rule.id() + " [" + error.code() + "] " + error.message()
+                + (error.level() == null ? "" : " (level=" + error.level() + ")"));
+        return new RecognitionResult(result.status(), result.evidence(), result.dependencies(), errors, result.modelVersion(), result.trace());
+    }
 }

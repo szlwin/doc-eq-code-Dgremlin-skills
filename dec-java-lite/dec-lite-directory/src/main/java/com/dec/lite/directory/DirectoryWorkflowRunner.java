@@ -2,6 +2,9 @@ package com.dec.lite.directory;
 
 import com.dec.lite.action.ActionRuntime;
 import com.dec.lite.action.ActionListenerRegistry;
+import com.dec.lite.action.ActionViewBinding;
+import com.dec.lite.action.DataSourceAdapterRegistry;
+import com.dec.lite.action.DataSourceSelection;
 import com.dec.lite.action.BusinessActionParser;
 import com.dec.lite.action.CompiledRuleView;
 import com.dec.lite.information.RuleViewKey;
@@ -32,6 +35,9 @@ public final class DirectoryWorkflowRunner {
     private final InformationCompilation information;
     private final DirectoryEngine directory;
     private final ActionListenerRegistry listeners;
+    private final java.util.List<com.dec.lite.action.ActionDefinition> actions;
+    private final String defaultDataSource;
+    private final java.util.Set<RuleViewKey> recognitionRules;
 
     public DirectoryWorkflowRunner(DecProject project, CustomActionRegistry registeredActions) {
         this(project, registeredActions, java.time.Clock.systemUTC());
@@ -52,8 +58,11 @@ public final class DirectoryWorkflowRunner {
         Objects.requireNonNull(project, "project");
         compiledRules = new RuleViewCompiler().compile(project);
         information = new InformationParser().parse(project);
+        recognitionRules = information.definitions().values().stream().filter(d -> d.ruleRef() != null)
+                .map(d -> new RuleViewKey(d.key().system(), d.viewRef(), d.ruleRef())).collect(java.util.stream.Collectors.toSet());
         var actionsByBusiness = new BusinessActionParser().parseByBusiness(project);
-        var actions = actionsByBusiness.values().stream().flatMap(java.util.List::stream).toList();
+        defaultDataSource = RuleViewCompiler.businessDataSource(project);
+        actions = actionsByBusiness.values().stream().flatMap(java.util.List::stream).toList();
         listeners.validate(actionsByBusiness.keySet());
         directory = new DirectoryEngine(new DirectoryGraphCompiler().compileReady(
                 project, information, Objects.requireNonNull(registeredActions, "registeredActions"),
@@ -66,11 +75,12 @@ public final class DirectoryWorkflowRunner {
 
     private <T> Completed<T> execute(RunRequest request, ModelCompletion<T> completion) {
         Objects.requireNonNull(request, "request");
+        if (request.viewBinding() != null) validateViewBinding(request.viewBinding());
+        RuleViewRegistry rules = new RuleViewCompiler().bind(compiledRules, request.ruleAdapter(), actions, defaultDataSource, recognitionRules).freeze();
         WorkflowTransaction.Binding binding = request.transaction().bind();
-        RuleViewRegistry rules = new RuleViewCompiler().bind(compiledRules, request.ruleAdapter()).freeze();
         InformationEngine engine = new InformationEngine(new InformationEngineContext(information, rules));
         try (ExecutionSession session = new ExecutionSession(engine,
-                new ActionRuntime(rules, request.customActions(), listeners, clock), request.model(), request.payload(),
+                new ActionRuntime(rules, request.customActions(), listeners, clock, request.viewBinding(), request.ruleAdapter()), request.model(), request.payload(),
                 request.deadline(), request.currentDirectory(),
                 request.transaction().mode() == WorkflowTransaction.Mode.EXTERNAL ? TransactionPolicy.EXTERNAL : TransactionPolicy.REQUIRED,
                 binding.participant());
@@ -93,6 +103,21 @@ public final class DirectoryWorkflowRunner {
         }
     }
 
+    private void validateViewBinding(ActionViewBinding binding) {
+        for (DirectoryDefinition definition : directory.graph().directories().values()) {
+            if (!definition.modelRef().equals(binding.viewRef()))
+                throw new IllegalArgumentException("Flow View binding " + binding.viewRef()
+                        + " conflicts with Directory " + definition.name() + " modelRef=" + definition.modelRef());
+        }
+    }
+
+    /** Resolve and validate one execution's implementation choices without modifying compiled design. */
+    public DataSourceSelection selectDataSources(DataSourceAdapterRegistry registry, Map<String, String> selection) {
+        DataSourceSelection selected = Objects.requireNonNull(registry, "DataSource registry").select(selection);
+        selected.validate(compiledRules.values(), actions, defaultDataSource, recognitionRules);
+        return selected;
+    }
+
     private void checkDeadline(RunRequest request) {
         if (!clock.instant().isBefore(request.deadline()))
             throw new com.dec.lite.runtime.RuntimeFailure(com.dec.lite.runtime.RuntimeErrorCode.TIMEOUT,
@@ -106,7 +131,7 @@ public final class DirectoryWorkflowRunner {
      * Callers distinguish a new entity from an existing entity using their repository, not this method.
      */
     public String recognizeDirectory(ModelContext model, DataOperationAdapter ruleAdapter) {
-        RuleViewRegistry rules = new RuleViewCompiler().bind(compiledRules, ruleAdapter).freeze();
+        RuleViewRegistry rules = new RuleViewCompiler().bind(compiledRules, ruleAdapter, actions, defaultDataSource, recognitionRules).freeze();
         InformationEngine engine = new InformationEngine(new InformationEngineContext(information, rules));
         Map<String, RecognitionResult.Status> states = new LinkedHashMap<>();
         directory.graph().directories().values().stream().filter(node -> !node.result())
@@ -158,9 +183,20 @@ public final class DirectoryWorkflowRunner {
                          ModelCodec<T> codec, CompletionHandler<T> completionHandler) {
         Objects.requireNonNull(codec, "codec");
         Objects.requireNonNull(completionHandler, "completionHandler");
+        DirectoryDefinition root = directory.graph().directories().get(directory.graph().root());
+        ActionViewBinding viewBinding = new ActionViewBinding(root.modelRef(),
+                Objects.requireNonNull(value, "flow View").getClass(), codec::fromModel);
         return execute(new RunRequest(currentDirectory, target, back, codec.toModel(value), payload,
-                ruleAdapter, customActions, transaction, deadline),
+                ruleAdapter, customActions, transaction, deadline, viewBinding),
                 (model, execution, scope) -> completionHandler.complete(codec.fromModel(model), execution, scope)).value();
+    }
+
+    public <T> T advance(T value, String currentDirectory, String target, boolean back,
+                         Map<String, Object> payload, DataSourceAdapterRegistry registry, Map<String, String> selection,
+                         CustomActionRegistry customActions, WorkflowTransaction transaction, Instant deadline,
+                         ModelCodec<T> codec, CompletionHandler<T> completionHandler) {
+        return advance(value, currentDirectory, target, back, payload, selectDataSources(registry, selection),
+                customActions, transaction, deadline, codec, completionHandler);
     }
 
     public interface ModelCodec<T> {
@@ -175,7 +211,21 @@ public final class DirectoryWorkflowRunner {
 
     public record RunRequest(String currentDirectory, String target, boolean back, ModelContext model,
                              Map<String, Object> payload, DataOperationAdapter ruleAdapter,
-                             CustomActionRegistry customActions, WorkflowTransaction transaction, Instant deadline) {
+                             CustomActionRegistry customActions, WorkflowTransaction transaction, Instant deadline,
+                             ActionViewBinding viewBinding) {
+        public RunRequest(String currentDirectory, String target, boolean back, ModelContext model,
+                          Map<String, Object> payload, DataOperationAdapter ruleAdapter,
+                          CustomActionRegistry customActions, WorkflowTransaction transaction, Instant deadline) {
+            this(currentDirectory, target, back, model, payload, ruleAdapter, customActions, transaction, deadline, null);
+        }
+        public RunRequest withView(ActionViewBinding binding) {
+            return new RunRequest(currentDirectory, target, back, model, payload, ruleAdapter,
+                    customActions, transaction, deadline, Objects.requireNonNull(binding, "View binding"));
+        }
+        public RunRequest withDataSources(DataSourceAdapterRegistry registry, Map<String, String> selection) {
+            return new RunRequest(currentDirectory, target, back, model, payload, registry.select(selection),
+                    customActions, transaction, deadline, viewBinding);
+        }
         public RunRequest {
             Objects.requireNonNull(target, "target");
             Objects.requireNonNull(model, "model");

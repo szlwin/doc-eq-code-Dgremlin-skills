@@ -447,7 +447,11 @@ def _build_rule(doc: minidom.Document, root: Mapping[str, Any], emit: bool) -> m
                 r_el.appendChild(_element(doc, "error-info", {"code": err.get("code"), "message": err.get("message"), "level": err.get("level")}))
             if rule.get("customer") is not None:
                 cust = _map(rule["customer"], f"ruleViews[{i}].rules[{ri}].customer")
+                if any(not isinstance(value, str) for value in cust.values()):
+                    raise ConversionError(f"ruleViews[{i}].rules[{ri}].customer: values must be strings (XML attributes)")
                 r_el.appendChild(_element(doc, "customer-info", cust))
+            if rule.get("process") is not None and rule.get("grammer") is not None and rule["process"] != rule["grammer"]:
+                raise ConversionError(f"ruleViews[{i}].rules[{ri}]: process and grammer conflict")
             process = rule.get("process", rule.get("grammer"))
             if process is not None:
                 _append_cdata(doc, r_el, "customer-process", process)
@@ -590,6 +594,15 @@ def _build_api(doc: minidom.Document, root: Mapping[str, Any], emit: bool) -> mi
         top.appendChild(api)
     return top
 
+def _business_datasource(node: Mapping[str, Any], path: str) -> Any:
+    if "dataSource" not in node:
+        return None
+    source = node["dataSource"]
+    if not isinstance(source, str) or not source.strip():
+        raise ConversionError(f"{path}.dataSource: non-empty string required")
+    return source
+
+
 def _append_actions(doc: minidom.Document, parent: minidom.Element, actions: Any, path: str, emit: bool) -> None:
     items = _list(actions, path)
     if not items:
@@ -597,12 +610,13 @@ def _append_actions(doc: minidom.Document, parent: minidom.Element, actions: Any
     info = _element(doc, "action-info")
     for i, raw in enumerate(items):
         node = _map(raw, f"{path}[{i}]")
-        _reject_unknown(node, {"name", "systemRef", "ruleRef", "produces", "rules"}, f"{path}[{i}]")
+        _reject_unknown(node, {"name", "systemRef", "ruleRef", "dataSource", "produces", "rules"}, f"{path}[{i}]")
         _id_comment(doc, info, node, emit)
         action = _element(doc, "action", {
             "name": _require(node, "name", f"{path}[{i}]"),
             "system-ref": node.get("systemRef"),
             "rule-ref": node.get("ruleRef"),
+            "dataSource": _business_datasource(node, f"{path}[{i}]"),
         })
         for rj, raw_rule in enumerate(_list(node.get("rules"), f"{path}[{i}].rules")):
             rule = _map(raw_rule, f"{path}[{i}].rules[{rj}]")
@@ -739,8 +753,8 @@ def _append_business_subdirectories(doc: minidom.Document, parent: minidom.Eleme
 
 def _build_business(doc: minidom.Document, root: Mapping[str, Any], emit: bool) -> minidom.Element:
     b = _map(root.get("business"), "business")
-    _reject_unknown(b, {"name", "desc", "directories"}, "business")
-    top = _element(doc, "business-config", {"name": _require(b, "name", "business"), "desc": b.get("desc")})
+    _reject_unknown(b, {"name", "desc", "dataSource", "directories"}, "business")
+    top = _element(doc, "business-config", {"name": _require(b, "name", "business"), "desc": b.get("desc"), "dataSource": _business_datasource(b, "business")})
     # Business is the XML root, so its stable design ID is emitted as the first
     # child comment when tracing is enabled. This allows XML -> YAML migration
     # to restore the canonical business ID without changing Runtime semantics.

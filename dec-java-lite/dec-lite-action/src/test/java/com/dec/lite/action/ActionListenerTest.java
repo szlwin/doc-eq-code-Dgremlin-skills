@@ -41,6 +41,42 @@ class ActionListenerTest {
         public void rollback() { rollbacks++; }
     }
 
+    private static final class OrderView {
+        long status;
+        OrderView(long status) { this.status = status; }
+    }
+
+    @Test void typedViewReflectsCurrentActionAndIsDetachedFromWorkingModel() throws Exception {
+        var views = new RuleViewRegistry(); var original = model();
+        var binding = new ActionViewBinding("OrderInfo", OrderView.class,
+                m -> new OrderView(((Number) m.read("status")).longValue()));
+        var listeners = ActionListenerRegistry.from(List.of(listener("BUS-TEST", c -> {
+            assertEquals("OrderInfo", c.viewRef());
+            OrderView before = c.view(OrderView.class); assertEquals(0L, before.status);
+            before.status = 99; assertEquals(0L, c.read("status"));
+            c.write("status", 1L); assertEquals(1L, c.view(OrderView.class).status);
+        }, c -> {
+            assertEquals(2L, c.view(OrderView.class).status);
+            assertThrows(IllegalArgumentException.class, () -> c.view(String.class));
+        })));
+        var result = new ActionRuntime(views, custom(c -> {
+            assertEquals(1L, c.model().read("status")); c.model().write("status", 2L, null);
+        }), listeners, Clock.systemUTC(), binding).execute(action(List.of(), List.of()), engine(views), original);
+        assertEquals(ActionStatus.SUCCESS, result.status(), result.error()); assertEquals(2L, original.read("status"));
+    }
+
+    @Test void missingOrInvalidViewBindingFailsClearly() throws Exception {
+        var views = new RuleViewRegistry();
+        var listeners = ActionListenerRegistry.from(List.of(listener("BUS-TEST", c -> c.view(OrderView.class), c -> {})));
+        var missing = new ActionRuntime(views, custom(c -> fail("missing binding")), listeners)
+                .execute(action(List.of(), List.of()), engine(views), model());
+        assertEquals(ActionStatus.FAILED, missing.status()); assertTrue(missing.error().contains("No typed flow View"));
+        var invalid = new ActionRuntime(views, custom(c -> fail("invalid binding")), listeners, Clock.systemUTC(),
+                new ActionViewBinding("OrderInfo", OrderView.class, m -> "wrong type"))
+                .execute(action(List.of(), List.of()), engine(views), model());
+        assertEquals(ActionStatus.FAILED, invalid.status()); assertTrue(invalid.error().contains("decoder returned an invalid"));
+    }
+
     @Test void routesActionsByBusinessAndUsesCurrentWorkingModelBeforeCommit() throws Exception {
         var events = new ArrayList<String>();
         var listeners = ActionListenerRegistry.from(List.of(

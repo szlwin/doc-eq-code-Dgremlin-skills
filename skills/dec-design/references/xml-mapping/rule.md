@@ -38,5 +38,8 @@
 | `cmd` | `@sql` |
 | `error` | `error-info` |
 | `process` | `customer-process` CDATA |
+| `customer` | `customer-info` 的字符串属性 |
 
-未配置 Rule `dataSource` 时由 Runtime 使用 RuleView `dataSource`；XML 不重复写继承值。
+XML 仅写声明值，不重复写继承值；运行优先级为 Action → Rule → RuleView → Business。Information 识别没有 Action 覆盖。
+
+导入 `grammer/sql` 为 canonical `dsl/cmd`。兼容输入同时出现 `cmd/sql` 或 `process/grammer` 时，值冲突必须失败。`customer` 只允许平铺字符串属性，不能丢失嵌套结构后仍声称无损转换。

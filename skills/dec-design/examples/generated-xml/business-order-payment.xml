@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<business-config name="order-payment" desc="订单创建、支付发起、支付结果处理的跨 System 业务流程">
+<business-config name="order-payment" desc="订单创建、支付发起、支付结果处理的跨 System 业务流程" dataSource="data1">
   <directory-info>
     <directory name="ordered" information-ref="order.ordered" model-ref="OrderInfo" is-root="true">
       <action-info>
@@ -19,7 +19,7 @@
         <dependency information-ref="user.effective"/>
       </dependency-info>
       <action-info>
-        <action name="startPay" system-ref="payment" rule-ref="pay">
+        <action name="startPay" system-ref="payment" rule-ref="pay" dataSource="paymentService">
           <produce-info>
             <produce ref="PaymentInfo" information-ref="payment.paymentInfo"/>
           </produce-info>
@@ -32,7 +32,7 @@
         <subdirectory rel="paying">
           <back name="returnPaying">
             <action-info>
-              <action name="resetPayResult" system-ref="payment" rule-ref="resetPayResult"/>
+              <action name="resetPayResult" system-ref="payment" rule-ref="resetPayResult" dataSource="data1"/>
             </action-info>
           </back>
         </subdirectory>
@@ -55,7 +55,7 @@
     </directory>
     <directory name="error" information-ref="common.payError" model-ref="OrderInfo">
       <action-info>
-        <action name="recordPyaError" system-ref="payment" rule-ref="recordPyaError">
+        <action name="recordPyaError" system-ref="payment" rule-ref="recordPyaError" dataSource="mongo1">
           <produce-info>
             <produce ref="PyaError"/>
           </produce-info>

@@ -264,6 +264,7 @@ countNotEmpty(ruleRef, ruleData, expression) == 1
 - Action 无 `ruleRef` 表示 Custom Action；
 - RuleView Action 与 Custom Action 不允许互相 fallback；
 - Action 顺序就是执行顺序。
+- Business 默认 `dataSource` 与 Action（含 Back）覆盖 `dataSource` 都引用 Config；优先级为 Action → Rule → RuleView → Business。HTML 必须展示声明与有效来源，详见 `yaml-spec/business.md`。
 
 ### Produce / Change
 
@@ -335,3 +336,5 @@ Back 绑定在明确 subDirectory relation 上，返回时逐级执行补偿，�
 - 站点使用不绑定单一流程的 `index.html`、`directories.html`、`systems.html` 等共享页；Directory 首页列出全部 Business Directory Maps，详细图输出到 `directory/<business>.html`。Change 箭头必须连接实际可见、可点击的目标节点，详情保留目标 Information/process。
 - View Property `desc` 应用于业务说明；View HTML 的字段类型必须从 Data property 解析，Enum 必须从 Data Column `relEnum` 解析并链接，禁止手工复制不一致的 type/enum。
 - 所有 HTML 仍必须由 `scripts/render_dec_graph.py` 创建或覆盖，禁止手工维护。
+
+Rule 设计及原 XML 迁移需按 `references/yaml-spec/rule.md` 核对目标 Runtime 的表达式支持范围。保留 cmd/process/error/customer，customer 限平铺字符串；checkData/checkDataPattern 声明外部读取，不能描述成纯内存校验。设计结构校验通过不代表历史 DSL 或真实后端已验证。

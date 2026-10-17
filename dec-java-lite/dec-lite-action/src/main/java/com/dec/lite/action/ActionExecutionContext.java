@@ -16,6 +16,8 @@ public final class ActionExecutionContext {
     private final boolean transactionOwner;
     private final boolean applyDirectoryChange;
     private final SystemAccessPolicy accessPolicy;
+    private final String dataSource;
+    private final DataOperationAdapter dataSourceAdapter;
     private final Map<String, Object> produced = new LinkedHashMap<>();
 
     public ActionExecutionContext(InformationEngine informationEngine, ModelContext model,
@@ -34,6 +36,14 @@ public final class ActionExecutionContext {
     public ActionExecutionContext(InformationEngine informationEngine, ModelContext model,
                                   Map<String, Object> payload, Instant deadline, ActionTransaction transaction,
                                   boolean transactionOwner, boolean applyDirectoryChange, SystemAccessPolicy accessPolicy) {
+        this(informationEngine, model, payload, deadline, transaction, transactionOwner, applyDirectoryChange, accessPolicy, null, null);
+    }
+    public ActionExecutionContext(InformationEngine informationEngine, ModelContext model,
+                                  Map<String, Object> payload, Instant deadline, ActionTransaction transaction,
+                                  boolean transactionOwner, boolean applyDirectoryChange, SystemAccessPolicy accessPolicy,
+                                  String dataSource, DataOperationAdapter dataSourceAdapter) {
+        this.dataSource = dataSource;
+        this.dataSourceAdapter = dataSourceAdapter;
         this.informationEngine = informationEngine;
         this.model = model;
         this.payload = Map.copyOf(payload == null ? Map.of() : payload);
@@ -42,6 +52,12 @@ public final class ActionExecutionContext {
         this.transactionOwner = transactionOwner;
         this.applyDirectoryChange = applyDirectoryChange;
         this.accessPolicy = accessPolicy == null ? SystemAccessPolicy.allowAll() : accessPolicy;
+    }
+    /** Logical Action override or Business default, for Custom Action code. */
+    public String dataSource() { return dataSource; }
+    public DataOperationAdapter dataSourceAdapter() {
+        if (dataSourceAdapter == null) throw new IllegalStateException("No selected adapter for Custom Action DataSource: " + dataSource);
+        return dataSourceAdapter;
     }
     public InformationEngine informationEngine() { return informationEngine; }
     public ModelContext model() { return model; }

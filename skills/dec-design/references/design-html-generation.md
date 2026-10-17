@@ -229,3 +229,7 @@ Directory 首页必须列出 Business Directory Map；每个 Business Map 生成
 View 详情必须以层级方式展示 Relation/子对象；标量 Property 显示 Data-derived logical type、`desc`、Enum 链接。
 
 Information 图保留右侧详情面板：点击原信息框显示完整定义与 System / View / RuleView 等跳转链接；四向“＋/−”独立控制图内规则框，不替代或清空右侧面板。窄屏下详情面板沿用响应式布局放到图下方。
+
+### 流程 / Action 数据源展示
+
+Business 列表与详情头部显示流程默认 DataSource；Action 图形下标显示有效逻辑数据源，右侧 Inspector 保留原菜单并显示 Action 覆盖、Business 默认和逐 Rule 的有效来源（Action / Rule / RuleView / Business）。详情页的 Action 数据源卡片同时覆盖普通 Action 和 Back Action，并提供 DataSource 跳转。纯模型 Rule 的来源展示不代表产生外部 I/O。HTML 不展示执行时注入的实现名称，因为它不是设计事实。

@@ -37,6 +37,7 @@ business:
       - id: PROD-PAYMENT-INFO
         ref: PaymentInfo
         informationRef: payment.paymentInfo
+      dataSource: paymentService
     change:
       informationRef: order.paying
   - id: DIR-PAY-RESULT
@@ -53,6 +54,7 @@ business:
           name: resetPayResult
           systemRef: payment
           ruleRef: resetPayResult
+          dataSource: data1
     - rel: success
       role: case
       informationRef: payment.success
@@ -91,6 +93,7 @@ business:
       produces:
       - id: PROD-PAY-ERROR
         ref: PyaError
+      dataSource: mongo1
     - id: ACT-SMS-NOTIFY
       name: smsNotify
     - id: ACT-CONFIRM-PAY-ERROR
@@ -99,3 +102,4 @@ business:
       ruleRef: confirmPayError
     change:
       informationRef: order.payErrorStatus
+  dataSource: data1

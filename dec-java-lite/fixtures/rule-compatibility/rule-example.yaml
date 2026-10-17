@@ -1,0 +1,90 @@
+kind: rule
+version: dec/v1
+ruleViews:
+- id: RV-SAVE-ORDER
+  name: save-Order
+  code: save-Order
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-SAVE-ORDER-DSL
+    name: dsl
+    type: dsl
+    error:
+      code: C001
+      message: user error
+      level: 1
+    process: "\t\t\t\t\n\t\t\t\t\t#num : if totalPrice>10 then totalPrice*1.1  else totalPrice*1.2;\n\t\t\t\t\ttotalPrice\
+      \ : totalPrice*#num;\n\t\t\t\t\n\t\t\t"
+  - id: RULE-SAVE-ORDER-CHECKNAME
+    name: checkName
+    type: checkPattern
+    pattern: userT.userName = userT.uname
+    error:
+      code: C001
+      message: user error
+      level: 1
+  - id: RULE-SAVE-ORDER-INSERTUSER
+    name: insertUser
+    type: insert
+    property: userT
+  - id: RULE-SAVE-ORDER-CHECKUSER
+    name: checkUser
+    type: checkDataPattern
+    property: userT
+    pattern: u_id = userId
+    cmd: 'select a.id as u_id from userT a where a.id = #userT.id'
+  - id: RULE-SAVE-ORDER-CHECKUSER1
+    name: checkUser1
+    type: checkData
+    property: userT
+    pattern: NOTNULL
+  - id: RULE-SAVE-ORDER-CHECK1
+    name: check1
+    type: checkPattern
+    pattern: userId != 0 and userT.id != 0 and ( productCount > 0 or totalPrice >= 0 ) or (productCount*(totalPrice+10) >
+      200 )
+  - id: RULE-SAVE-ORDER-CHECKUERID
+    name: checkUerId
+    type: check
+    property: userId
+    pattern: NOTNULL;NOTEQUAL:2
+  - id: RULE-SAVE-ORDER-INSERTORDER
+    name: insertOrder
+    type: insert
+    property: OrderInfo
+  - id: RULE-SAVE-ORDER-INSERTPRODUCT
+    name: insertProduct
+    type: insert
+    property: productList
+  - id: RULE-SAVE-ORDER-DELETEPRODUCT
+    name: deleteProduct
+    type: delete
+    cmd: delete p.* from productList p where p.productPrice = 20
+- id: RV-GET-USER
+  name: get-user
+  code: get-user
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-GET-USER-SELECTUSER
+    name: selectUser
+    type: get
+    property: userT
+    cmd: 'select a.userName from userT a where a.id = #userT.id'
+  - id: RULE-GET-USER-SELECTORDER
+    name: selectOrder
+    type: get
+    property: OrderInfo
+  - id: RULE-GET-USER-GETPRODUCT
+    name: getProduct
+    type: query
+    property: productList
+    cmd: 'select p.id,p.productPrice from productList p where p.orderId = #id'
+- id: RV-BACK-ORDER
+  name: back-Order
+  code: back-Order
+  viewRef: OrderInfo
+  rules:
+  - id: RULE-BACK-ORDER-INSERTPRODUCT1
+    name: insertProduct1
+    type: insert
+    property: productList

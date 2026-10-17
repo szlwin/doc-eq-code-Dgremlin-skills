@@ -212,6 +212,11 @@
                                     "type"
                                   ]
                                 }
+                              },
+                              "dataSource": {
+                                "type": "string",
+                                "minLength": 1,
+                                "pattern": "\\S"
                               }
                             },
                             "additionalProperties": false,
@@ -381,6 +386,11 @@
                           "type"
                         ]
                       }
+                    },
+                    "dataSource": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S"
                     }
                   },
                   "additionalProperties": false,
@@ -413,6 +423,11 @@
         },
         "desc": {
           "type": "string"
+        },
+        "dataSource": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         }
       },
       "additionalProperties": false,

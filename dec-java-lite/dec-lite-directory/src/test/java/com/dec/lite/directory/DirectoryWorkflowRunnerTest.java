@@ -30,6 +30,19 @@ class DirectoryWorkflowRunnerTest {
         assertTrue(failure.getMessage().contains("BUS-TYPO"));
     }
 
+    @Test void invalidViewAndDataSourceBindingsFailBeforeTransactionOpens() throws Exception {
+        var runner = runner(Map.of());
+        var transaction = WorkflowTransaction.runtimeManaged("not-opened", () -> {
+            throw new AssertionError("Invalid bindings must fail before opening the transaction");
+        });
+        var request = new DirectoryWorkflowRunner.RunRequest("ordered", "ordered", false,
+                model(1, 1, null), Map.of(), NO_WRITES, new CustomActionRegistry(), transaction, java.time.Instant.MAX);
+        assertThrows(IllegalArgumentException.class, () -> runner.run(request.withView(
+                new ActionViewBinding("UserInfo", String.class, m -> "wrong flow view"))));
+        var sources = DataSourceAdapterRegistry.from(List.of(new DataSourceAdapter("local", NO_WRITES)));
+        assertThrows(IllegalArgumentException.class, () -> runner.run(request.withDataSources(sources, Map.of("data1", "local"))));
+    }
+
     @Test void reusedRunnerDoesNotReadCanonicalDocumentsDuringRequests() throws Exception {
         var parsed = new DecXmlParser().parse(Path.of(getClass().getClassLoader().getResource("mix-xml").toURI()));
         var reads = new java.util.concurrent.atomic.AtomicInteger();

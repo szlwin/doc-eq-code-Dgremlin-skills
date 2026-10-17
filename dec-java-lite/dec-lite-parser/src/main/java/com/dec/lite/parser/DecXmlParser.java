@@ -459,8 +459,9 @@ public final class DecXmlParser {
     }
 
     private static Map<String, Object> business(Element root) {
-        shape(root, "name desc", "directory-info"); String name = required(root, "name");
+        shape(root, "name desc dataSource", "directory-info"); String name = required(root, "name");
         Map<String, Object> result = m("name", name); putAttr(result, "desc", root, "desc");
+        putAttr(result, "dataSource", root, "dataSource");
         Element directories = firstRequired(root, "directory-info"); shape(directories, "", "directory");
         List<Map<String, Object>> values = new ArrayList<>();
         for (Element directory : children(directories, "directory")) {
@@ -511,8 +512,9 @@ public final class DecXmlParser {
         Element info = first(parent, "action-info"); if (info == null) return List.of();
         shape(info, "", "action"); List<Map<String, Object>> values = new ArrayList<>();
         for (Element action : children(info, "action")) {
-            shape(action, "name system-ref rule-ref", "rule produce-info");
+            shape(action, "name system-ref rule-ref dataSource", "rule produce-info");
             String name = required(action, "name"); Map<String, Object> value = m("name", name);
+            putAttr(value, "dataSource", action, "dataSource");
             putAttr(value, "systemRef", action, "system-ref"); putAttr(value, "ruleRef", action, "rule-ref");
             List<Map<String, Object>> inline = new ArrayList<>();
             for (Element rule : children(action, "rule")) inline.add(rule(rule, action, directoryName + "-" + name));

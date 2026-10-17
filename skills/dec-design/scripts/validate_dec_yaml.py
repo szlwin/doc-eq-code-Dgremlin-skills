@@ -867,11 +867,36 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                             if str(prop) != target_main and str(prop) not in valid_props:
                                 err(errors, file, f"System {sname}.modelAccess ref property {prop!r} not found in View {v} or targetMain {target_main!r}")
 
+    # Business and Action logical DataSource references (including Back).
+    def check_business_source(node, file, location):
+        if "dataSource" not in node:
+            return
+        source = node["dataSource"]
+        if not isinstance(source, str) or not source.strip():
+            err(errors, file, f"{location}.dataSource: non-empty string required")
+        elif datasource_names and source not in datasource_names:
+            err(errors, file, f"{location}.dataSource: DataSource {source!r} not found")
+        elif not datasource_names:
+            if any(kind == "config" for _, _, kind in docs):
+                err(errors, file, f"{location}.dataSource: DataSource {source!r} not found")
+            else:
+                warn(warnings, file, f"{location}.dataSource cross-file check skipped because no config YAML was loaded")
+
     # Business refs.
     for file, root, kind in docs:
         if kind != "business":
             continue
         business = root.get("business") or {}
+        check_business_source(business, file, "business")
+        for directory in as_list(business.get("directories")):
+            if not isinstance(directory, Mapping): continue
+            actions = list(as_list(directory.get("actions")))
+            for sub in as_list(directory.get("subDirectories")):
+                if isinstance(sub, Mapping) and isinstance(sub.get("back"), Mapping):
+                    actions.extend(as_list(sub["back"].get("actions")))
+            for action in actions:
+                if isinstance(action, Mapping):
+                    check_business_source(action, file, f"Action {action.get('name')}")
         dirs = as_list(business.get("directories"))
         names = {str(d.get("name")) for d in dirs if isinstance(d, Mapping) and d.get("name")}
         case_targets: Dict[str, List[Tuple[str, str]]] = defaultdict(list)

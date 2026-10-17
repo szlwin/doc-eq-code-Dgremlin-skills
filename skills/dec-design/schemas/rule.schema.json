@@ -103,7 +103,7 @@
                 },
                 "customer": {
                   "type": "object",
-                  "additionalProperties": true
+                  "additionalProperties": {"type": "string"}
                 },
                 "dataSource": {
                   "type": "string",

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<systems>
+  <!-- dec-id: SYS-COMPATIBILITY -->
+  <system name="compatibility">
+    <rule-file-info>
+      <rule-file path="rule-example.yaml"/>
+    </rule-file-info>
+  </system>
+</systems>

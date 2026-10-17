@@ -1,0 +1,7 @@
+kind: systems
+version: dec/v1
+systems:
+- id: SYS-COMPATIBILITY
+  name: compatibility
+  ruleFiles:
+  - rule-example.yaml

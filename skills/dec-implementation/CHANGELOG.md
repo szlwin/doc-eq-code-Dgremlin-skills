@@ -1,3 +1,9 @@
+## 2026-10-17 — Rule execution and driver boundary
+
+- Preserve cmd/process/error/customer through compilation and per-invocation routing.
+- Require explicit DataSource reads for checkData/checkDataPattern and include them in route preflight.
+- Document RuleDataAdapter/RuleDataAccess integration, transaction ownership, unsupported legacy expressions and verification requirements.
+
 ## 2026-10-04 - Script-only YAML/XML I/O
 
 - Added `scripts/yaml_io.py` for canonical DEC YAML and implementation-binding YAML read/write.
