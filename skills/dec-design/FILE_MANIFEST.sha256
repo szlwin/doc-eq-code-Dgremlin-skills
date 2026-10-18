@@ -34,8 +34,8 @@ ad219900425379022506579e44e2365d5876e4e2c2cec4c51cc2c40c5967633a  ./references/x
 1c15011a0fdde9ff1fb3c3a9fa589b1b6f89d506fbe3e4371fe590e671fa7851  ./references/xml-mapping/view.md
 160d3692833faab57ab83761d3d4c9847ec8ac21372a73e49cd6d0bd80acccff  ./references/xml-to-yaml.md
 aed2493a9a32312fecfda0984ae6004df3ee5a143d29074540f41e8a7a9744e1  ./references/xml-yaml-sync.md
-2ef2ff27ac4a1fb8699a011c3a6cc6892053299cf70fb701f86a45f6f73d9191  ./references/yaml-spec/api.md
-c827d9607303ebb33ce44e0c8fb66dac6ae6bce719cf791425166a5bae373890  ./references/yaml-spec/business.md
+fd2244e89362f23d15031ea6d2a03f0629f7f46b019a631cd9874ed7a9c01fbd  ./references/yaml-spec/api.md
+712f0ca27d5cf50e8ddd9f1955407a64ba0f850788b7133e9de06ac3c03fe625  ./references/yaml-spec/business.md
 1fc5f127b2f1323dbc8d0ae8e0b64ca9317e18bb79dd42b4b461b352ba7823ea  ./references/yaml-spec/common.md
 efb9df28f55e44aaabe8006be4f0f1e67de8222ed16ea7a5897c301520cb1abf  ./references/yaml-spec/config.md
 da3f0de6857effd8678acde0e0077b7dd01c4ef9dc0ea33c43e35ab2b454840d  ./references/yaml-spec/cross-file.md

@@ -74,6 +74,7 @@ public final class QueryRunner {
     }
     private boolean matches(QueryPlan plan, ModelContext model) {
         int matches = 0;
+        Map<String, Integer> groups = new java.util.HashMap<>();
         for (QueryPlan.CaseBranch branch : plan.branches()) {
             boolean accepted = true;
             for (InformationKey key : branch.information()) {
@@ -82,9 +83,12 @@ public final class QueryRunner {
                     throw new QueryExecutionException("Information query is " + result.status() + ": " + key + " " + result.errors());
                 if (result.status() != RecognitionResult.Status.TRUE) { accepted = false; break; }
             }
-            if (accepted) matches++;
+            if (accepted) {
+                matches++;
+                if (branch.exclusiveGroup() != null && groups.merge(branch.exclusiveGroup(), 1, Integer::sum) > 1)
+                    throw new QueryExecutionException("result case is ambiguous for model: " + branch.exclusiveGroup());
+            }
         }
-        if (matches > 1) throw new QueryExecutionException("result case is ambiguous for model");
-        return matches == 1;
+        return matches > 0;
     }
 }

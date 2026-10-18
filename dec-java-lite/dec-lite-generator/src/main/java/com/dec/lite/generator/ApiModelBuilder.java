@@ -209,7 +209,11 @@ final class ApiModelBuilder {
                 for (Object value : (Collection<?>) api.get("imports")) imports.add(String.valueOf(value));
                 for (Object value : (Collection<?>) api.get("serviceImports")) serviceImports.add(String.valueOf(value));
                 if (api.get("requestClass") != null) serviceImports.add(api.get("requestPackage") + "." + api.get("requestClass"));
-                if (!"void".equals(api.get("responseType"))) serviceImports.add(api.get("responsePackage") + "." + api.get("responseType"));
+                String responseType = String.valueOf(api.get("responseType"));
+                if (responseType.startsWith("List<")) {
+                    serviceImports.add("java.util.List");
+                    serviceImports.add(api.get("responsePackage") + "." + responseType.substring(5, responseType.length() - 1));
+                } else if (!"void".equals(responseType)) serviceImports.add(api.get("responsePackage") + "." + responseType);
             }
             imports.addAll(serviceImports);
             Map<String, Object> group = new LinkedHashMap<>();
@@ -230,8 +234,10 @@ final class ApiModelBuilder {
         if (!(responseRaw instanceof Map<?, ?> raw)) return "void";
         Map<String, Object> response = castMap(raw);
         String modelRef = response.get("modelRef") instanceof String ref ? ref : null;
-        if (modelRef != null && viewTypes.containsKey(modelRef)) return viewTypes.get(modelRef);
+        if (modelRef != null && viewTypes.containsKey(modelRef))
+            return "array".equals(response.get("type")) ? "List<" + viewTypes.get(modelRef) + ">" : viewTypes.get(modelRef);
         if (modelRef != null) throw new GenerationException("DESIGN_GAP API response modelRef is unresolved: " + modelRef);
+        if ("array".equals(response.get("type"))) throw new GenerationException("DESIGN_GAP array response requires a View modelRef");
         if (response.get("fields") instanceof Collection<?>) return className(requiredText(definition, "name", "api") + "Response");
         return "void";
     }

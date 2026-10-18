@@ -240,3 +240,94 @@ apis:
       type: int
       required: true
       relEnum: OrderStatus
+- id: API-ORDER-QUERY
+  name: queryOrders
+  desc: 按当前业务阶段查询订单，支持阶段分类、闭区间、关联用户和分页
+  system: order
+  url: /api/orders
+  method: GET
+  request:
+    params:
+    - id: API-PARAM-QUERY-EQ
+      name: eq
+      in: query
+      type: string
+      required: false
+      desc: 精确业务阶段，与 start/end 互斥
+      validations:
+      - type: minLength
+        value: 1
+        message: eq长度不能小于1
+      - type: maxLength
+        value: 256
+        message: eq长度不能大于256
+    - id: API-PARAM-QUERY-START
+      name: start
+      in: query
+      type: string
+      required: false
+      desc: 范围起点，包含起点
+      validations:
+      - type: minLength
+        value: 1
+        message: start长度不能小于1
+      - type: maxLength
+        value: 256
+        message: start长度不能大于256
+    - id: API-PARAM-QUERY-END
+      name: end
+      in: query
+      type: string
+      required: false
+      desc: 范围终点，包含终点
+      validations:
+      - type: minLength
+        value: 1
+        message: end长度不能小于1
+      - type: maxLength
+        value: 256
+        message: end长度不能大于256
+    - id: API-PARAM-QUERY-WITH
+      name: with
+      in: query
+      type: string
+      required: false
+      desc: 关联名称，多个名称用逗号分隔
+      validations:
+      - type: minLength
+        value: 1
+        message: with长度不能小于1
+      - type: maxLength
+        value: 256
+        message: with长度不能大于256
+    - id: API-PARAM-QUERY-OFFSET
+      name: offset
+      in: query
+      type: int
+      required: false
+      desc: 根订单偏移量，省略时使用查询框架默认值 0
+      validations:
+      - type: min
+        value: 0
+        message: offset不能小于0
+      - type: max
+        value: 99999
+        message: offset不能大于99999
+    - id: API-PARAM-QUERY-SIZE
+      name: size
+      in: query
+      type: int
+      required: false
+      desc: 每页订单数，省略时使用查询框架默认值 50
+      validations:
+      - type: min
+        value: 1
+        message: size不能小于1
+      - type: max
+        value: 500
+        message: size不能大于500
+  response:
+    type: array
+    modelRef: OrderInfo
+    desc: 当前页订单 View 数组；关联用户仅在 with 指定时加载
+  notes: 选择器使用 Directory 名称、Design ID 或明确注册的中文别名；eq 与 start/end 互斥。未知阶段、关联或不可达范围返回 400。仅查询当前事实，不查询历史经历。

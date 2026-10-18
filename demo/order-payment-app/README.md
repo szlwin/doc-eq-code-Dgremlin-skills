@@ -1,8 +1,81 @@
 # 可运行的订单支付 Demo
 
+## 业务目录查询
+
+本项目的查询入口为 [`OrderQueryService`](src/main/java/com/example/orderpayment/order/service/OrderQueryService.java)，
+四种完整调用集中在 [`OrderQueryExamples`](src/main/java/com/example/orderpayment/order/query/OrderQueryExamples.java)。
+两者使用当前仓库 `dec-java-lite/dec-lite-query` 的 `BusinessQueryRuntime`，加载本 Demo 已有设计和编译后的 RuleView。
+
+在 Spring Bean 中注入 `OrderQueryService orders` 后调用：
+
+```java
+// 支付结果的 success/error case 并集。
+var paid = orders.find(BusinessQuery.find("订单").eq("支付结果"));
+// 已订购及正向可达阶段。
+var ordered = orders.find(BusinessQuery.find("订单").start("已订购"));
+// 两端包含，排除支付失败旁支。
+var range = orders.find(BusinessQuery.find("订单").start("已订购").end("支付成功"));
+// 根据 View 的关联键同时取得用户信息。
+var users = orders.find(BusinessQuery.find("订单").with("用户")
+    .start("已订购").end("支付成功"));
+// 追加绑定参数和根订单分页，集合明细仍完整返回。
+var page = orders.find(BusinessQuery.find("订单").with("明细").with("用户")
+    .eq("支付结果").where("user.name", "demo-user-1").page(0, 20));
+var models = users.models(); // ModelContext 列表；例如 model.read("user.name")
+var explain = orders.explain(BusinessQuery.find("订单").eq("支付结果"));
+```
+
+中文别名只映射 View/Directory Design ID 和关联路径，没有复制状态值。`find("OrderInfo")`、`eq("DIR-PAY-RESULT")`、`with("user")` 等 canonical 名称也可使用。
+`OrderQueryService` 按本流程 Information 的输入需求加载 `payInfo` 和 `orderDetailList`；查询分类同时验证支付事实、订单和全部明细，不以订单 `status` 单独代替设计判断。`with("用户")` 增加可选的 `user` 关联，用户不存在时保留订单并返回 `user=null`。
+
+编译对象在启动时复用，InformationEngine 和 RuleView 注册表每次查询独立绑定。
+查询复用 `@Transactional(readOnly=true, isolation=REPEATABLE_READ)` 的 Spring JDBC 连接完成候选、明细和关联读取；加入外部事务时遵循外部事务的隔离级别。
+`SqlTranslator` 的不可变物理表名配置将设计表名映射到 Demo 既有的 `dec_demo_*` 表，字段、关系和业务谓词仍来自设计。此配置不切换逻辑 DataSource 或连接。
+当前 Demo 的识别 RuleView 全部在模型上执行；外部读取规则需要另行提供 `DataOperationAdapter`，未配置时明确失败。
+
+默认返回最多 50 单，`page(offset,size)` 的 size 范围为 1～500，运行时过滤的候选上限默认 1000，可用 `candidateLimit(...)` 调整；达到上限而页面未完成会报错。
+这里查询的是**当前业务事实**，不是历史经历；Back 后清除的支付结果不会继续命中“支付结果”。查询不执行 Action/Change/Back，不发送短信。
+HTTP 查询入口为生成的 `OrdersController.queryOrders`（`API-ORDER-QUERY`），返回当前页的 `OrderInfo` JSON 数组：
+
+```text
+GET /api/orders?eq=支付结果
+GET /api/orders?start=已订购
+GET /api/orders?start=已订购&end=支付成功
+GET /api/orders?start=已订购&end=支付成功&with=用户&offset=0&size=20
+```
+
+实际请求时需对中文参数进行 URL 编码，例如：
+
+```sh
+curl --get 'http://localhost:8080/api/orders' \
+  --data-urlencode 'start=已订购' --data-urlencode 'end=支付成功' \
+  --data-urlencode 'with=用户,明细' --data-urlencode 'size=20'
+```
+
+`eq/start/end/with` 均可省略；未指定阶段时查询设计阶段并集。`with` 支持逗号分隔的关联名称或路径。
+`offset` 默认 0，`size` 默认 50；省略分页值时沿用框架默认值，仍受上述候选上限约束。
+`eq` 不能与 `start/end` 同用，未知名称、不可达范围、空名称、非法分页参数均返回 400；数据库或运行时识别失败不会伪装成空数组。
+原有 `GET /api/orders/{orderId}` 继续查询单个订单。
+
+在仓库根目录先安装框架，再运行真实 MySQL 示例（使用专用测试库，测试会清空其中的 `dec_demo_*` 表）：
+
+```sh
+./dec-java-lite/mvnw -f dec-java-lite/pom.xml install -DskipTests
+export DEC_DB_URL='jdbc:mysql://127.0.0.1:3306/dec_query_demo?useSSL=false&allowPublicKeyRetrieval=true'
+export DEC_DB_USERNAME='root'
+# 在本地设置 DEC_DB_PASSWORD。
+./dec-java-lite/mvnw -f demo/order-payment-app/pom.xml -Dtest=OrderQueryTest test
+```
+
+[`OrderQueryTest`](src/test/java/com/example/orderpayment/demo/OrderQueryTest.java) 通过真实 Workflow 创建 701～704 四单，依次为已订购、支付中、支付成功、支付失败。
+四种查询的预期 ID 分别为 `[703,704]`、`[701,702,703,704]`、`[701,702,703]`、`[701,702,703]`。
+测试还验证缺少用户、多明细分页、参数绑定、外层事务未提交数据可见、Back 后查询变化，以及明细事实不一致时不命中支付结果。
+
+## 生成与流程实现
+
 本工程由 canonical DEC YAML 生成 Controller、DTO、Entity、View、Enum、DAO 和 Mapper，并生成 `order/information/OrderInformation`、`payment/information/PaymentInformation`、`user/information/UserInformation` 与 `business/OrderPaymentFlow` 设计投影。Information 类对应信息树，保留识别表达式、依赖、change-data 和 View/Rule 引用；Business Flow 类对应 Directory，保留依赖、Action、Produce、case、Change 和 Back。它们是只读导航元数据，不替代运行时执行。`src/main/java/com/example/orderpayment/order/`、`payment/` 和 `user/` 下的应用包包含手写绑定，不在 `dec-generated-manifest.txt` 中；重新生成不会覆盖它。运行时加载 `src/main/resources/dec/design/` 中由 `dec-design` 正式转换器生成的 XML，编译 RuleView、Information 和 Business Directory，并执行完整订单支付路径。
 
-订单资源的 5 个 API 集中在 `order/controller/OrdersController.java` 和 `order/service/OrdersService.java`，由 `order/service/impl/OrdersServiceImpl.java` 统一委托给 `OrderWorkflow`。分组依据是 System 与 URL 主资源（`order` + `orders`）；方法各自保留 Design ID、请求 DTO 和路由。
+订单资源的 6 个 API 集中在 `order/controller/OrdersController.java` 和 `order/service/OrdersService.java`，由 `order/service/impl/OrdersServiceImpl.java` 委托给 `OrderWorkflow` 或 `OrderQueryService`。分组依据是 System 与 URL 主资源（`order` + `orders`）；方法各自保留 Design ID、请求 DTO 和路由。
 
 从代码查设计时，先看生成类中的 `Design ID + YAML#节点路径 + XML#节点路径` 注释，再用 [DEC-DESIGN-INDEX.md](DEC-DESIGN-INDEX.md) 交叉定位设计和代码；手写实现的 Design ID、类和验证用例记录在 `../order-payment-implementation-binding.yaml`。`OrderWorkflow` 使用 `OrderPaymentFlow` 的 Directory 名称常量，负责 API 输入、View/Entity 转换、DAO 完成回写和错误映射；通用 `DirectoryWorkflowRunner.advance(...)` 负责 Directory、RuleView、Information、Action 和 Session 编排，`OrderViewAssembler` 通过生成 DAO 读取 Entity 并装配 View，`LocalRuleAdapter` 执行外部 Rule 的 DAO 写入，`DecViewModelBridge` 适配 DEC Runtime 的模型，`LocalOrderStoreFactory` 注入已有 DAO 并创建 `LocalOrderStore`。Store 是普通对象，不是 Spring Bean，也不在自身内部持有锁。
 

@@ -25,6 +25,7 @@ description: 根据已批准的 DEC canonical YAML 独立实现或修改真实�
 - API / RuleView.apiRef：`references/api-implementation.md`；
 - 框架通用性、并发、乱序、集合关系和失败场景验证：`references/scenario-validation.md`；
 - Runtime 初始化、classpath 设计加载、编译复用：`references/runtime-assembly.md`；
+- 业务阶段/范围查询、find/eq/start/end/with 和当前事实与历史经历的边界：`references/business-query.md`；
 - RuleView / Action / Produce / Change、业务流程绑定的 Action 前后监听器：`references/rule-action-implementation.md`。
 
 如果 `dec-design` Skill 未安装，本包仍可按上述最小消费契约独立实现已校验的 canonical YAML；YAML 内容必须通过 `scripts/yaml_io.py` 读取，不要求任何特定编排器、项目布局或研发流程 Skill。

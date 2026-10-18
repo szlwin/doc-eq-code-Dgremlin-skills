@@ -2,11 +2,19 @@ package com.dec.lite.query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /** Generic SQL translator with dialect quoting and paging. */
 public final class SqlTranslator {
     private final SqlDialect dialect;
-    public SqlTranslator(SqlDialect dialect) { this.dialect = dialect; }
+    private final Map<String, String> tableNames;
+    public SqlTranslator(SqlDialect dialect) { this(dialect, Map.of()); }
+    /** Deployment table names only; never rewrites columns, predicates, routes or SQL text. */
+    public SqlTranslator(SqlDialect dialect, Map<String, String> tableNames) {
+        this.dialect = java.util.Objects.requireNonNull(dialect, "dialect");
+        this.tableNames = Map.copyOf(tableNames);
+        this.tableNames.forEach((logical, physical) -> { dialect.quote(logical); dialect.quote(physical); });
+    }
     public SqlStatement candidates(QueryPlan plan, int offset, int size) {
         List<TypedParameter> parameters = new ArrayList<>();
         String rootId = column("t0", plan.rootIdColumn());
@@ -37,9 +45,9 @@ public final class SqlTranslator {
         return String.join("\n", plan.trace()) + "\nSQL=" + sample.sql() + "\nparameters=" + sample.parameters();
     }
     private String fromAndJoins(QueryPlan plan) {
-        StringBuilder result = new StringBuilder(" FROM ").append(dialect.quote(plan.rootTable())).append(" ").append(dialect.quote("t0"));
+        StringBuilder result = new StringBuilder(" FROM ").append(table(plan.rootTable())).append(" ").append(dialect.quote("t0"));
         for (JoinPlan join : plan.joins()) {
-            result.append(" LEFT JOIN ").append(dialect.quote(join.table())).append(' ').append(dialect.quote(join.alias()));
+            result.append(" LEFT JOIN ").append(table(join.table())).append(' ').append(dialect.quote(join.alias()));
             result.append(" ON ").append(column(join.parentAlias(), join.parentColumn()));
             result.append(" = ").append(column(join.alias(), join.childColumn()));
         }
@@ -59,4 +67,5 @@ public final class SqlTranslator {
         return field + " " + comparison.operator() + " ?";
     }
     private String column(String alias, String column) { return dialect.quote(alias) + "." + dialect.quote(column); }
+    private String table(String logical) { return dialect.quote(tableNames.getOrDefault(logical, logical)); }
 }

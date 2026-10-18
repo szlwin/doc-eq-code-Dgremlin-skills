@@ -16,6 +16,7 @@ import com.dec.lite.directory.DirectoryGraphCompiler;
 import com.dec.lite.directory.PathPlanner;
 import com.dec.lite.directory.DirectoryExecutionException;
 import com.dec.lite.query.DirectoryQuery;
+import com.dec.lite.query.BusinessQuery;
 import com.dec.lite.query.QueryCompiler;
 import com.dec.lite.query.QueryCompilationException;
 import com.dec.lite.query.SqlTranslator;
@@ -87,16 +88,19 @@ public class Main {
             }
             if ("query".equals(command)) {
                 String directory = optionValue(args, "--directory", null);
-                if (directory == null) throw new IllegalArgumentException("--directory is required for query");
+                String view = optionValue(args, "--view", null);
+                if ((directory == null) == (view == null)) throw new OptionException("query requires exactly one of --directory or --view");
+                String start = optionValue(args, "--start", null);
+                String end = optionValue(args, "--end", null);
                 var information = new InformationParser().parse(project);
                 var graph = new DirectoryGraphCompiler().compile(project, information);
-                DirectoryQuery query = DirectoryQuery.find(directory);
+                DirectoryQuery query = DirectoryQuery.find(directory == null ? view : directory);
                 String selectedCase = optionValue(args, "--eq", null);
-                if (selectedCase != null) query = query.eq(selectedCase);
                 String from = optionValue(args, "--from", null);
-                if (from != null) query = query.from(from);
                 String to = optionValue(args, "--to", null);
-                if (to != null) query = query.to(to);
+                if (view != null && (from != null || to != null)) throw new OptionException("--view uses --start/--end, not --from/--to");
+                if (directory != null && (start != null || end != null)) throw new OptionException("--start/--end require --view");
+                if (view != null && selectedCase != null && (start != null || end != null)) throw new OptionException("--eq cannot be combined with --start/--end");
                 for (String relation : optionValues(args, "--with")) query = query.with(relation);
                 for (String filter : optionValues(args, "--where")) {
                     int split = filter.indexOf('=');
@@ -105,7 +109,10 @@ public class Main {
                 }
                 query = query.page(integerOption(args, "--offset", 0), integerOption(args, "--size", 50))
                         .candidateLimit(integerOption(args, "--candidate-limit", 1000));
-                var plan = new QueryCompiler(project, graph, information).compile(query);
+                var compiler = new QueryCompiler(project, graph, information);
+                var plan = view != null
+                        ? compiler.compile(new BusinessQuery(view, selectedCase, start, end, query))
+                        : compiler.compile(query.eq(selectedCase).from(from).to(to));
                 System.out.println(new SqlTranslator(new MySqlDialect()).explain(plan));
                 return 0;
             }
@@ -185,6 +192,7 @@ public class Main {
         System.out.println("       commands: inspect, information, action, directory, query, generate");
         System.out.println("       directory options: [--target <directory>]");
         System.out.println("       query options: --directory <name> [--eq <case>] [--from <directory>] [--to <directory-or-case>] [--with <relation>] [--where property=value] [--offset N] [--size N] [--candidate-limit N]");
+        System.out.println("       business query: --view <View-name-or-ID> [--eq <Directory> | --start <Directory> --end <Directory>] [--with <relation>] [--where property=value] [--offset N] [--size N] [--candidate-limit N]");
         System.out.println("       generate options: --output <directory> [--base-package <package>] [--generation-config <properties-file>]");
     }
 

@@ -75,7 +75,9 @@ bindings:
   notes: Executed by DEC Runtime. One OrderPaymentListener binds BUS-ORDER-PAYMENT and receives all executed Action events,
     including success/error branches and Back Actions. Duplicate flow listener registration is rejected. Listener typed View
     snapshots reuse the flow ModelCodec. Named DEC DataSource implementations are manually injected and selected by logical
-    source per execution; this does not reroute application DAO/JDBC resources.
+    source per execution; this does not reroute application DAO/JDBC resources. Current-stage business queries use BusinessQueryRuntime
+    with canonical Information/RuleViews, declared relations and Spring-owned JDBC reads; OrderQueryExamples demonstrates
+    find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
@@ -95,6 +97,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
   implementation:
@@ -110,16 +115,28 @@ bindings:
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/config/DataSourceAdapterConfiguration.java
     symbol: DataSourceAdapterConfiguration#dataSourceAdapterRegistry
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
 - designId: DIR-ORDERED
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios. Current-stage business queries use
+    BusinessQueryRuntime with canonical Information/RuleViews, declared relations and Spring-owned JDBC reads; OrderQueryExamples
+    demonstrates find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
 - designId: ACT-SAVE-ORDER
   strategy: REUSE
   status: VERIFIED
@@ -146,13 +163,22 @@ bindings:
 - designId: DIR-PAYING
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios. Current-stage business queries use
+    BusinessQueryRuntime with canonical Information/RuleViews, declared relations and Spring-owned JDBC reads; OrderQueryExamples
+    demonstrates find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
 - designId: ACT-START-PAY
   strategy: REUSE
   status: VERIFIED
@@ -179,13 +205,22 @@ bindings:
 - designId: DIR-PAY-RESULT
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios. Current-stage business queries use
+    BusinessQueryRuntime with canonical Information/RuleViews, declared relations and Spring-owned JDBC reads; OrderQueryExamples
+    demonstrates find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
 - designId: ACT-RESET-PAY-RESULT
   strategy: REUSE
   status: VERIFIED
@@ -222,13 +257,22 @@ bindings:
 - designId: DIR-SUCCESS
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios. Current-stage business queries use
+    BusinessQueryRuntime with canonical Information/RuleViews, declared relations and Spring-owned JDBC reads; OrderQueryExamples
+    demonstrates find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
 - designId: ACT-CONFIRM-PAY-SUCCESS
   strategy: REUSE
   status: VERIFIED
@@ -242,13 +286,22 @@ bindings:
 - designId: DIR-ERROR
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios. Current-stage business queries use
+    BusinessQueryRuntime with canonical Information/RuleViews, declared relations and Spring-owned JDBC reads; OrderQueryExamples
+    demonstrates find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
 - designId: ACT-RECORD-PAY-ERROR
   strategy: REUSE
   status: VERIFIED
@@ -1132,7 +1185,12 @@ bindings:
   - module: order-payment-app
     file: src/main/java/com/example/orderpayment/order/workflow/DecViewModelBridge.java
     symbol: DecViewModelBridge#fromModel
-  notes: Generated View is assembled from Entity records read through generated DAO; the DEC model bridge is isolated.
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/OrderQueryService.java
+    symbol: OrderQueryService#find
+  notes: Generated View is assembled from Entity records read through generated DAO; the DEC model bridge is isolated. Current-stage
+    business queries use BusinessQueryRuntime with canonical Information/RuleViews, declared relations and Spring-owned JDBC
+    reads; OrderQueryExamples demonstrates find/eq/start/end/with without status-code lists.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
@@ -1140,6 +1198,9 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest#listenerReadsTypedViewBeforeAndAfterResultAction
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest
 - designId: API-PARAM-USER-ID
   strategy: CREATE
   status: VERIFIED
@@ -1374,3 +1435,136 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest#canonicalInformationRejectsMismatchedDetailAndPaymentStates
+- designId: API-ORDER-QUERY
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.
+- designId: API-PARAM-QUERY-EQ
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.
+- designId: API-PARAM-QUERY-START
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.
+- designId: API-PARAM-QUERY-END
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.
+- designId: API-PARAM-QUERY-WITH
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.
+- designId: API-PARAM-QUERY-OFFSET
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.
+- designId: API-PARAM-QUERY-SIZE
+  strategy: CREATE
+  status: VERIFIED
+  implementation:
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/controller/OrdersController.java
+    symbol: OrdersController#queryOrders
+  - module: order-payment-app
+    file: src/main/java/com/example/orderpayment/order/service/impl/OrdersServiceImpl.java
+    symbol: OrdersServiceImpl#queryOrders
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#queryApiRejectsInvalidSelectorsAndPaginationAsBadRequests
+  notes: Generated GET /api/orders delegates to the current app BusinessQueryRuntime; array response uses OrderInfo and Integer
+    enum values. Input selection errors return HTTP 400; runtime/database failures remain server failures.

@@ -45,6 +45,8 @@ HTTP endpoint
 
 DTO/Serializer 可以是技术实现，但 `modelRef`、field required、relEnum 与外部值不得漂移。额外公开字段属于契约变更，应先修订 canonical YAML。
 
+`response.type: array` + `modelRef` 生成 `List<View>`，集合及元素类型都要正确导入。查询返回的 ModelContext 应映射为声明的 View 再序列化，保留 Enum Integer 值和日期格式；不能直接将 QueryPlan/trace/运行时对象作为业务响应。当前 `GET /api/orders` 示例由 canonical API 生成 Controller 和 Service 接口，手写 ServiceImpl 只映射参数并调用 OrderQueryService。
+
 ## 5. Binding
 
 API Design ID 绑定真实 endpoint/handler symbol；RuleView Design ID 继续绑定 Runtime capability 或 RuleView 承载点，不用 Controller 代替全部业务节点。

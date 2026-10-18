@@ -148,3 +148,5 @@ response:
 ```
 
 Response field 支持 `name/type/required/desc/relEnum/validations`。`modelRef` 存在时必须解析到 View。
+
+列表响应使用 `type: array` 与 `modelRef: OrderInfo`，表示每个数组元素是该 View；Java 生成器输出 `List<OrderInfo>`，不能忽略 array 退化为单对象。当前生成器的数组响应要求明确的 View modelRef；未声明元素模型的数组会报 DESIGN_GAP。

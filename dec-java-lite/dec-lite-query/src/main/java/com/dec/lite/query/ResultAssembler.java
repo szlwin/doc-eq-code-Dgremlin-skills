@@ -23,7 +23,11 @@ public final class ResultAssembler {
                 if (parent == null) continue;
                 String property = join.path().substring(join.path().lastIndexOf('.') + 1);
                 Object childId = row.get(ViewJoinPlanner.resultAlias(join.path() + ".__dec_id"));
-                if (childId == null) { if (join.many()) parent.computeIfAbsent(property, ignored -> new ArrayList<>()); continue; }
+                if (childId == null) {
+                    if (join.many()) parent.computeIfAbsent(property, ignored -> new ArrayList<>());
+                    else parent.putIfAbsent(property, null); // Known absent LEFT JOIN, not an unloaded relation.
+                    continue;
+                }
                 Map<String, Object> child;
                 if (join.many()) {
                     Map<String, Map<String, Object>> byId = children.computeIfAbsent(parent, ignored -> new LinkedHashMap<>());

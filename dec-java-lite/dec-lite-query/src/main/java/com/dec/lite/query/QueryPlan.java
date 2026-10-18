@@ -16,7 +16,12 @@ public record QueryPlan(String directory, String rootModel, String rootTable, St
         selectedCases = List.copyOf(selectedCases); parameters = List.copyOf(parameters); trace = List.copyOf(trace);
     }
     /** Each branch is a case of the result Directory, or a single ordinary Directory. */
-    public record CaseBranch(String name, List<InformationKey> information, SqlPredicate predicate, boolean postFilter) {
+    public record CaseBranch(String name, List<InformationKey> information, SqlPredicate predicate, boolean postFilter,
+                             String exclusiveGroup) {
+        /** Compatibility: DirectoryQuery branches belong to one exclusive result selection. */
+        public CaseBranch(String name, List<InformationKey> information, SqlPredicate predicate, boolean postFilter) {
+            this(name, information, predicate, postFilter, "directory-query");
+        }
         public CaseBranch { information = List.copyOf(information); }
     }
 }

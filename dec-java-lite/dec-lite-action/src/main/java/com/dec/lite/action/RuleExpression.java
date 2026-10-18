@@ -15,6 +15,7 @@ final class RuleExpression {
             }
             Object value = model;
             for (String part : path.split("\\.")) {
+                if (value == null) return null; // A declared optional parent is absent; unknown keys still fail below.
                 int bracket = part.indexOf('[');
                 String key = bracket < 0 ? part : part.substring(0, bracket);
                 if (!(value instanceof Map<?, ?> map) || !map.containsKey(key)) throw new MissingValue(path);

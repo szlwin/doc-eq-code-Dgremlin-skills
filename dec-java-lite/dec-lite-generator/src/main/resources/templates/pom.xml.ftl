@@ -45,6 +45,11 @@
       <version>0.1.0</version>
     </dependency>
     <dependency>
+      <groupId>com.dec</groupId>
+      <artifactId>dec-lite-query</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>

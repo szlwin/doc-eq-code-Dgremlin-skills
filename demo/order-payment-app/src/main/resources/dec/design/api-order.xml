@@ -125,4 +125,52 @@
       <field name="status" type="int" required="true" rel-enum="OrderStatus"/>
     </response>
   </api>
+  <!-- dec-id: API-ORDER-QUERY -->
+  <api name="queryOrders" desc="按当前业务阶段查询订单，支持阶段分类、闭区间、关联用户和分页" system="order" url="/api/orders" method="GET">
+    <request>
+      <!-- dec-id: API-PARAM-QUERY-EQ -->
+      <parameter name="eq" in="query" type="string" required="false" desc="精确业务阶段，与 start/end 互斥">
+        <validation-info>
+          <validation type="minLength" value="1" message="eq长度不能小于1"/>
+          <validation type="maxLength" value="256" message="eq长度不能大于256"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-QUERY-START -->
+      <parameter name="start" in="query" type="string" required="false" desc="范围起点，包含起点">
+        <validation-info>
+          <validation type="minLength" value="1" message="start长度不能小于1"/>
+          <validation type="maxLength" value="256" message="start长度不能大于256"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-QUERY-END -->
+      <parameter name="end" in="query" type="string" required="false" desc="范围终点，包含终点">
+        <validation-info>
+          <validation type="minLength" value="1" message="end长度不能小于1"/>
+          <validation type="maxLength" value="256" message="end长度不能大于256"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-QUERY-WITH -->
+      <parameter name="with" in="query" type="string" required="false" desc="关联名称，多个名称用逗号分隔">
+        <validation-info>
+          <validation type="minLength" value="1" message="with长度不能小于1"/>
+          <validation type="maxLength" value="256" message="with长度不能大于256"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-QUERY-OFFSET -->
+      <parameter name="offset" in="query" type="int" required="false" desc="根订单偏移量，省略时使用查询框架默认值 0">
+        <validation-info>
+          <validation type="min" value="0" message="offset不能小于0"/>
+          <validation type="max" value="99999" message="offset不能大于99999"/>
+        </validation-info>
+      </parameter>
+      <!-- dec-id: API-PARAM-QUERY-SIZE -->
+      <parameter name="size" in="query" type="int" required="false" desc="每页订单数，省略时使用查询框架默认值 50">
+        <validation-info>
+          <validation type="min" value="1" message="size不能小于1"/>
+          <validation type="max" value="500" message="size不能大于500"/>
+        </validation-info>
+      </parameter>
+    </request>
+    <response type="array" desc="当前页订单 View 数组；关联用户仅在 with 指定时加载" model-ref="OrderInfo"/>
+  </api>
 </api-config>

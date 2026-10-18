@@ -20,18 +20,31 @@ public final class QueryCompiler {
     private final DirectoryGraph graph;
     private final InformationCompilation information;
     private final QuerySchema schema;
+    private final BusinessQueryPlanner businessQueries;
     public QueryCompiler(DecProject project, DirectoryGraph graph, InformationCompilation information) {
+        this(project, graph, information, BusinessQueryNames.canonical());
+    }
+    public QueryCompiler(DecProject project, DirectoryGraph graph, InformationCompilation information, BusinessQueryNames names) {
         this.graph = graph; this.information = information; this.schema = QuerySchema.compile(project);
+        this.businessQueries = new BusinessQueryPlanner(project, graph, schema, names);
+    }
+    public QueryPlan compile(BusinessQuery query) {
+        var selection = businessQueries.select(query);
+        return compile(selection.options(), selection.anchor(), selection.trace(), selection.nodes());
     }
     public QueryPlan compile(DirectoryQuery query) {
         DirectoryDefinition directory = graph.directories().get(query.directory());
         if (directory == null) throw new QueryCompilationException("unknown Directory: " + query.directory());
         List<String> path = new PathPlanner().plan(graph, query.from(), query.directory()).directories();
+        return compile(query, directory, List.of("path=" + path), null);
+    }
+    private QueryPlan compile(DirectoryQuery query, DirectoryDefinition directory, List<String> selectionTrace, List<String> businessStages) {
         QuerySchema.View view = schema.view(directory.modelRef()); ViewJoinPlanner joins = new ViewJoinPlanner(schema, view);
         for (String relation : query.with()) joins.include(relation);
         AtomicInteger numbers = new AtomicInteger();
         InformationPredicateCompiler predicates = new InformationPredicateCompiler(information, joins, view.name(), numbers);
-        List<QueryPlan.CaseBranch> branches = branches(directory, query, predicates);
+        List<QueryPlan.CaseBranch> branches = businessStages == null ? branches(directory, query, predicates)
+                : businessStages.stream().map(name -> businessBranch(name, predicates)).toList();
         if (branches.isEmpty()) throw new QueryCompilationException("query has no case branch");
         for (QueryPlan.CaseBranch branch : branches) for (InformationKey key : branch.information()) includeModelRelations(key, view, joins, new LinkedHashSet<>());
         if (query.to() != null && !query.to().equals(query.directory()) && branches.stream().noneMatch(branch -> branch.name().equals(query.to())))
@@ -57,7 +70,7 @@ public final class QueryCompiler {
         if (runtimeOnly && query.offset() + query.size() > query.candidateLimit())
             throw new QueryCompilationException("runtime-only query page exceeds candidateLimit");
         List<String> trace = new ArrayList<>();
-        trace.add("path=" + path);
+        trace.addAll(selectionTrace);
         trace.add("selectedCases=" + branches.stream().map(QueryPlan.CaseBranch::name).toList());
         trace.add("information=" + branches.stream().map(branch -> branch.information().toString()).toList());
         trace.add("informationPredicates=" + branches.stream().map(branch -> branch.name() + ":" + branch.predicate()).toList());
@@ -72,6 +85,18 @@ public final class QueryCompiler {
                 query.offset(), query.size(), query.candidateLimit(),
                 new AssemblyPlan("__dec_id", joins.joins().stream().filter(JoinPlan::many).map(JoinPlan::path).toList()),
                 schema.route(root), runtimeOnly, trace);
+    }
+    private QueryPlan.CaseBranch businessBranch(String name, InformationPredicateCompiler compiler) {
+        DirectoryDefinition directory = graph.directories().get(name);
+        List<InformationKey> keys = new ArrayList<>(); keys.add(directory.informationRef());
+        List<CaseEdge> owners = graph.caseEdges().stream().filter(edge -> edge.target().equals(name)).toList();
+        if (owners.size() > 1) throw new QueryCompilationException("business query case has multiple result owners: " + name);
+        for (CaseEdge edge : owners) {
+            keys.add(graph.directories().get(edge.parent()).informationRef()); keys.add(edge.informationRef());
+        }
+        var branch = branch(name, keys.stream().distinct().toList(), compiler);
+        return new QueryPlan.CaseBranch(branch.name(), branch.information(), branch.predicate(), branch.postFilter(),
+                owners.isEmpty() ? null : owners.get(0).parent());
     }
     private List<QueryPlan.CaseBranch> branches(DirectoryDefinition directory, DirectoryQuery query,
                                                 InformationPredicateCompiler compiler) {

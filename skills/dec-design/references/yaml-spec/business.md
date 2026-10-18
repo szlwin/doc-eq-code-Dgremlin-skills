@@ -28,6 +28,12 @@ business:
 
 BusinessScope 负责跨 System 编排，不拥有 Information。
 
+### 业务查询边界
+
+设计需要支持 `find(View).eq(Directory)`、`start/end` 范围查询时，阶段判定保持在 Information，关联数据保持在 View，范围保持在 Directory 正向边。不要为查询新增平行状态码表或在 Java 中复制状态判断。`dec-java-lite` 的 BusinessQuery 按当前 Information 事实取阶段并集：范围包含两端，排除无法到达终点的旁支和 Back 边；result 只包含设计声明的 case，不自动把支付中当作结果分支。
+
+“当前处于订购及后续阶段”与“历史上曾订购过”必须在需求中区分。图可达不能证明某条业务记录的真实历史；若取消、回退或状态覆盖后仍要查询历史经历，需要显式历史数据/关联和持久化设计。当前 BusinessQuery 没有事件历史，不得标记为历史查询已实现。展示用中文别名可独立绑定 canonical name/ID/关联路径，不携带业务条件、不模糊匹配 desc。实现接线见 dec-implementation 的 `references/business-query.md`。
+
 ## 9.2 Directory 字段
 
 ```yaml

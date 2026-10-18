@@ -12,6 +12,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MainTest {
     @org.junit.jupiter.api.io.TempDir java.nio.file.Path temp;
 
+    @Test void explainsBusinessRangesAndRejectsMixedSelectorModes() {
+        Result result = run("query", "--yaml", "../fixtures/mix", "--view", "OrderInfo", "--start", "ordered", "--end", "success", "--with", "user");
+        assertEquals(0, result.code(), result.error());
+        assertTrue(result.output().contains("selectedDirectories=[ordered, paying, success]"));
+        assertTrue(result.output().contains("LEFT JOIN `user_info`"));
+        assertEquals(2, run("query", "--yaml", "../fixtures/mix", "--view", "OrderInfo", "--directory", "ordered").code());
+        assertEquals(2, run("query", "--yaml", "../fixtures/mix", "--view", "OrderInfo", "--from", "ordered").code());
+        assertEquals(2, run("query", "--yaml", "../fixtures/mix", "--directory", "ordered", "--start", "ordered").code());
+        assertEquals(2, run("query", "--yaml", "../fixtures/mix", "--view", "OrderInfo", "--eq", "success", "--end", "success").code());
+    }
+
     @Test void generatesConfiguredGroupsThroughCli() throws Exception {
         var output = temp.resolve("out");
         Result result = run("generate", "--yaml", "../../demo/order-payment-yaml", "--output", output.toString(),
@@ -55,14 +66,19 @@ class MainTest {
 
     private static Result run(String... args) {
         PrintStream previous = System.err;
+        PrintStream previousOut = System.out;
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        try (PrintStream capture = new PrintStream(output, true, StandardCharsets.UTF_8)) {
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        try (PrintStream capture = new PrintStream(output, true, StandardCharsets.UTF_8);
+             PrintStream out = new PrintStream(stdout, true, StandardCharsets.UTF_8)) {
             System.setErr(capture);
-            return new Result(Main.run(args), output.toString(StandardCharsets.UTF_8));
+            System.setOut(out);
+            return new Result(Main.run(args), output.toString(StandardCharsets.UTF_8), stdout.toString(StandardCharsets.UTF_8));
         } finally {
             System.setErr(previous);
+            System.setOut(previousOut);
         }
     }
 
-    private record Result(int code, String error) { }
+    private record Result(int code, String error, String output) { }
 }
