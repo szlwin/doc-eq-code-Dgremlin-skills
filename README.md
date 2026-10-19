@@ -1,5 +1,6 @@
 # DEC 设计与实现工具
 
+- [项目文档总览](docs/README.md)：理念、整体设计、Skill、Java 框架、示例与开发验证；[XML 修改后同步回 YAML](docs/xml-to-yaml-sync.md)。
 - [dec-design](skills/dec-design/SKILL.md)：从需求生成 canonical DEC YAML，并生成 XML/HTML。
 - [dec-implementation](skills/dec-implementation/SKILL.md)：按已批准的 YAML 实现代码与追踪 Binding。
 - [dec-java-lite](dec-java-lite/README.md)：`dec/v1` 的 Java 21 解析、编译、运行时与代码生成器。

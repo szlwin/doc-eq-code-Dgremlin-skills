@@ -18,7 +18,7 @@ Request DTO 的 Jakarta Validation 注解、错误信息和业务校验边界见
 
 生成代码按设计节点的 `system` 字段分包。实体、DAO、Mapper、View、Controller、Service 和 Request DTO 使用 `<base-package>.<system>.<layer>`；例如 `system: order` 的 API 位于 `com.example.order.order.controller`，订单数据位于 `com.example.order.order.entity`。Enum 根据其 Data 归属系统进入对应的 `<system>.enums`，被多个系统的 Data 共同拥有时才进入 `<base-package>.common.enums`。View 中的嵌套投影跟随所属顶层 View 的系统包，跨系统引用通过显式 Java import 保持可读性。
 
-Controller 和 Service 默认按 `System + URL 主资源` 归组，可通过独立 `--generation-config` 覆盖指定 API：跳过开头的 `api`、`v数字` 段，以首个静态资源段转换为类名前缀，保留复数。例如订单的 5 个 `/api/orders/...` 接口合并到 `OrdersController/OrdersService`，手写实现使用一个 `OrdersServiceImpl`。不同 System 或资源分别生成；同资源跨 YAML 文件合并。每个方法保留 Design ID 和完整路由，DTO 仍按 API 请求契约生成。无法识别资源段或归组后类名/方法名冲突时在覆盖文件前报错。
+Controller 和 Service 默认按 `System + URL 主资源` 归组，可通过独立 `--generation-config` 覆盖指定 API：跳过开头的 `api`、`v数字` 段，以首个静态资源段转换为类名前缀，保留复数。例如当前订单 Demo 的 6 个 `/api/orders` 及其子路径接口合并到 `OrdersController/OrdersService`，手写实现使用一个 `OrdersServiceImpl`。不同 System 或资源分别生成；同资源跨 YAML 文件合并。每个方法保留 Design ID 和完整路由，DTO 仍按 API 请求契约生成。无法识别资源段或归组后类名/方法名冲突时在覆盖文件前报错。
 
 生成的 `config.CustomActionConfiguration` 统一收集 Spring `CustomAction` Bean 并创建冻结的注册表；Workflow 注入 `CustomActionRegistry`，新增 Action 无需改 Workflow 构造器。实现仍由应用提供，生成器不生成假成功的短信等业务动作。设计中无 `ruleRef` 的 Action 默认按名称注册，Business Flow 的 `ActionNode.customType()`/`isCustom()` 可用于导航；详细接入和事务时序见 [Action Runtime](action-runtime.md)。
 
