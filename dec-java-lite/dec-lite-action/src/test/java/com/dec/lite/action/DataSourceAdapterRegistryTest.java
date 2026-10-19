@@ -28,7 +28,7 @@ class DataSourceAdapterRegistryTest {
                 provider("db-a", r -> calls.add("A:" + r.dataSource())), provider("db-b", r -> calls.add("B:" + r.dataSource()))));
         var selected = registry.select(choices("db-a", "db-b"));
         var views = new RuleViewCompiler().bind(compiled(), selected);
-        for (String rule : List.of("receivePayResult", "recordPyaError")) {
+        for (String rule : List.of("receivePayResult", "recordPayError")) {
             var result = views.invoke("payment", rule, new ModelContext(Map.of()), Map.of(), new MutationSet());
             assertEquals(RecognitionResult.Status.TRUE, result.status(), result.errors().toString());
         }

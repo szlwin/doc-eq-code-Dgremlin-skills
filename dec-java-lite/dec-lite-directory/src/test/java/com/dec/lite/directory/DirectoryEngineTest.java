@@ -68,7 +68,7 @@ class DirectoryEngineTest {
         assertEquals(List.of("execution", "execution", "case"), result.plan().edgeKinds());
         assertEquals(1, count(fixture.calls(), "insertPay"));
         assertEquals(1, count(fixture.calls(), "updatePayResult"));
-        assertEquals(0, count(fixture.calls(), "recordPyaError"));
+        assertEquals(0, count(fixture.calls(), "recordPayError"));
         assertEquals(3L, fixture.context().model().read("status"));
         assertEquals(1, fixture.transaction().commits);
         assertEquals(0, fixture.transaction().rollbacks);
@@ -91,8 +91,8 @@ class DirectoryEngineTest {
         Fixture fixture = fixture(2);
         DirectoryExecutionResult result = fixture.engine().executeTo("error", fixture.context());
         assertTrue(result.success(), result.error());
-        assertEquals(List.of("recordPyaError", "smsNotify"), fixture.calls().stream()
-                .filter(value -> value.equals("recordPyaError") || value.equals("smsNotify")).toList());
+        assertEquals(List.of("recordPayError", "smsNotify"), fixture.calls().stream()
+                .filter(value -> value.equals("recordPayError") || value.equals("smsNotify")).toList());
         assertEquals(4L, fixture.context().model().read("status"));
         assertEquals("error", fixture.context().currentDirectory());
 
@@ -207,7 +207,7 @@ class DirectoryEngineTest {
                 case "insertOrderDetail" -> { invocation.write("orderDetailList[0].status", 1L); invocation.write("orderDetailList[1].status", 1L); }
                 case "insertPay" -> { invocation.write("payInfo.id", 50L); invocation.produce("PaymentInfo", Map.of("id", 50L)); }
                 case "updatePayResult" -> { invocation.write("payInfo.resultCode", invocation.payload().get("resultCode")); invocation.produce("PayResult", Map.of("resultCode", invocation.payload().get("resultCode"))); }
-                case "recordPyaError" -> invocation.produce("PyaError", Map.of("code", "P1"));
+                case "recordPayError" -> invocation.produce("PayError", Map.of("code", "P1"));
                 default -> throw new IllegalStateException("unexpected external Rule " + rule.name());
             }
             return RecognitionResult.of(RecognitionResult.Status.TRUE, invocation.context().version(), rule.name());

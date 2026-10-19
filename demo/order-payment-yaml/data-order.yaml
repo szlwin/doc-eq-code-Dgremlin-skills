@@ -200,3 +200,4 @@ datas:
       pd_pay_amount: payAmount
   system: payment
   desc: 支付明细数据
+notes: 部署表名映射见应用 OrderQueryService 的 SqlTranslator 配置及 Local*MapperAdapter；schema.sql 使用 dec_demo_ 前缀。逻辑表名不随部署前缀改变。

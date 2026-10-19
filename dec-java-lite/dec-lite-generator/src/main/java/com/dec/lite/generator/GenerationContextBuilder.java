@@ -82,7 +82,9 @@ final class GenerationContextBuilder {
     }
 
     private static Map<String, Object> projectModel(String basePackage, boolean mysql) {
-        return Map.of("groupId", basePackage, "artifactId", "generated-dec-project", "version", "0.1.0", "mysql", mysql);
+        Map<String, Object> model = new LinkedHashMap<>(GenerationVersions.DEFAULTS);
+        model.putAll(Map.of("groupId", basePackage, "artifactId", "generated-dec-project", "version", "0.1.0", "mysql", mysql));
+        return Map.copyOf(model);
     }
 
     static List<Map<String, Object>> topLevelEntries(DecProject project, DecKind kind, String key) {

@@ -81,7 +81,7 @@ final class LocalRuleAdapter implements DataOperationAdapter {
             }
             case "RULE-RECORD-PAY-ERROR" -> {
                 Integer orderId = ((Number) invocation.context().read("id")).intValue();
-                invocation.produce("PyaError", paymentErrors.record(orderId, bridge.fromModel(invocation.context()).getPayInfo().getResultCode()));
+                invocation.produce("PayError", paymentErrors.record(orderId, bridge.fromModel(invocation.context()).getPayInfo().getResultCode()));
             }
             default -> throw new IllegalStateException("Unexpected Rule " + rule.id());
         }

@@ -44,7 +44,10 @@ final class RuleExpression {
     }
     static BigDecimal number(Object value) {
         if (!(value instanceof Number n)) throw new ActionExecutionException("numeric Rule operand required: " + value);
-        return new BigDecimal(n.toString());
+        try { return new BigDecimal(n.toString()); }
+        catch (NumberFormatException invalid) {
+            throw new ActionExecutionException("finite numeric Rule operand required: " + value);
+        }
     }
     static boolean equal(Object a, Object b) {
         return a instanceof Number && b instanceof Number ? number(a).compareTo(number(b)) == 0 : Objects.equals(a, b);
@@ -77,7 +80,9 @@ final class RuleExpression {
                     int start = i++;
                     while (i < source.length() && (Character.isDigit(source.charAt(i)) || source.charAt(i) == '.')) i++;
                     String text = source.substring(start, i);
-                    Object number = text.contains(".") ? new BigDecimal(text) : Long.valueOf(text);
+                    Object number;
+                    try { number = text.contains(".") ? new BigDecimal(text) : Long.valueOf(text); }
+                    catch (NumberFormatException invalid) { throw error("invalid numeric literal " + text); }
                     tokens.add(new Token(text, number, true)); continue;
                 }
                 if (Character.isLetter(c) || c == '_' || c == '#') {
@@ -193,6 +198,15 @@ final class RuleExpression {
         void validatePath(String path) {
             if (!path.matches("#?[A-Za-z_][A-Za-z0-9_]*(?:\\[\\d+])?(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\\d+])?)*"))
                 throw error("invalid property path " + path);
+            // Standalone grammar words cannot silently become model operands.
+            // Qualified fields such as item.and remain unambiguous and supported.
+            if (Set.of("and", "or", "not", "if", "then", "else", "true", "false", "null", "exists", "every", "any").contains(path))
+                throw error("reserved keyword cannot be a property operand: " + path);
+            var indexes = java.util.regex.Pattern.compile("\\[(\\d+)]").matcher(path);
+            while (indexes.find()) {
+                try { Integer.parseInt(indexes.group(1)); }
+                catch (NumberFormatException invalid) { throw error("property index out of range: " + path); }
+            }
         }
     }
 }

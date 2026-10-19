@@ -163,7 +163,7 @@ class ActionRuntimeTest {
         return new RuleViewRegistry()
                 .register("user", "UserInfo", "isActivated", invocation -> bool(invocation.context().read("active"), "user.activated"))
                 .register("user", "UserInfo", "isCertified", invocation -> bool(invocation.context().read("certified"), "user.certified"))
-                .register("order", "OrderInfo", "save-Order", invocation -> {
+                .register("order", "OrderInfo", "saveOrder", invocation -> {
                     invocation.write("status", 1L);
                     invocation.write("orderDetailList[0].status", 1L);
                     invocation.write("orderDetailList[1].status", 1L);

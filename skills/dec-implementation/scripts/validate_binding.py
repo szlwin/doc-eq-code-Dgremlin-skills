@@ -87,7 +87,7 @@ def collect_design_ids(path: Path) -> Tuple[Set[str], List[str]]:
 def location_exists(project_root: Optional[Path], loc: Mapping[str, Any]) -> Optional[bool]:
     if project_root is None or not loc.get("file"):
         return None
-    return (project_root / str(loc["file"])).exists()
+    return inside(project_root, str(loc["file"])).is_file()
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -176,7 +176,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     root = args.project_root.resolve()
                     for group in ("implementation", "tests"):
                         for loc in item.get(group) or []:
-                            exists = location_exists(root, loc)
+                            try:
+                                exists = location_exists(root, loc)
+                            except ValueError as exc:
+                                result["errors"].append(f"{design_id}: {group}: {exc}")
+                                continue
                             if exists is False:
                                 result["errors"].append(f"{design_id}: bound {group} file does not exist: {loc.get('file')}")
                             if require_symbols and status in {"IMPLEMENTED", "VERIFIED"}:

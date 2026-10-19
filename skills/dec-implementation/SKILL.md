@@ -178,7 +178,7 @@ python3 scripts/validate_binding.py \
 
 交付前用 `--require-complete --require-tests --require-symbols --project-root ...` 检查覆盖、测试声明及真实 Java 符号；runtimeManaged 的已实现节点同样需要测试。用 `scripts/run_binding_verification.py` 包装真实测试命令生成当前设计/源码/Binding/报告摘要证据，再以 `--require-evidence` 核对。具体命令、JDK 要求和边界见 `references/implementation-binding.md`。
 
-`--require-complete` 只检查 ID 覆盖率，允许 `PLANNED`/`BLOCKED`。应用发布就绪检查使用 `--require-ready`（隐含完整覆盖、符号、当前测试证据检查，要求所有 Binding 为 `VERIFIED`），同时核对真实场景与注册表。生成代码能编译但 Service 尚未绑定 Runtime 时，Binding 保持 `PLANNED`。
+`--require-complete` 只检查 ID 覆盖率，允许 `PLANNED`/`BLOCKED`。`--require-ready` 是实现就绪的防漂移核对（完整覆盖、符号、当前报告摘要匹配、全部为 `VERIFIED`），不是测试真实性或发布安全证明。它依赖可信测试命令和 CI；本地可修改的 JUnit XML 与 mtime 不能证明报告来源。仍须核对真实场景与注册表。生成代码能编译但 Service 尚未绑定 Runtime 时，Binding 保持 `PLANNED`。
 
 Binding 指向真实 module/file/symbol/test 或明确 Runtime capability。
 
@@ -214,9 +214,7 @@ effectiveDataSource(rule) =
 
 ## 8. API / RuleView
 
-- URL/method/source/type/required/default/min/max/length/pattern/regex/enum/relEnum/expression/response 与 YAML 一致；
-- request-level expression 仅用于纯 transport 组合约束，在进入 RuleView 前执行；业务状态、库存、权限和状态转换必须由 RuleView/Information 承载，不能生成到 Request DTO 的 `@AssertTrue`；
-- 生成 `@NotNull`、`@NotEmpty`、`@Min`、`@Max`、`@Size`、`@Pattern` 时必须带 `message`，优先使用 YAML validation.message，缺省时使用稳定默认消息；
+- API 接入须阅读 [API 实现契约](references/api-implementation.md)，按已校验 YAML 保持传输契约和验证消息；字段清单与映射规则不在本入口重复维护。业务事实仍由 RuleView/Information 承载；
 - RuleView.apiRef 存在时 endpoint 路由到该 RuleView，不复制平行业务逻辑；
 - `RuleView.code` 用于快速查找/注册索引，不能替代 Design ID 或 name；
 - `ruleRef` 引用 RuleView name，不是 Rule name。

@@ -2,7 +2,7 @@ kind: rule
 version: dec/v1
 ruleViews:
 - id: RV-SAVE-ORDER
-  name: save-Order
+  name: saveOrder
   desc: 保存并提交订单的业务规则视图
   viewRef: OrderInfo
   apiRef: order.submitOrder
@@ -20,6 +20,7 @@ ruleViews:
     type: insert
     property: orderDetailList
   code: SAVE_ORDER
+  dataSource: data1
 - id: RV-ORDER-IS-WAIT-PAY
   name: isWaitPay
   desc: 判断订单是否等待支付

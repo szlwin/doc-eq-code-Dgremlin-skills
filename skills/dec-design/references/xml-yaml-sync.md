@@ -4,6 +4,8 @@
 
 这不是 XML/YAML 双主机制。同步成功后，canonical YAML 仍然是唯一 Source of Truth；后续 XML 继续由 `yaml_to_xml.py` 重新生成。
 
+外部 XML 在构建 DOM 前限制为 8 MB，并通过 XML 解析事件拒绝 DTD、ENTITY 和外部实体声明（包括 UTF-16 输入）；`xml_to_yaml.py` 与本同步入口共用该保护。实现 Skill 的 XML 检查/读取入口使用同一份独立打包的保护模块。
+
 ## 1. 适用场景
 
 适用：

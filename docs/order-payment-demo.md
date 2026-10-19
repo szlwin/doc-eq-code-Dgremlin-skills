@@ -69,7 +69,7 @@ receivePaymentResult
   → PayResult 的 receivePayResult Action
   → payment.hasResult 与 case Information 求值
       payment.success → success → confirmPaySuccess → Change
-      payment.error   → error   → recordPyaError → smsNotify → confirmPayError → Change
+      payment.error   → error   → recordPayError → smsNotify → confirmPayError → Change
   → 最终持久化、回读校验
   → Spring 提交
 ```

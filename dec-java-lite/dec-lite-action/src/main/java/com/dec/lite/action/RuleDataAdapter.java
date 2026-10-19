@@ -8,6 +8,8 @@ public final class RuleDataAdapter implements DataOperationAdapter {
     private final RuleDataAccess access;
     public RuleDataAdapter(RuleDataAccess access) { this.access = Objects.requireNonNull(access, "DataSource driver"); }
     private RuleDataAccess.Result call(CompiledRule rule, String operation, RuleViewRegistry.Invocation invocation) {
+        if (!rule.type().equals("delete") && (rule.property() == null || rule.property().isBlank()))
+            throw new ActionExecutionException("Rule " + rule.id() + " requires property for " + rule.type());
         return Objects.requireNonNull(access.execute(new RuleDataAccess.Request(rule, operation, invocation.key(),
                 invocation.context().values(), invocation.payload(), invocation.transaction())), "DataSource result");
     }

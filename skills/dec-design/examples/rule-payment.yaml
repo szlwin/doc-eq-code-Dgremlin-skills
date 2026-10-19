@@ -71,16 +71,16 @@ ruleViews:
   code: ISPAYERROR
   dataSource: data1
 - id: RV-RECORD-PAY-ERROR
-  name: recordPyaError
+  name: recordPayError
   desc: 记录支付错误
   viewRef: OrderInfo
   rules:
   - id: RULE-RECORD-PAY-ERROR
-    name: recordPyaError
+    name: recordPayError
     type: insert
     property: payInfo
     dataSource: mongo1
-  code: RECORDPYAERROR
+  code: RECORDPAYERROR
   dataSource: data1
 - id: RV-RESET-PAY-RESULT
   name: resetPayResult
@@ -90,8 +90,7 @@ ruleViews:
   - id: RULE-RESET-PAY-RESULT
     name: resetPayResult
     type: dsl
-    process: 'payInfo.resultCode : null;
-
-      '
+    process: |
+      payInfo.resultCode : null;
   code: RESETPAYRESULT
   dataSource: data1

@@ -45,7 +45,7 @@ class ConverterTest(unittest.TestCase):
         xml = convert_document(load_yaml(ROOT / "examples" / "business-order-payment.yaml"))
         self.assertIn('<business-config name="order-payment" desc="订单创建、支付发起、支付结果处理的跨 System 业务流程" dataSource="data1">', xml)
         self.assertIn('information-ref="order.ordered"', xml)
-        self.assertIn('rule-ref="save-Order"', xml)
+        self.assertIn('rule-ref="saveOrder"', xml)
 
     def test_system_root(self):
         xml = convert_document(load_yaml(ROOT / "examples" / "systems-order.yaml"))

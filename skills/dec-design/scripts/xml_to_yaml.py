@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from xml.dom import Node, minidom
+from safe_xml import load_safe_xml
 
 from dec_common import dump_yaml as _dump_yaml
 
@@ -857,7 +858,7 @@ def convert_document(doc: minidom.Document, *, id_mode: str = "auto") -> Dict[st
 
 def load_xml(path: Path) -> minidom.Document:
     try:
-        return minidom.parse(str(path))
+        return load_safe_xml(path)
     except Exception as exc:
         raise ConversionError(f"{path}: XML parse error: {exc}") from exc
 

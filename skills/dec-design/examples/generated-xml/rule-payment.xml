@@ -18,8 +18,8 @@
   <rule-view-info name="isPayError" code="ISPAYERROR" desc="判断支付结果是否失败" view-ref="OrderInfo" dataSource="data1">
     <rule name="isPayError" type="checkPattern" pattern="payInfo.resultCode = 2"/>
   </rule-view-info>
-  <rule-view-info name="recordPyaError" code="RECORDPYAERROR" desc="记录支付错误" view-ref="OrderInfo" dataSource="data1">
-    <rule name="recordPyaError" type="insert" property="payInfo" dataSource="mongo1"/>
+  <rule-view-info name="recordPayError" code="RECORDPAYERROR" desc="记录支付错误" view-ref="OrderInfo" dataSource="data1">
+    <rule name="recordPayError" type="insert" property="payInfo" dataSource="mongo1"/>
   </rule-view-info>
   <rule-view-info name="resetPayResult" code="RESETPAYRESULT" desc="回退时重置支付结果" view-ref="OrderInfo" dataSource="data1">
     <rule name="resetPayResult" type="grammer">

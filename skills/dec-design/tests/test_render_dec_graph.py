@@ -17,6 +17,20 @@ sys.path.pop(0)
 
 
 class RenderDecGraphTest(unittest.TestCase):
+    def test_legacy_cleanup_requires_explicit_marker_and_does_not_follow_links(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            legacy = root / "user"; legacy.mkdir()
+            user_file = legacy / "index.html"
+            user_file.write_text("<p>About dec-design/scripts/render_dec_graph.py</p>")
+            renderer.cleanup_legacy_system_directories(root, ["user"])
+            self.assertTrue(user_file.exists())
+            user_file.write_text("<meta name='generator' content='dec-design/scripts/render_dec_graph.py'>")
+            (root / "alias").symlink_to(legacy, target_is_directory=True)
+            renderer.cleanup_legacy_system_directories(root, ["alias"])
+            self.assertTrue(user_file.exists())
+            self.assertTrue((root / "alias").is_symlink())
+
     def test_information_nodes_embed_complete_rules_and_collapsed_controls(self):
         docs = renderer.load_docs(renderer.discover([str(ROOT.parents[1] / "demo" / "order-payment-yaml")]))
         catalog = renderer.build_catalog(docs)
@@ -317,7 +331,7 @@ systems:
             self.assertIn("<h2>Data</h2>", order)
             self.assertIn("data.html#data-order", order)
             self.assertIn("views.html#view-orderinfo", order)
-            self.assertIn("ruleviews.html#ruleview-save-order", order)
+            self.assertIn("ruleviews.html#ruleview-saveorder", order)
             self.assertIn("enums.html#enum-orderstatus", order)
             self.assertIn("apis.html#api-order.submitorder", order)
             self.assertIn("information.html#info-order.payable", order)

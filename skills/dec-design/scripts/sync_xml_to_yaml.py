@@ -36,6 +36,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from xml_to_yaml import convert_document as xml_to_yaml_document, load_xml
 from yaml_to_xml import convert_document as yaml_to_xml_document
+from safe_xml import parse_safe_xml
 
 
 class SyncError(ValueError):
@@ -257,7 +258,7 @@ def _merge_projected(
 
 def _project_existing(existing: Mapping[str, Any]) -> Dict[str, Any]:
     xml_text = yaml_to_xml_document(existing, emit_id_comments=True)
-    return xml_to_yaml_document(minidom.parseString(xml_text), id_mode="comments")
+    return xml_to_yaml_document(parse_safe_xml(xml_text), id_mode="comments")
 
 
 def sync_document(

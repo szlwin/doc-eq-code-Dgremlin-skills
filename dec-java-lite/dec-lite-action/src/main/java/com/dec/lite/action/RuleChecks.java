@@ -8,9 +8,13 @@ import java.util.Locale;
 /** PropertyCheck's compound checks; unknown validators are rejected instead of becoming equality. */
 final class RuleChecks {
     private record Check(String name, Object expected) { }
-    static void validate(String pattern) { parse(pattern); }
-    static boolean test(Object actual, String pattern) {
-        for (Check check : parse(pattern)) {
+    static void validate(String pattern) { compile(pattern); }
+    static boolean test(Object actual, String pattern) { return compile(pattern).test(actual); }
+    static Program compile(String pattern) { return new Program(parse(pattern)); }
+    record Program(List<Check> checks) {
+        Program { checks = List.copyOf(checks); }
+        boolean test(Object actual) {
+        for (Check check : checks) {
             boolean success = switch (check.name()) {
                 case "NOTNULL" -> actual != null;
                 case "NULL" -> actual == null;
@@ -25,6 +29,7 @@ final class RuleChecks {
             if (!success) return false;
         }
         return true;
+        }
     }
     private static List<Check> parse(String pattern) {
         if (pattern == null || pattern.isBlank()) throw new ActionExecutionException("check requires pattern");

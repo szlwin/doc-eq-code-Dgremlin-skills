@@ -56,3 +56,6 @@ java -cp dec-java-lite/dec-lite-action/target/test-classes:dec-java-lite/dec-lit
 ```
 
 2026-10-14，本机 Java 21.0.12、14 个 RuleView，预热 2,000 次，7 组交替顺序、每组 10,000 次，中位数：compile+bind 4.765 μs，复用后 bind 0.365 μs。此测量只包含规则接线，非 JMH，也不包含 SQL、表达式执行或 HTTP 请求；不设 CI 时间阈值，不据此声称端到端性能提升。
+
+
+外部 Spring 事务绑定跟随物理事务的 suspend/resume/completion。原事务被 REQUIRES_NEW 挂起时，旧 participant 不得在新事务中获取资源或提交/标记回滚；恢复后才可继续参与。TransactionTemplate 接入必须传入当前回调的 status，不能捕获其他事务的 status 冒充当前所有者。

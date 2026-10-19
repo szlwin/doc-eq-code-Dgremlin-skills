@@ -31,9 +31,9 @@
     <rule name="isPayError" type="checkPattern" pattern="payInfo.resultCode = 2"/>
   </rule-view-info>
   <!-- dec-id: RV-RECORD-PAY-ERROR -->
-  <rule-view-info name="recordPyaError" code="RECORDPYAERROR" desc="记录支付错误" view-ref="OrderInfo" dataSource="data1">
+  <rule-view-info name="recordPayError" code="RECORDPAYERROR" desc="记录支付错误" view-ref="OrderInfo" dataSource="data1">
     <!-- dec-id: RULE-RECORD-PAY-ERROR -->
-    <rule name="recordPyaError" type="insert" property="payInfo" dataSource="mongo1"/>
+    <rule name="recordPayError" type="insert" property="payInfo" dataSource="mongo1"/>
   </rule-view-info>
   <!-- dec-id: RV-RESET-PAY-RESULT -->
   <rule-view-info name="resetPayResult" code="RESETPAYRESULT" desc="回退时重置支付结果" view-ref="OrderInfo" dataSource="data1">

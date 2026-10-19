@@ -6,7 +6,7 @@
     <directory name="ordered" information-ref="order.ordered" model-ref="OrderInfo" is-root="true">
       <action-info>
         <!-- dec-id: ACT-SAVE-ORDER -->
-        <action name="saveOrder" system-ref="order" rule-ref="save-Order">
+        <action name="saveOrder" system-ref="order" rule-ref="saveOrder">
           <produce-info>
             <!-- dec-id: PROD-ORDER -->
             <produce ref="OrderInfo" information-ref="order.ordered"/>
@@ -70,10 +70,10 @@
     <directory name="error" information-ref="common.payError" model-ref="OrderInfo">
       <action-info>
         <!-- dec-id: ACT-RECORD-PAY-ERROR -->
-        <action name="recordPyaError" system-ref="payment" rule-ref="recordPyaError">
+        <action name="recordPayError" system-ref="payment" rule-ref="recordPayError">
           <produce-info>
             <!-- dec-id: PROD-PAY-ERROR -->
-            <produce ref="PyaError"/>
+            <produce ref="PayError"/>
           </produce-info>
         </action>
         <!-- dec-id: ACT-SMS-NOTIFY -->

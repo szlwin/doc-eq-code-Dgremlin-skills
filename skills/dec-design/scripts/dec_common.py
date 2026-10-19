@@ -13,6 +13,56 @@ import yaml
 INFO_REF_RE = re.compile(r"(?<![#A-Za-z0-9_.-])([A-Za-z_][A-Za-z0-9_-]*\.[A-Za-z_][A-Za-z0-9_-]*)(?![A-Za-z0-9_.-])")
 
 
+def named_entries(value: Any) -> List[Tuple[str, Any]]:
+    """Canonical named mappings and named-list entries share one traversal."""
+    if isinstance(value, Mapping):
+        return [(str(k), v) for k, v in value.items()]
+    items = value if isinstance(value, list) else ([] if value is None else [value])
+    return [(str(v["name"]), v) for v in items if isinstance(v, Mapping) and v.get("name")]
+
+
+def data_property_enums(datas: Mapping[str, Mapping[str, Any]], data_name: str, property_name: str) -> set[str]:
+    tables = datas.get(data_name, {}).get("tables") or []
+    if not isinstance(tables, list):
+        tables = [tables]
+    return {str(column["relEnum"]) for table in tables if isinstance(table, Mapping)
+            for _, column in named_entries(table.get("columns"))
+            if isinstance(column, Mapping) and column.get("relEnum")
+            and str(column.get("ref", column.get("refProperty"))) == str(property_name)}
+
+
+def resolve_view_property_enums(view: Mapping[str, Any], path: str,
+                                datas: Mapping[str, Mapping[str, Any]]) -> set[str]:
+    """Resolve a View path through relation Data and mapped columns to relEnum.
+
+    Both validation and rendering pass plain Data definitions, independent of
+    their source-location/catalog wrappers. Ambiguity remains a set for callers.
+    """
+    parts = str(path).split(".")
+    if not all(parts):
+        return set()
+    current_data = str(view.get("targetMain") or "")
+    props = view.get("properties") or {}
+    for index, part in enumerate(parts):
+        raw = dict(named_entries(props)).get(part)
+        if raw is None:
+            return set()
+        last = index == len(parts) - 1
+        if isinstance(raw, Mapping) and raw.get("relation"):
+            if last:
+                return set()
+            current_data = str(raw.get("data") or "")
+            props = raw.get("properties") or {}
+            continue
+        if not last:
+            return set()
+        ref = raw.get("ref", raw.get("refProperty")) if isinstance(raw, Mapping) else raw
+        if ref in (None, ""):
+            return set()
+        return data_property_enums(datas, current_data, str(ref))
+    return set()
+
+
 def extract_info_refs(expression: str) -> set[str]:
     return set(INFO_REF_RE.findall(expression or ""))
 

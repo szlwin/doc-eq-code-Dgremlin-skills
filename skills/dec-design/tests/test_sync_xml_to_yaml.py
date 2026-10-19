@@ -91,7 +91,7 @@ class SyncXmlToYamlTest(unittest.TestCase):
     def test_rename_with_dec_id_comment_is_unambiguous(self):
         existing = load_yaml(ROOT / "examples" / "rule-order.yaml")
         xml = yaml_to_xml(existing, emit_id_comments=True)
-        xml = xml.replace('name="save-Order"', 'name="saveOrderV2"', 1)
+        xml = xml.replace('name="saveOrder"', 'name="saveOrderV2"', 1)
         merged, report = sync_document(existing, minidom.parseString(xml))
 
         self.assertEqual("READY", report["status"])
@@ -101,12 +101,12 @@ class SyncXmlToYamlTest(unittest.TestCase):
     def test_rename_without_dec_id_comment_fails_closed(self):
         existing = load_yaml(ROOT / "examples" / "rule-order.yaml")
         xml = yaml_to_xml(existing, emit_id_comments=False)
-        xml = xml.replace('name="save-Order"', 'name="saveOrderV2"', 1)
+        xml = xml.replace('name="saveOrder"', 'name="saveOrderV2"', 1)
         merged, report = sync_document(existing, minidom.parseString(xml))
 
         self.assertEqual("CONFLICT", report["status"])
         self.assertTrue(any(c.get("code") == "AMBIGUOUS_RENAME_OR_REPLACEMENT" for c in report["conflicts"]))
-        self.assertEqual("save-Order", merged["ruleViews"][0]["name"])
+        self.assertEqual("saveOrder", merged["ruleViews"][0]["name"])
 
 
 if __name__ == "__main__":

@@ -168,6 +168,28 @@ class WorkflowTransactionsTest {
         assertEquals(0, actionCalls.get());
     }
 
+    @Test void externalBindingCannotParticipateInAnotherPhysicalTransactionOnSameThread() {
+        var inner = new TransactionTemplate(manager);
+        inner.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        new TransactionTemplate(manager).executeWithoutResult(outerStatus -> {
+            var outer = SpringWorkflowTransactions.externallyManaged(() -> outerStatus).bind().participant();
+            var escaped = new java.util.concurrent.atomic.AtomicReference<com.dec.lite.action.ActionTransaction>();
+            inner.executeWithoutResult(innerStatus -> {
+                assertThrows(RuntimeFailure.class, outer::commit);
+                assertThrows(RuntimeFailure.class, outer::rollback);
+                assertFalse(innerStatus.isRollbackOnly());
+                var participant = SpringWorkflowTransactions.externallyManaged(() -> innerStatus).bind().participant();
+                participant.commit();
+                escaped.set(participant);
+            });
+            assertThrows(RuntimeFailure.class, escaped.get()::rollback);
+            assertFalse(outerStatus.isRollbackOnly());
+            outer.commit(); // owner resumed
+            outer.rollback();
+            assertTrue(outerStatus.isRollbackOnly());
+        });
+    }
+
     @Test void externalRunReportsPendingUntilOwnerCommits() {
         new TransactionTemplate(manager).executeWithoutResult(status -> {
             var result = runner.run(new DirectoryWorkflowRunner.RunRequest(null, "ordered", false, original,

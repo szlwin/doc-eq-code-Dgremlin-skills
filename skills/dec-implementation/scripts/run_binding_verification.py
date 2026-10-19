@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import time
 
 from binding_evidence import VERSION, DESIGN_ALGORITHM, design_digest, source_digest, yaml_digest, file_digest, junit_cases
@@ -27,8 +28,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         root, design, binding = args.project_root.resolve(), args.design.resolve(), args.binding.resolve()
-        output = args.output.resolve() if args.output else root / "target/dec-binding-evidence.json"
-        if not output.is_relative_to(root) or output.relative_to(root).parts[0] not in {"target", "build"}:
+        output = (args.output if args.output else root / "target/dec-binding-evidence.json").resolve()
+        if (not output.is_relative_to(root) or len(output.relative_to(root).parts) < 2
+                or output.relative_to(root).parts[0] not in {"target", "build"}):
             raise ValueError("evidence output must be inside a project target/build directory (normally target)")
         # A failed/preflight-aborted run must not leave an older success certificate in place.
         output.unlink(missing_ok=True)
@@ -69,8 +71,12 @@ def main(argv=None):
                     "startedAt": datetime.datetime.fromtimestamp(start_ns / 1e9, datetime.timezone.utc).isoformat(),
                     "finishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(), "reports": reports}
         output.parent.mkdir(parents=True, exist_ok=True)
-        pending = output.with_suffix(".pending.json")
-        pending.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        # Exclusive creation prevents a pre-existing symlink at a predictable
+        # pending filename from redirecting the write outside the project.
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=output.parent,
+                                         prefix=output.stem + ".", suffix=".pending.json", delete=False) as stream:
+            pending = Path(stream.name)
+            stream.write(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n")
         try:
             if validate(common + ["--require-evidence", "--evidence", str(pending)]):
                 return 1

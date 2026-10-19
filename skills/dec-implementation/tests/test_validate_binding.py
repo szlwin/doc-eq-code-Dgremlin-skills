@@ -9,6 +9,21 @@ SCRIPT = ROOT / "scripts" / "validate_binding.py"
 
 
 class BindingValidatorTest(unittest.TestCase):
+    def test_file_only_validation_rejects_path_escape_without_symbol_flag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); project = root / "project"; project.mkdir()
+            outside = root / "outside.java"; outside.write_text("class Outside {}")
+            (project / "link.java").symlink_to(outside)
+            (root / "design.yaml").write_text("kind: data\ndatas: [{id: DATA-X, name: x}]\n")
+            for filename in ("../outside.java", "link.java", str(outside)):
+                (root / "binding.yaml").write_text("version: dec-binding/v1\nbindings:\n"
+                    "  - designId: DATA-X\n    strategy: REUSE\n    status: PLANNED\n"
+                    f"    implementation:\n      - module: app\n        file: {filename}\n        symbol: Outside\n")
+                result = subprocess.run([sys.executable, str(SCRIPT), "--design", str(root / "design.yaml"),
+                    "--binding", str(root / "binding.yaml"), "--project-root", str(project)], capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("escapes project root", result.stdout + result.stderr)
+
     def test_require_ready_rejects_planned_binding_even_when_complete(self):
         with tempfile.TemporaryDirectory() as tmp:
             t = Path(tmp)

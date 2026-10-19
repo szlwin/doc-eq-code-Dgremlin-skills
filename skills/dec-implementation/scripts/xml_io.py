@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 from xml.dom import Node, minidom
+from safe_xml import load_safe_xml
 
 
 def _xml_files(path: Path) -> List[Path]:
@@ -43,7 +44,7 @@ def _element(el) -> Dict[str, Any]:
 
 
 def parse(path: Path) -> Dict[str, Any]:
-    doc = minidom.parse(str(path))
+    doc = load_safe_xml(path)
     return _element(doc.documentElement)
 
 
@@ -59,7 +60,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         files = _xml_files(args.path.resolve())
         if args.command == "check":
             for f in files:
-                minidom.parse(str(f))
+                load_safe_xml(f)
             print(f"PASSED: xml_files={len(files)}")
             return 0
         if args.path.is_file():

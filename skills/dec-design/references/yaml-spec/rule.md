@@ -10,7 +10,7 @@ version: dec/v1
 
 ruleViews:
   - id: RV-SAVE-ORDER
-    name: save-Order
+    name: saveOrder
     code: SAVE_ORDER
     desc: 保存并提交订单
     viewRef: OrderInfo
@@ -71,6 +71,12 @@ effectiveDataSource(rule) =
 | `dsl` | 赋值、计算、判断等 DSL |
 
 历史 Runtime XML 的 `grammer` 由 Converter 兼容；新 YAML 使用 `dsl`。
+
+### 表达式作用域
+
+普通 checkPattern/DSL 读取当前 View；checkDataPattern 使用“查询行覆盖 View”的临时顶层映射，同名行别名优先，不改写 View。every/any 谓词及 DSL every 内部只读取当前集合项，嵌套 every 进入嵌套项，不隐式回退根模型。`#变量` 在一次 RuleView 调用内共享，可显式传入 DSL 外层值。字段缺失必须报告未决，不能因作用域不同而静默补值。
+
+独立关键字不能作为属性操作数；可使用明确的限定字段（如 `item.and`）。改写查询别名或集合表达式时，应覆盖同名字段和缺失字段的场景。
 
 ## 3. Rule 字段
 

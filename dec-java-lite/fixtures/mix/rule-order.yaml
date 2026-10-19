@@ -2,7 +2,7 @@ kind: rule
 version: dec/v1
 ruleViews:
 - id: RV-SAVE-ORDER
-  name: save-Order
+  name: saveOrder
   desc: 保存并提交订单的业务规则视图
   viewRef: OrderInfo
   apiRef: order.submitOrder
@@ -36,11 +36,9 @@ ruleViews:
   - id: RULE-CONFIRM-PAY-SUCCESS
     name: setPaySuccess
     type: dsl
-    process: 'status : 3;
-
+    process: |
+      status : 3;
       every(orderDetailList, status : 3);
-
-      '
   code: CONFIRMPAYSUCCESS
   dataSource: data1
 - id: RV-CONFIRM-PAY-ERROR
@@ -51,10 +49,8 @@ ruleViews:
   - id: RULE-CONFIRM-PAY-ERROR
     name: setPayError
     type: dsl
-    process: 'status : 4;
-
+    process: |
+      status : 4;
       every(orderDetailList, status : 4);
-
-      '
   code: CONFIRMPAYERROR
   dataSource: data1

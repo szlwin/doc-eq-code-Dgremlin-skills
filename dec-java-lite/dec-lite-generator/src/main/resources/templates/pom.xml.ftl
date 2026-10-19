@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.4</version>
+    <version>${springBootVersion}</version>
   </parent>
   <groupId>${groupId}</groupId>
   <artifactId>${artifactId}</artifactId>
   <version>${version}</version>
   <properties>
-    <java.version>21</java.version>
+    <java.version>${javaVersion}</java.version>
   </properties>
   <dependencies>
     <dependency>
@@ -26,7 +26,7 @@
     <dependency>
       <groupId>org.mybatis.spring.boot</groupId>
       <artifactId>mybatis-spring-boot-starter</artifactId>
-      <version>3.0.3</version>
+      <version>${mybatisVersion}</version>
     </dependency>
 <#if mysql>
     <dependency>
@@ -42,12 +42,12 @@
     <dependency>
       <groupId>com.dec</groupId>
       <artifactId>dec-lite-spring</artifactId>
-      <version>0.1.0</version>
+      <version>${runtimeVersion}</version>
     </dependency>
     <dependency>
       <groupId>com.dec</groupId>
       <artifactId>dec-lite-query</artifactId>
-      <version>0.1.0</version>
+      <version>${runtimeVersion}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

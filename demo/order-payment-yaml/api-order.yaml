@@ -126,7 +126,8 @@ apis:
   method: POST
   request:
     params:
-    - name: orderId
+    - id: API-PARAM-STARTPAYMENT-ORDER-ID
+      name: orderId
       in: path
       type: long
       required: true
@@ -135,7 +136,6 @@ apis:
         value: 1
       - type: max
         value: 999999999
-      id: API-PARAM-STARTPAYMENT-ORDER-ID
   response:
     type: object
     modelRef: OrderInfo
@@ -155,7 +155,8 @@ apis:
   method: POST
   request:
     params:
-    - name: orderId
+    - id: API-PARAM-RECEIVEPAYMENTRESULT-ORDER-ID
+      name: orderId
       in: path
       type: long
       required: true
@@ -164,7 +165,6 @@ apis:
         value: 1
       - type: max
         value: 999999999
-      id: API-PARAM-RECEIVEPAYMENTRESULT-ORDER-ID
     - id: API-PARAM-PAY-RESULT-CODE
       name: resultCode
       in: body
@@ -190,7 +190,8 @@ apis:
   method: POST
   request:
     params:
-    - name: orderId
+    - id: API-PARAM-BACKTOPAYING-ORDER-ID
+      name: orderId
       in: path
       type: long
       required: true
@@ -199,7 +200,6 @@ apis:
         value: 1
       - type: max
         value: 999999999
-      id: API-PARAM-BACKTOPAYING-ORDER-ID
   response:
     type: object
     modelRef: OrderInfo
@@ -219,7 +219,8 @@ apis:
   method: GET
   request:
     params:
-    - name: orderId
+    - id: API-PARAM-GETORDER-ORDER-ID
+      name: orderId
       in: path
       type: long
       required: true
@@ -228,7 +229,6 @@ apis:
         value: 1
       - type: max
         value: 999999999
-      id: API-PARAM-GETORDER-ORDER-ID
   response:
     type: object
     modelRef: OrderInfo

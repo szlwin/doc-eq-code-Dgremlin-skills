@@ -250,10 +250,7 @@ countNotEmpty(ruleRef, ruleData, expression) == 1
 - RuleView `code` 必填且唯一，`desc` 用于快速理解；
 - RuleView `dataSource` 是默认值，Rule `dataSource` 是特定覆盖；二者都引用 Config DataSource；
 - DataSource 可以是 MySQL/Redis/MongoDB/第三方系统/微服务等统一外部能力；
-- API 支持 required、数值 `min/max`、长度 `minLength/maxLength`、`regex`、inline enum、公共 `relEnum` 与纯传输层 request-level `expression`；字段校验生成的 Bean Validation 注解必须带 `message`（显式或确定性默认值）；业务组合条件不得进入 DTO；
-- `relEnum` 必须解析到公共 Enum，且不得与同字段内联 enum values 双主；
-- Path 参数必须与 URL `{name}` 一一对应并 `required: true`；
-- API response `modelRef` 存在时必须引用 View；
+- 修改 API 时读取 [API 规范](references/yaml-spec/api.md)，字段、路径参数、枚举、错误消息与传输校验的完整契约只维护在那里；业务组合条件不得进入 DTO；
 - View `system` 必填并引用已定义 System，作为 View ownership 与 System-first HTML 导航依据。
 
 ### Directory / Action

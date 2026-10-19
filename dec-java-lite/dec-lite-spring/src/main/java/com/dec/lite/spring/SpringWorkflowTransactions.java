@@ -8,6 +8,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronization;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -27,9 +28,19 @@ public final class SpringWorkflowTransactions {
         return WorkflowTransaction.externallyManaged(() -> {
             requireWriteTransaction();
             TransactionStatus status = Objects.requireNonNull(current.get(), "Spring transaction status");
+            // Activity on the thread alone is insufficient: REQUIRES_NEW suspends
+            // this physical transaction while another one is active on that thread.
+            var owner = new TransactionSynchronization() {
+                private boolean active = true;
+                public void suspend() { active = false; }
+                public void resume() { active = true; }
+                public void afterCompletion(int completionStatus) { active = false; }
+                boolean active() { return active; }
+            };
+            TransactionSynchronizationManager.registerSynchronization(owner);
             return new WorkflowTransaction.ExternalTransaction() {
                 public boolean isActive() {
-                    return !status.isCompleted() && TransactionSynchronizationManager.isActualTransactionActive()
+                    return owner.active() && !status.isCompleted() && TransactionSynchronizationManager.isActualTransactionActive()
                             && !TransactionSynchronizationManager.isCurrentTransactionReadOnly();
                 }
                 public boolean isRollbackOnly() { return status.isRollbackOnly(); }
@@ -67,6 +78,7 @@ public final class SpringWorkflowTransactions {
 
     private static void requireWriteTransaction() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()
+                || !TransactionSynchronizationManager.isSynchronizationActive()
                 || TransactionSynchronizationManager.isCurrentTransactionReadOnly())
             throw new IllegalStateException("External mode requires an active Spring write transaction");
     }

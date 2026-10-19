@@ -114,7 +114,7 @@ python3 scripts/sync_xml_to_yaml.py changed/order.xml \
 
 # 5. 生成完整 HTML 设计文档站点（自包含 HTML）
 # 会生成 Business + Information + DataSource/Data/View/RuleView/API/System/Enum/Overview
-# 并生成 system-<name>.html；View/RuleView/API/Enum/Information 从 System 页作为主导航进入
+# 并生成 system/<name>/index.html；View/RuleView/API/Enum/Information 从 System 页作为主导航进入
 # 同名旧 HTML 会被覆盖；HTML 禁止手工维护
 python3 scripts/render_dec_graph.py examples -o /tmp/dec-design-html
 ```

@@ -17,7 +17,7 @@ public final class OrderPaymentFlow {
             List.of(),
             List.of(),
             List.of(
-                        new ActionNode("ACT-SAVE-ORDER", "saveOrder", "business-order-payment.yaml#root.business.directories[0].actions[0]", "order", "save-Order", null, null, DATA_SOURCE,
+                        new ActionNode("ACT-SAVE-ORDER", "saveOrder", "business-order-payment.yaml#root.business.directories[0].actions[0]", "order", "saveOrder", null, null, DATA_SOURCE,
                                 List.of(new ProduceNode("PROD-ORDER", "OrderInfo", "order.ordered")))),
             null);
 
@@ -63,8 +63,8 @@ public final class OrderPaymentFlow {
             List.of(),
             List.of(),
             List.of(
-                        new ActionNode("ACT-RECORD-PAY-ERROR", "recordPyaError", "business-order-payment.yaml#root.business.directories[4].actions[0]", "payment", "recordPyaError", null, null, DATA_SOURCE,
-                                List.of(new ProduceNode("PROD-PAY-ERROR", "PyaError", null))),
+                        new ActionNode("ACT-RECORD-PAY-ERROR", "recordPayError", "business-order-payment.yaml#root.business.directories[4].actions[0]", "payment", "recordPayError", null, null, DATA_SOURCE,
+                                List.of(new ProduceNode("PROD-PAY-ERROR", "PayError", null))),
                         new ActionNode("ACT-SMS-NOTIFY", "smsNotify", "business-order-payment.yaml#root.business.directories[4].actions[1]", null, null, "smsNotify", null, DATA_SOURCE,
                                 List.of()),
                         new ActionNode("ACT-CONFIRM-PAY-ERROR", "confirmPayError", "business-order-payment.yaml#root.business.directories[4].actions[2]", "order", "confirmPayError", null, null, DATA_SOURCE,

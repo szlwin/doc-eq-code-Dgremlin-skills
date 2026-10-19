@@ -21,7 +21,8 @@ public final class RuleViewInterpreter {
             } catch (RuleExpression.MissingValue missing) {
                 result = RecognitionResult.unresolved(invocation.context().version(), missing.getMessage());
             } catch (RuntimeException failure) {
-                result = RecognitionResult.error(invocation.context().version(), "Rule " + rule.id() + " failed: " + failure.getMessage());
+                result = RecognitionResult.error(invocation.context().version(), "Rule " + rule.id() + " failed: "
+                        + failure.getClass().getSimpleName() + ": " + Objects.toString(failure.getMessage(), "no detail"));
             }
             if (result.status() != RecognitionResult.Status.TRUE) return withError(rule, result);
         }
@@ -29,12 +30,12 @@ public final class RuleViewInterpreter {
     }
     private RecognitionResult evaluate(CompiledRule rule, RuleViewRegistry.Invocation invocation, Map<String,Object> variables) {
         return switch (rule.type()) {
-            case "check" -> result(RuleChecks.test(invocation.context().read(rule.property()), rule.pattern()), rule, invocation);
-            case "checkPattern" -> result(RuleExpression.bool(RuleExpression.compile(rule.pattern()).evaluate(
+            case "check" -> result(rule.checks().test(invocation.context().read(rule.property())), rule, invocation);
+            case "checkPattern" -> result(RuleExpression.bool(rule.expression().evaluate(
                     new RuleExpression.Scope(invocation.context().values(), variables))), rule, invocation);
             case "checkData", "checkDataPattern" -> checkData(rule, invocation, variables);
             case "dsl" -> {
-                RuleDsl.compile(rule.process()).execute(invocation, variables, "");
+                rule.program().execute(invocation, variables, "");
                 yield result(true, rule, invocation);
             }
             case "insert", "update", "delete", "get", "query" -> {
@@ -57,12 +58,12 @@ public final class RuleViewInterpreter {
         if (rows == null) throw new ActionExecutionException("DataSource read returned null rows: " + rule.id());
         if (!snapshot.values().equals(before) || !read.produced().isEmpty() || !read.mutations().mutations().isEmpty())
             throw new ActionExecutionException("DataSource read must not modify the model or produce data: " + rule.id());
-        if (rows.isEmpty()) return result(rule.type().equals("checkData") && RuleChecks.test(null, rule.pattern()), rule, invocation);
-        var expression = rule.type().equals("checkDataPattern") ? RuleExpression.compile(rule.pattern()) : null;
+        if (rows.isEmpty()) return result(rule.type().equals("checkData") && rule.checks().test(null), rule, invocation);
+        var expression = rule.expression();
         for (Map<String,Object> row : rows) {
             if (row == null) throw new ActionExecutionException("DataSource read returned null row: " + rule.id());
             boolean passed;
-            if (expression == null) passed = RuleChecks.test(row, rule.pattern());
+            if (expression == null) passed = rule.checks().test(row);
             else {
                 Map<String,Object> scope = new LinkedHashMap<>(invocation.context().values());
                 scope.putAll(row); // Legacy query aliases temporarily shadow same-named model fields.

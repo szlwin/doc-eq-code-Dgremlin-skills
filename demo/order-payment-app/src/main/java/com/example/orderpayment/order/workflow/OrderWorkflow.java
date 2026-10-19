@@ -64,6 +64,9 @@ public class OrderWorkflow {
     public OrderInfo submitOrder(SubmitOrderRequest request, Long orderId, Map<String, String> selection) {
         DataSourceSelection rules = runtime.selectDataSources(dataSources, selection);
         requireId(orderId);
+        // Fast rejection only: concurrent creation is arbitrated by the database
+        // primary key. The Rule/Directory failure path below returns HTTP 409
+        // and the enclosing transaction rolls back the losing submission.
         if (store.orders().find(orderId) != null)
             throw failure(HttpStatus.CONFLICT, "Order already exists: " + orderId);
         if (request == null || !validator.validate(request).isEmpty())
@@ -85,7 +88,13 @@ public class OrderWorkflow {
             user = new User(); user.setId(request.getUserId());
             user.setName("demo-user-" + user.getId()); user.setActive(user.getId() == 2 ? 0 : 1);
             user.setCertified(1);
-            store.users().insert(user);
+            try {
+                store.users().insert(user);
+            } catch (org.springframework.dao.DuplicateKeyException | org.springframework.dao.ConcurrencyFailureException conflict) {
+                // The local demo provider may initialize this user concurrently.
+                // Roll back this submission; the caller can retry against the winner.
+                throw failure(HttpStatus.CONFLICT, "Concurrent user initialization; retry order submission: " + orderId);
+            }
         }
         return advance(orderId, true, assembler.draft(order, detail, user), OrderPaymentFlow.ORDERED.name(), null, false, rules);
     }

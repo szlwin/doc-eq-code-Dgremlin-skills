@@ -87,7 +87,7 @@ export DEC_DB_USERNAME='root'
 ./dec-java-lite/mvnw -f demo/order-payment-app/pom.xml spring-boot:run
 ```
 
-Demo 默认连接 `jdbc:mysql://127.0.0.1:3306/demo-test2`，用户名为 `root`，密码为 `mysqldb`。也可以通过 `DEC_DB_URL`、`DEC_DB_USERNAME` 和 `DEC_DB_PASSWORD` 覆盖配置。启动时 `schema.sql` 会创建 `dec_demo_` 前缀的业务演示表；这些表按当前 DEC YAML 字段映射设计，不修改数据库中已有的业务表。Directory 状态直接从订单和支付实体状态推导，不单独建状态表。
+Demo 默认连接 `jdbc:mysql://127.0.0.1:3306/demo-test2`，用户名为 `root`；密码必须通过 `DEC_DB_PASSWORD` 提供，仓库不再内置默认口令。可以通过 `DEC_DB_URL`、`DEC_DB_USERNAME` 和 `DEC_DB_PASSWORD` 覆盖配置。启动时 `schema.sql` 会创建 `dec_demo_` 前缀的业务演示表；这些表按当前 DEC YAML 字段映射设计，不修改数据库中已有的业务表。Directory 状态直接从订单和支付实体状态推导，不单独建状态表。
 
 接口执行顺序：
 
@@ -163,4 +163,4 @@ selection 左侧是设计逻辑数据源，右侧是适配器实现名。submitO
 
 ### 流程默认与 Action 覆盖
 
-订单流程在 `business-order-payment.yaml` 声明默认 `dataSource: data1`。saveOrder 的 RuleView 不再重复配置，继承流程默认；startPay 显式使用 paymentService，recordPyaError 显式使用 mongo1，Back resetPayResult 显式使用 data1。优先级为 Action → Rule → RuleView → Business。逻辑名称仍通过工作流执行参数选择 `local` / 手工注册的其他实现。生成的 `OrderPaymentFlow.DATA_SOURCE` 与 ActionNode 可查看声明，`demo/design-html/directory/order-payment.html` 显示流程默认、Action 覆盖和逐 Rule 有效来源。
+订单流程在 `business-order-payment.yaml` 声明默认 `dataSource: data1`。saveOrder 的 RuleView 也显式声明 `dataSource: data1`，与其他 RuleView 保持一致；startPay 显式使用 paymentService，recordPayError 显式使用 mongo1，Back resetPayResult 显式使用 data1。优先级为 Action → Rule → RuleView → Business。省略 RuleView 数据源时仍支持继承 Business 默认，框架测试覆盖该行为。逻辑名称仍通过工作流执行参数选择 `local` / 手工注册的其他实现。生成的 `OrderPaymentFlow.DATA_SOURCE` 与 ActionNode 可查看声明，`demo/design-html/directory/order-payment.html` 显示流程默认、Action 覆盖和逐 Rule 有效来源。

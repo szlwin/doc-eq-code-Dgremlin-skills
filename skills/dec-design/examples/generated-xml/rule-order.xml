@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <orm-rule-mapping>
-  <rule-view-info name="save-Order" code="SAVE_ORDER" desc="保存并提交订单的业务规则视图" view-ref="OrderInfo" api-ref="order.submitOrder" dataSource="data1">
+  <rule-view-info name="saveOrder" code="SAVE_ORDER" desc="保存并提交订单的业务规则视图" view-ref="OrderInfo" api-ref="order.submitOrder" dataSource="data1">
     <rule name="validateSubmitOrder" type="checkPattern" pattern="status = 1 and type = 1"/>
     <rule name="insertOrder" type="insert" property="OrderInfo"/>
     <rule name="insertOrderDetail" type="insert" property="orderDetailList"/>

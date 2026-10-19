@@ -3,7 +3,7 @@
 ## RuleView
 
 ```yaml
-- name: save-Order
+- name: saveOrder
   code: SAVE_ORDER
   desc: 保存订单
   viewRef: OrderInfo
@@ -15,7 +15,7 @@
 
 ```xml
 <rule-view-info
-    name="save-Order"
+    name="saveOrder"
     code="SAVE_ORDER"
     desc="保存订单"
     view-ref="OrderInfo"

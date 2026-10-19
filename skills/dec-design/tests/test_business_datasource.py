@@ -57,11 +57,13 @@ class BusinessDataSourceTest(unittest.TestCase):
         self.assertIn('Back returnPaying', html)
         self.assertIn('datasources.html#', html)
         action = business['directories'][0]['actions'][0]
-        self.assertTrue(all(origin == 'Business' for _, _, origin in renderer.action_data_sources(action, business, cat)))
+        self.assertTrue(all(origin == 'RuleView' for _, _, origin in renderer.action_data_sources(action, business, cat)))
         for action in [business['directories'][1]['actions'][0], business['directories'][4]['actions'][0]]:
             self.assertTrue(all(origin == 'Action' for _, _, origin in renderer.action_data_sources(action, business, cat)))
         action = {'name':'work', 'ruleRef':'test'}
         rules = {'ruleviews':{'test':{'dataSource':'view', 'rules':[{'name':'one','dataSource':'rule'}, {'name':'two'}]}}}
         self.assertEqual([('one','rule','Rule'),('two','view','RuleView')], renderer.action_data_sources(action,business,rules))
+        rules['ruleviews']['test'].pop('dataSource')
+        self.assertEqual([('one','rule','Rule'),('two','data1','Business')], renderer.action_data_sources(action,business,rules))
         action['dataSource']='override'
         self.assertTrue(all(source == 'override' for _,source,_ in renderer.action_data_sources(action,business,rules)))

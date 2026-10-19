@@ -667,7 +667,7 @@ bindings:
 - designId: RULE-VALIDATE-SUBMIT-ORDER
   strategy: REUSE
   status: VERIFIED
-  notes: Canonical business combination is evaluated by the save-Order RuleView before persistence; it is intentionally absent
+  notes: Canonical business combination is evaluated by the saveOrder RuleView before persistence; it is intentionally absent
     from the generated request DTO.
   tests:
   - module: order-payment-app

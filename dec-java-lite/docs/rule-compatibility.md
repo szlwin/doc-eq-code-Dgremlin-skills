@@ -25,6 +25,21 @@ Canonical YAML uses `dsl/process/cmd`; XML uses `grammer/customer-process/sql`. 
 
 RuleViews stop on the first non-TRUE result. Missing expression values produce UNRESOLVED; adapter errors and invalid operations produce ERROR. Configured error code/message/level are retained. Action/Workflow transaction boundaries roll back participating resources and withhold failed model changes; direct low-level RuleView invocation is not an independent transaction boundary.
 
+### Compiled programs and evaluation scopes
+
+`CompiledRule` retains immutable expression/DSL programs at construction; validation no longer compiles and discards them. DataSource rebinding reuses those programs. Variables, models and mutations remain invocation-local, including concurrent execution and nested `every` updates.
+
+| Construct | Unqualified property lookup |
+| --- | --- |
+| checkPattern / outer DSL | Current View model |
+| checkDataPattern | Temporary shallow overlay of the returned row on the View; a row alias shadows the whole same-named top-level View property |
+| every/any predicate, DSL every body | Current collection item only; nested every enters the nested item, without implicit fallback to parent/root fields |
+| `#variable` | Invocation-local variables, also accessible inside collection scopes |
+
+The row overlay preserves legacy query-alias semantics; collection isolation prevents accidental root-field matches when an item omits a field. These are explicit scopes, not interchangeable evaluation contexts. Use a distinct alias or capture an outer DSL value in `#variable`; do not depend on implicit parent lookup. Overlays never modify the input View. A missing field is UNRESOLVED rather than a guessed fallback.
+
+Standalone grammar words (`and/or/not/if/then/else`, literals and built-in function names) cannot be property operands. Qualified names such as `item.and` are unambiguous. Invalid numbers and out-of-range indexes fail with `ActionExecutionException` at compilation, rather than leaking numeric parsing exceptions.
+
 Information recognition may read external data. Generic get/query then report existence without writing the View; use checkDataPattern to validate returned values. Mutating data rules are prohibited, and DSL writes remain subject to the Information write guard.
 
 ## Driver integration

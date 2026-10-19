@@ -109,7 +109,7 @@ class OrderWorkflowTest {
         assertTrue(OrderPaymentFlow.PAY_RESULT.actions().get(0).produces().stream()
                 .anyMatch(produce -> "payment.hasResult".equals(produce.informationRef())));
         assertTrue(OrderPaymentFlow.ERROR.actions().get(0).produces().stream()
-                .anyMatch(produce -> "PyaError".equals(produce.ref()) && produce.informationRef() == null));
+                .anyMatch(produce -> "PayError".equals(produce.ref()) && produce.informationRef() == null));
     }
 
     @Test void storeUsesInjectedSystemDaoBeans() {
@@ -310,6 +310,22 @@ class OrderWorkflowTest {
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_pay_info WHERE p_order_id=120", Integer.class));
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_pay_detail_info WHERE pd_pay_id=120", Integer.class));
         verifyNoInteractions(smsSender);
+    }
+
+    @Test void concurrentSubmissionsReturnConflictForBothNewAndExistingUser() throws Exception {
+        for (long orderId : List.of(151L, 152L)) {
+            // First race initializes the user; second race uses that existing user.
+            var barrier = new java.util.concurrent.CyclicBarrier(2);
+            var reads = new java.util.concurrent.atomic.AtomicInteger();
+            doAnswer(call -> {
+                Object result = call.callRealMethod();
+                if (reads.incrementAndGet() <= 2) barrier.await(10, java.util.concurrent.TimeUnit.SECONDS);
+                return result;
+            }).when(orderDao).find(orderId);
+            assertEquals(List.of("conflict", "success"), race(() -> workflow.submitOrder(request(1), orderId)));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_order_info WHERE o_id=?", Integer.class, orderId));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_order_detail_info WHERE od_order_id=?", Integer.class, orderId));
+        }
     }
 
     @Test void duplicateConcurrentCallbacksAndLateConflictingResultDoNotRepeatSideEffects() throws Exception {

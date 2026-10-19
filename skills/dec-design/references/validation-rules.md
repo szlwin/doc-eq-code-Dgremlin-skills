@@ -46,17 +46,10 @@
 
 ## API
 
-- ApiKey `<system>.<name>` 唯一；system/url/method/name 必填；
-- method 属于允许 HTTP 方法；
-- request parameter name 唯一，`in ∈ {path,query,header,body}`；
-- URL `{name}` 与 path 参数一一对应，path 必须 required=true 且不得 default；
-- 字段级 validation：`min/max/minLength/maxLength/pattern/regex` 要有 value，`enum` 要有 values；
-- 字段级 validation 的 `message` 若省略，代码生成器必须生成稳定默认错误信息；生成的 `@NotNull`、`@NotEmpty`、`@Min`、`@Max`、`@Size`、`@Pattern` 不得省略 `message`；
-- request-level `expression` 必须有 expression 文本；示例：`format = csv and compress = true`；
-- request-level `expression` 只允许纯 transport 组合约束；依赖业务状态、View、Data、权限或跨入口复用的条件必须建模为 RuleView/Information/Business；
-- required、长度、枚举、表达式校验均可机器验证；
-- response.modelRef 存在时引用 View；
-- relEnum 存在时引用公共 Enum。
+API 字段、路径参数、Validation 和传输层边界的完整契约统一维护在
+[yaml-spec/api.md](yaml-spec/api.md)，此处不重复字段规则。
+局部结构由 `validation_local.validate_api` / `validation_common.validate_api_validations`
+校验，跨文件引用由 `validation_references` 校验。新增规则须更新该规范、实现和行为测试。
 
 ## System / Information
 

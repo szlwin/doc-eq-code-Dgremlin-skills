@@ -14,7 +14,7 @@ business:
     - id: ACT-SAVE-ORDER
       name: saveOrder
       systemRef: order
-      ruleRef: save-Order
+      ruleRef: saveOrder
       produces:
       - id: PROD-ORDER
         ref: OrderInfo
@@ -85,12 +85,12 @@ business:
     modelRef: OrderInfo
     actions:
     - id: ACT-RECORD-PAY-ERROR
-      name: recordPyaError
+      name: recordPayError
       systemRef: payment
-      ruleRef: recordPyaError
+      ruleRef: recordPayError
       produces:
       - id: PROD-PAY-ERROR
-        ref: PyaError
+        ref: PayError
     - id: ACT-SMS-NOTIFY
       name: smsNotify
     - id: ACT-CONFIRM-PAY-ERROR

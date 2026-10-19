@@ -5,7 +5,7 @@ The canonical design is [`fixtures/mix`](../../fixtures/mix). XML under [`fixtur
 `generated/` is produced by `GeneratorPipeline`. Do not edit files there. Regenerate from the project root:
 
 ```sh
-./mvnw clean package
+./mvnw clean install
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
   --yaml fixtures/mix --output examples/order-service/generated \
   --base-package com.example.order

@@ -11,6 +11,7 @@ from pathlib import Path
 
 import yaml
 import jsonschema
+from safe_xml import read_safe_xml_bytes
 
 VERSION = "dec-binding-evidence/v1"
 DESIGN_ALGORITHM = "dec-yaml-json-sha256/v1"
@@ -106,10 +107,7 @@ def resolve_symbol(root, loc, index):
 
 
 def junit_cases(path):
-    raw = path.read_bytes()
-    if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
-        raise ValueError(f"DTD/entities are not supported in test reports: {path}")
-    root = ET.fromstring(raw)
+    root = ET.fromstring(read_safe_xml_bytes(path))
     if root.tag not in {"testsuite", "testsuites"}:
         raise ValueError(f"not a JUnit report: {path}")
     cases = []

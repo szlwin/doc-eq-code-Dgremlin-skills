@@ -81,6 +81,68 @@ class ThingTest { void works() {} void parameterized(int value) {} }
         self.assertEqual(evidence.design_digest(self.design), proof["designDigest"])
         self.assertEqual(evidence.file_digest(self.report), proof["reports"][0]["digest"])
 
+    def test_report_dtd_is_rejected_for_all_supported_encodings(self):
+        self.report.parent.mkdir(parents=True)
+        for encoding in ("utf-8", "utf-16", "utf-16-le", "utf-16-be"):
+            declaration = "utf-16" if encoding.startswith("utf-16") else encoding
+            xml = ('<?xml version="1.0" encoding="' + declaration + '"?>'
+                   '<!DOCTYPE testsuite [<!ENTITY n "works">]>'
+                   '<testsuite><testcase classname="example.ThingTest" name="&n;"/></testsuite>')
+            with self.subTest(encoding=encoding):
+                self.report.write_bytes(xml.encode(encoding))
+                with self.assertRaisesRegex(ValueError, "DTD and ENTITY"):
+                    evidence.junit_cases(self.report)
+
+    def test_report_safety_preserves_comments_and_rejects_oversized_inputs(self):
+        from safe_xml import MAX_XML_BYTES
+        self.report.parent.mkdir(parents=True)
+        self.report.write_text('<testsuite><!-- <!DOCTYPE innocent> -->'
+                               '<testcase classname="example.ThingTest" name="works">'
+                               '<system-out><![CDATA[<!ENTITY text>]]></system-out>'
+                               '</testcase></testsuite>')
+        self.assertTrue(evidence.junit_cases(self.report)[0]["passed"])
+        self.report.write_bytes(b" " * (MAX_XML_BYTES + 1))
+        with self.assertRaisesRegex(ValueError, "exceeds"):
+            evidence.junit_cases(self.report)
+
+    def test_runner_rejects_default_output_through_external_target_symlink(self):
+        outside = self.base / "outside"
+        outside.mkdir()
+        (self.root / "target").symlink_to(outside, target_is_directory=True)
+        marker = outside / "dec-binding-evidence.json"
+        marker.write_text("must survive")
+        rc, out = self.run_tests(code="raise AssertionError('must not run')")
+        self.assertNotEqual(0, rc, out)
+        self.assertIn("evidence output must be inside", out)
+        self.assertEqual("must survive", marker.read_text())
+
+    def test_runner_rejects_escaped_report_directories_and_files(self):
+        for report_dir in ("../outside", str(self.base / "outside")):
+            rc, out = self.run_tests(extra=["--report-dir", report_dir])
+            self.assertNotEqual(0, rc, out)
+            self.assertIn("report directory escapes", out)
+            self.assertFalse(self.proof.exists())
+        outside = self.base / "outside.xml"
+        outside.write_text('<testsuite><testcase classname="example.ThingTest" name="works"/></testsuite>')
+        self.report.unlink()
+        self.report.symlink_to(outside)
+        rc, out = self.run_tests(code="pass")
+        self.assertNotEqual(0, rc, out)
+        self.assertIn("report escapes project root", out)
+        self.assertFalse(self.proof.exists())
+
+    def test_runner_does_not_follow_existing_pending_output_symlink(self):
+        self.proof.parent.mkdir(parents=True)
+        outside = self.base / "untouched.json"
+        outside.write_text("must survive")
+        pending = self.proof.with_suffix(".pending.json")
+        pending.symlink_to(outside)
+        rc, out = self.run_tests()
+        self.assertEqual(0, rc, out)
+        self.assertEqual("must survive", outside.read_text())
+        self.assertTrue(pending.is_symlink())
+        self.assertTrue(self.proof.is_file())
+
     def test_ast_rejects_comments_calls_strings_and_wrong_class_members(self):
         index = evidence.java_index([self.root / "src/Thing.java"])
         for symbol in ["Thing#missing", "Thing#deleted", "Thing#other", "Decoy#work", "wrong.Thing#work"]:

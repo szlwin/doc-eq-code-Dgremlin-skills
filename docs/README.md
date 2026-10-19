@@ -17,6 +17,8 @@
 | [Java 框架详解](java-framework.md) | 编译与执行、DSL、事务、监听器、数据源、查询、生成器与扩展点 |
 | [订单支付示例详解](order-payment-demo.md) | 设计到代码映射、六个 API、成功/失败分支、短信、查询示例及限制 |
 | [开发与验证手册](development-and-verification.md) | 环境、生成、运行、测试、Binding 证据、变更检查与故障定位 |
+| [2026-10-19 体检修复记录](health-check-recovery-2026-10-19.md) | 中断恢复、报告逐项核实、修复范围、真实测试与剩余限制 |
+| [2026-10-20 五项反馈收尾](health-check-followup-2026-10-20.md) | 设计风格统一、HTTP 并发核实、安全解析与 JDBC 公共逻辑 |
 
 ## 推荐阅读顺序
 

@@ -22,6 +22,43 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** Runs against a disposable MySQL database when DEC_MYSQL_JDBC_URL is supplied. */
 class MySqlQueryIntegrationTest {
+    @Test void executorsShareRowMappingButRetainConnectionOwnership() throws Exception {
+        String url = mysqlUrl();
+        var connections = new java.util.ArrayList<java.sql.Connection>();
+        ConnectionRouter router = route -> {
+            var connection = DriverManager.getConnection(url,
+                    System.getenv().getOrDefault("DEC_MYSQL_USER", "root"),
+                    System.getenv().getOrDefault("DEC_MYSQL_PASSWORD", ""));
+            connections.add(connection);
+            return connection;
+        };
+        var route = new ConnectionRoute("con1", "data1", "MySQL");
+        var query = new SqlStatement("SELECT ? AS alias_name, CAST(NULL AS CHAR) AS absent, CAST(? AS DECIMAL(10,2)) AS amount",
+                java.util.List.of(new TypedParameter("name", "string", "sample", false),
+                        new TypedParameter("amount", "decimal", "1.25", false)));
+        var expected = new JdbcQueryExecutor(router).query(query, route);
+        assertTrue(connections.get(0).isClosed());
+        assertEquals(1, expected.size());
+        assertEquals(java.util.List.of("alias_name", "absent", "amount"), new java.util.ArrayList<>(expected.get(0).keySet()));
+        assertEquals("sample", expected.get(0).get("alias_name"));
+        assertNull(expected.get(0).get("absent"));
+        assertEquals(new java.math.BigDecimal("1.25"), expected.get(0).get("amount"));
+        var information = new InformationEngine(new InformationParser().parse(
+                new DecYamlParser().parse(Path.of(getClass().getClassLoader().getResource("mix").toURI()))));
+        try (var session = new ExecutionSession(information,
+                new ActionRuntime(new RuleViewRegistry(), new CustomActionRegistry()), new ModelContext(Map.of()), Map.of(),
+                Instant.MAX, null, TransactionPolicy.REQUIRED, null);
+             var scope = session.begin()) {
+            var executor = new SessionJdbcQueryExecutor(session, router);
+            assertEquals(expected, executor.query(query, route));
+            assertTrue(executor.query(new SqlStatement("SELECT 1 AS empty_result WHERE 1=0", java.util.List.of()), route).isEmpty());
+            assertEquals(2, connections.size());
+            assertFalse(connections.get(1).isClosed(), "query must not close the session-owned connection");
+            scope.commit();
+        }
+        assertTrue(connections.get(1).isClosed());
+    }
+
     @Test void twoSystemsShareOneConnectionAndFailureRollsBackBothWrites() throws Exception {
         String url = mysqlUrl();
         String user = System.getenv().getOrDefault("DEC_MYSQL_USER", "root");

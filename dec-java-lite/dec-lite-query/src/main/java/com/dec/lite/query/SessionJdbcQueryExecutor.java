@@ -8,10 +8,7 @@ import com.dec.lite.session.TransactionResource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,21 +21,15 @@ public final class SessionJdbcQueryExecutor implements QueryExecutor, DataComman
     }
     public List<Map<String, Object>> query(SqlStatement statement, ConnectionRoute route) {
         try (PreparedStatement prepared = connection(route).prepareStatement(statement.sql())) {
-            bind(prepared, statement.parameters());
+            JdbcRows.bind(prepared, statement.parameters());
             try (ResultSet result = prepared.executeQuery()) {
-                List<Map<String, Object>> rows = new ArrayList<>(); ResultSetMetaData metadata = result.getMetaData();
-                while (result.next()) {
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    for (int index = 1; index <= metadata.getColumnCount(); index++) row.put(metadata.getColumnLabel(index), result.getObject(index));
-                    rows.add(row);
-                }
-                return rows;
+                return JdbcRows.read(result);
             }
         } catch (SQLException failure) { throw new QueryExecutionException("session SQL query failed", failure); }
     }
     public int execute(SqlStatement statement, ConnectionRoute route) {
         try (PreparedStatement prepared = connection(route).prepareStatement(statement.sql())) {
-            bind(prepared, statement.parameters()); return prepared.executeUpdate();
+            JdbcRows.bind(prepared, statement.parameters()); return prepared.executeUpdate();
         } catch (SQLException failure) { throw new QueryExecutionException("session SQL command failed", failure); }
     }
     private Connection connection(ConnectionRoute route) {
@@ -54,9 +45,6 @@ public final class SessionJdbcQueryExecutor implements QueryExecutor, DataComman
                 throw new RuntimeFailure(RuntimeErrorCode.TRANSACTION, route.dataSource() + "/" + route.connection(), null, "cannot open routed JDBC connection", failure);
             }
         }, Connection.class);
-    }
-    private static void bind(PreparedStatement prepared, List<TypedParameter> parameters) throws SQLException {
-        for (int index = 0; index < parameters.size(); index++) prepared.setObject(index + 1, parameters.get(index).value());
     }
     private record ConnectionResource(Connection connection) implements TransactionResource {
         public Object handle() { return connection; }

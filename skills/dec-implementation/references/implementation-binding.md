@@ -72,7 +72,7 @@ python3 skills/dec-implementation/scripts/run_binding_verification.py \
 
 测试命令在 project-root 中执行。先构建并安装本次源码对应的框架依赖；包装器不会自动构建依赖或更改 Binding 状态。`--input` 可重复，用于项目外的框架、生成器或其他依赖源码。Maven 本地缓存、远程服务和环境变化不能仅靠源码摘要证明，测试命令和 CI 应负责固定/构建正确的依赖版本。
 
-默认读取 `target/surefire-reports/*.xml`；可重复传入 `--report-dir` 指定项目内其他报告目录。报告必须由本次命令产生；残留报告会被拒绝，建议 `clean test`。命令失败、无报告、测试期间输入变化或证据检查不通过时，不保留旧的成功证据。
+默认读取 `target/surefire-reports/*.xml`；可重复传入 `--report-dir` 指定项目内其他报告目录。每份 XML 最大 8 MiB，解析前按 XML 编码识别并拒绝 DTD/ENTITY 声明（含 UTF-16）。报告必须由本次命令产生；残留报告会被拒绝，建议 `clean test`。命令失败、无报告、测试期间输入变化或证据检查不通过时，不保留旧的成功证据。
 
 默认输出 `PROJECT/target/dec-binding-evidence.json`，格式见 `schemas/test-evidence.schema.json`。记录设计、Binding、项目输入、附加依赖输入、各报告的 SHA-256，以及测试命令、开始/结束时间和退出码。验证时重新计算这些摘要并重新解析报告。项目源码摘要覆盖所有文件，排除 target/build、版本库、常见依赖/缓存目录（精确定义见 binding_evidence.py 的 EXCLUDED）；证据必须放在项目 target/build 下。
 
@@ -85,8 +85,10 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
   --binding demo/order-payment-implementation-binding.yaml \
   --project-root demo/order-payment-app --require-complete --require-evidence
 
-# 发布门禁：Demo 当前仍有 4 个 PLANNED，因此此检查应失败
+# 实现就绪防漂移核对：Demo 当前仍有 4 个 PLANNED，因此此检查应失败
 # 将上面的 --require-complete --require-evidence 替换为 --require-ready
 ```
 
 证据默认路径可用 `--evidence FILE` 指定；CI 应归档证据与对应 JUnit XML。摘要用于发现漂移，不是防伪签名，也不证明测试断言充分覆盖业务语义；语义符合性仍需 Review。不得为了门禁通过而把 PLANNED 批量改为 VERIFIED。
+
+信任边界：测试命令和产生报告的环境必须可信。包装器执行命令、核对时间与摘要，但任意命令仍可以伪造 JUnit XML 或刷新旧报告的 mtime；本工具不提供报告来源认证。`releaseReady` 表示本工具检查项满足，不替代发布审批、可信 CI 或业务验收。

@@ -95,9 +95,7 @@ public final class RuleViewCompiler {
             throw new ActionExecutionException("delete requires property or cmd: " + name);
         if (type.equals("dsl") && alias(rule, "process", "grammer") == null)
             throw new ActionExecutionException("dsl requires process: " + name);
-        if (type.equals("check") || type.equals("checkData")) RuleChecks.validate(text(rule, "pattern", name));
-        if (type.equals("checkPattern") || type.equals("checkDataPattern")) RuleExpression.compile(text(rule, "pattern", name));
-        if (type.equals("dsl")) RuleDsl.compile(alias(rule, "process", "grammer"));
+        // CompiledRule constructs and retains check/expression/DSL programs once.
     }
     private static String alias(Map<String, Object> rule, String canonical, String legacy) {
         String value = optional(rule, canonical), old = optional(rule, legacy);
