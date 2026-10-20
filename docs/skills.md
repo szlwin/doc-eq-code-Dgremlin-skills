@@ -40,7 +40,7 @@ Skill 是交给开发 Agent 的任务契约，包含操作说明、规范、模�
 | `render_dec_graph.py` | 生成完整 HTML 站点 |
 | `check_manifest.py` | 检查 Skill 包清单与实际文件 |
 
-以上脚本位于 [dec-design/scripts](../skills/dec-design/scripts)。XML 同步步骤见 [专门指南](xml-to-yaml-sync.md)。
+以上脚本位于 [dec-design/scripts](../skills/dec-design/scripts)。XML 同步操作以 [Skill 同步规范](../skills/dec-design/references/xml-yaml-sync.md) 为准；场景选择与风险判断见 [同步决策指南](xml-to-yaml-sync.md)。
 
 ### YAML I/O 示例
 

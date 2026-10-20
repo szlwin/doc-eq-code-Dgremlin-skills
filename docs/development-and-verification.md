@@ -38,9 +38,29 @@ python3 skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml -o
 
 ```sh
 ./dec-java-lite/mvnw -f dec-java-lite/pom.xml install -DskipTests
-java -jar dec-java-lite/dec-lite-cli/target/dec-lite-cli-0.1.0.jar inspect \
+```
+
+构建成功后，从实际产物定位 CLI（排除源码、Javadoc 和测试附件）：
+
+```sh
+# 选择唯一的 CLI 主产物，排除源码和 Javadoc 附件；多版本残留时停止并检查 target。
+dec_cli_jar=$(python3 - <<'PYCLI'
+from pathlib import Path
+jars = sorted(p for p in Path('dec-java-lite/dec-lite-cli/target').glob('dec-lite-cli-*.jar')
+              if not p.name.endswith(('-sources.jar', '-javadoc.jar', '-tests.jar')))
+if len(jars) != 1:
+    raise SystemExit(f'需要唯一 CLI jar，实际找到 {len(jars)} 个；请核对构建结果后重试')
+print(jars[0])
+PYCLI
+)
+```
+
+定位成功后，在同一 shell 中执行；若提示找不到或有多个 jar，先核对构建结果和旧版本残留。
+
+```sh
+java -jar "$dec_cli_jar" inspect \
   --yaml demo/order-payment-yaml
-java -jar dec-java-lite/dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
+java -jar "$dec_cli_jar" generate \
   --yaml demo/order-payment-yaml \
   --output demo/order-payment-app \
   --base-package com.example.orderpayment
@@ -51,7 +71,7 @@ java -jar dec-java-lite/dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
 要试验独立 API 分组配置，使用一个新的输出目录：
 
 ```sh
-java -jar dec-java-lite/dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
+java -jar "$dec_cli_jar" generate \
   --yaml demo/order-payment-yaml \
   --output /tmp/dec-configured-demo \
   --base-package com.example.orderpayment \
@@ -122,6 +142,14 @@ Demo 测试会清理 `dec_demo_*` 数据，必须连接专用测试库。框架�
 
 未提供数据库环境时，一些条件测试可能跳过；只有实际运行报告能证明真实 MySQL 路径已验证。不要把本地内存测试结果归因到数据库驱动。
 
+### 并发测试应证明什么
+
+并发回归需要确定性地制造竞争窗口，并核对失败后的持久化结果。[OrderApiTest](../demo/order-payment-app/src/test/java/com/example/orderpayment/demo/OrderApiTest.java) 的 `concurrentHttpSubmissionsReturnOneSuccessAndOneConflictWithoutPartialWrites` 用 barrier 让两个请求都读到“订单不存在”后再继续，避免实际只测到顺序重复请求。
+
+测试覆盖相同新用户、相同已有用户、不同新用户争抢同一订单 ID，分别断言 HTTP 状态为一成功、一冲突（200/409），且最终只有一笔订单、一条明细和一个用户；不同新用户场景还验证失败请求的用户初始化被回滚。这种“竞争窗口 + 接口结果 + 数据完整性”的组合，比只断言抛出异常更能说明事务行为。
+
+修改冲突映射时还要区分业务重复与基础设施故障：数据库主键冲突可按业务契约返回 409，网络或提交故障不能因此一概转成 409。测试依赖真实 MySQL，执行条件与数据库清理要求同本节说明。
+
 ## 6. Binding：覆盖、符号、证据、就绪
 
 基础检查：
@@ -165,7 +193,7 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
 | `--require-evidence` | 声明测试有本次通过报告，并匹配当前输入 |
 | `--require-ready` | 完整、符号及证据合格，且全部为 VERIFIED |
 
-当前 Demo 存在 4 个 PLANNED，所以发布就绪检查应失败。不要批量改状态来消除失败。摘要是漂移检查，不是安全签名，也不证明断言一定充分。Java semanticDigest 与 Binding 设计摘要不同，详见 [Binding 契约](../skills/dec-implementation/references/implementation-binding.md)。
+Demo 的当前状态与未实现项见 [集成说明](../demo/INTEGRATION.md)；只要仍有 PLANNED，发布就绪检查就应失败。不要批量改状态来消除失败。摘要是漂移检查，不是安全签名，也不证明断言一定充分。Java semanticDigest 与 Binding 设计摘要不同，详见 [Binding 契约](../skills/dec-implementation/references/implementation-binding.md)。
 
 ## 7. 派生产物漂移检查
 

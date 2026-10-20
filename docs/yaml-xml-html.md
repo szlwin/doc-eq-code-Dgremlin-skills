@@ -102,4 +102,4 @@ python3 skills/dec-design/scripts/validate_dec_yaml.py imported/design-yaml
 
 初次导入优先恢复 `dec-id`，缺少时按转换规则生成 ID，之后纳入 YAML 管理。
 
-**已经有 canonical YAML** 时，使用 `sync_xml_to_yaml.py --existing`，不能拿全量反向导入替代语义合并，否则可能丢失 YAML 独有元数据。操作步骤见 [XML 修改后同步回 YAML](xml-to-yaml-sync.md)。
+**已经有 canonical YAML** 时，使用 `sync_xml_to_yaml.py --existing`，不能拿全量反向导入替代语义合并，否则可能丢失 YAML 独有元数据。场景与风险见 [XML 同步决策指南](xml-to-yaml-sync.md)，操作步骤以 [Skill 同步规范](../skills/dec-design/references/xml-yaml-sync.md) 为准。

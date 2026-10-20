@@ -1,8 +1,8 @@
 # 全面体检修复与中断恢复记录
 
-这是上一轮的历史记录。用户随后要求统一 API 键序及显式 RuleView 数据源，并继续核对并发、XML 和 JDBC；最新结果见 [五项反馈收尾记录](health-check-followup-2026-10-20.md)。
+本记录保存 2026-10-19 的修复与验证快照，不代表当前工作区状态。API 键序、RuleView 数据源及并发、XML、JDBC 的后续核对见 [五项反馈收尾记录](health-check-followup-2026-10-20.md)。
 
-核对日期：2026-10-19（Asia/Shanghai）。恢复基线：`52ab57b` 加上此前中断留下的工作区改动。保留已有修改，核对后补齐遗漏、回归测试及生成物；本次未提交或推送 Git。
+核对日期：2026-10-19（Asia/Shanghai）。恢复基线：`52ab57b` 加上此前中断留下的工作区改动。保留已有修改，核对后补齐遗漏、回归测试及生成物。
 
 ## 结论
 
@@ -52,7 +52,7 @@
 | 浏览器抽查 | 流程图加载、缩放、点击 recordPayError 节点后的详情正常，正确显示 mongo1 与 PayError |
 | manifest / 空白错误 | 100 文件 PASSED；`git diff --check` 通过 |
 
-最终测试命令和重生成方法见 [开发与验证手册](development-and-verification.md)。本次使用 JDK 21 和仓库 Maven Wrapper。Node 使用本机已有运行时，不因 PATH 缺失跳过测试。
+最终测试命令和重生成方法见 [开发与验证手册](../development-and-verification.md)。本次使用 JDK 21 和仓库 Maven Wrapper。Node 使用本机已有运行时，不因 PATH 缺失跳过测试。
 
 Binding 证据位于 `demo/order-payment-app/target/dec-binding-evidence.json`，报告位于同目录下 `surefire-reports/`。额外输入包括 `dec-java-lite`、`skills/dec-implementation` 和 generation properties；后续修改这些输入需要重新执行包装器。证据与报告属于构建产物，不提交 Git。
 

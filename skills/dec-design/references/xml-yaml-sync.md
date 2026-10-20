@@ -6,6 +6,8 @@
 
 外部 XML 在构建 DOM 前限制为 8 MB，并通过 XML 解析事件拒绝 DTD、ENTITY 和外部实体声明（包括 UTF-16 输入）；`xml_to_yaml.py` 与本同步入口共用该保护。实现 Skill 的 XML 检查/读取入口使用同一份独立打包的保护模块。
 
+本文是同步操作的权威规范；命令从 `skills/dec-design/` 目录执行，示例输入输出路径按实际工程调整。
+
 ## 1. 适用场景
 
 适用：
@@ -59,8 +61,9 @@ python3 scripts/sync_xml_to_yaml.py changed/order.xml \
 - `removedEntities`
 - `conflicts`
 - `changeCounts`
+- `preservedYamlOnly`（记录顶层 YAML-only 字段；嵌套元数据也按合并规则保留）
 
-有冲突时返回非 0，并且不写 YAML。
+有冲突时返回非 0，并且不写 YAML。`--check` 仅完成语义合并和 Converter 语法/形状检查，不执行目录级验证；即使传入 `--validate-root`，此分支也不会调用 `validate_dec_yaml.py`。
 
 ## 4. 同步到原 YAML
 
@@ -120,7 +123,9 @@ desc: 保存并校验订单              # 从 XML 更新
 notes: 该规则必须在支付前完成      # XML 无法表达，保留
 ```
 
-现有 YAML Design ID 永远不会被 XML 自动重写。
+现有 YAML Design ID 永远不会被 XML 自动重写。语义元数据保留不等于文本原样保留：输出会规范化排版，不保证 YAML 注释、引号风格和空行不变。
+
+同步不是三方合并：旧投影来自同步时的现有 YAML，没有外部编辑开始时的历史共同基线。若两边同时修改同一字段，外部 XML 的旧值可能覆盖新的 YAML 值；需固定交付版本并审阅差异。
 
 ## 7. Rename 与 `dec-id` 注释
 
@@ -143,7 +148,7 @@ Design ID 注释的适用边界和快照规则统一见 [`yaml-to-xml.md`](yaml-
 AMBIGUOUS_RENAME_OR_REPLACEMENT
 ```
 
-不静默猜测。
+不静默猜测。身份匹配不会自动更新其他文件的引用；跨文件改名需协调修改并通过完整设计校验。
 
 ## 8. 删除保护
 
@@ -185,7 +190,11 @@ rollback original YAML
 status = ROLLED_BACK
 ```
 
-不会留下半同步 YAML。
+此回滚仅覆盖本次目标文件：恢复原文件内容，或删除原先不存在的新输出文件。它不是跨文件事务，不会回滚此前成功的其他调用。目录校验默认检查目标文件父目录，也可通过 `--validate-root` 指定完整设计根目录。
+
+`--output/-o` 与 `--in-place` 不能同时使用。需要审阅候选结果时，使用隔离的完整设计副本，不要把同 ID 的候选 YAML 放入原 canonical 目录。
+
+退出码：0 表示预检查或写回成功，3 表示合并冲突，4 表示写入后校验失败并回滚，2 表示输入或其他异常。异常路径还需保留标准错误输出，不能只依赖 JSON 报告。
 
 ## 10. 同步后的强制动作
 

@@ -2,7 +2,7 @@
 
 [返回文档总览](README.md) · [模块地图](architecture.md#3-java-模块地图)
 
-`dec-java-lite` 使用 Java 21，生成 Spring Boot 3.2.4/MyBatis 工程。它提供设计前端、共享编译链、业务 Runtime 和生成器；实际支付、短信、数据库映射由应用适配器接入。
+`dec-java-lite` 使用 Java 21，生成 Spring Boot/MyBatis 工程，生成依赖版本以 [集中配置](../dec-java-lite/dec-lite-generator/src/main/resources/generation-versions.properties) 为准。它提供设计前端、共享编译链、业务 Runtime 和生成器；实际支付、短信、数据库映射由应用适配器接入。
 
 ## 1. 解析、编译与快照
 

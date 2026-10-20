@@ -12,13 +12,13 @@
 | [整体架构](architecture.md) | 设计到运行的链路、模块分工、启动与请求生命周期、命令和查询 |
 | [设计模型](design-model.md) | 八类 YAML、Data/View/RuleView、Information、Directory、Action、数据源 |
 | [YAML、XML 与 HTML](yaml-xml-html.md) | 三种产物的职责、生成路径、HTML 阅读、运行时镜像、初次 XML 导入 |
-| **[XML 修改后同步回 YAML](xml-to-yaml-sync.md)** | 外部 XML 编辑后的预检查、合并、ID 保留、删除、冲突、回滚与重新生成 |
+| **[XML 修改后同步回 YAML](xml-to-yaml-sync.md)** | 同步方式选择、协作风险、典型事故与权威操作规范入口 |
 | [Skill 使用与维护](skills.md) | 两个 Skill 的输入输出、规范分片、脚本、语义要求与工程约定 |
 | [Java 框架详解](java-framework.md) | 编译与执行、DSL、事务、监听器、数据源、查询、生成器与扩展点 |
 | [订单支付示例详解](order-payment-demo.md) | 设计到代码映射、六个 API、成功/失败分支、短信、查询示例及限制 |
 | [开发与验证手册](development-and-verification.md) | 环境、生成、运行、测试、Binding 证据、变更检查与故障定位 |
-| [2026-10-19 体检修复记录](health-check-recovery-2026-10-19.md) | 中断恢复、报告逐项核实、修复范围、真实测试与剩余限制 |
-| [2026-10-20 五项反馈收尾](health-check-followup-2026-10-20.md) | 设计风格统一、HTTP 并发核实、安全解析与 JDBC 公共逻辑 |
+
+历史检查与修复快照见 [历史记录](history/README.md)。
 
 ## 推荐阅读顺序
 
@@ -48,8 +48,6 @@ docs/                        本组项目说明文档
 
 ## 如何判断“设计已经实现”
 
-YAML 通过校验，说明设计契约成立；XML/HTML 生成成功，说明可输出对应产物；Java 编译成功，说明工程可以编译。**这些结果都不能单独证明业务行为正确。** 还需要真实 Runtime 测试，以及绑定到当前设计和源码的测试证据。
-
-当前订单 Demo 的设计规模为 10 个 YAML 文件、118 个 Design ID、6 个 API、19 个 Information。Binding 覆盖全部 ID，其中 114 个标记为 `VERIFIED`、4 个为 `PLANNED`。这是当前设计与绑定清单的快照，不能替代重新执行验证；完整覆盖也不等于发布就绪。
+实现完成需要与当前设计和源码相符的行为测试及 Binding 证据，覆盖完整也不等于发布就绪。原则见 [项目理念](philosophy.md#3-五条核心原则)，执行方法见 [开发与验证手册](development-and-verification.md#6-binding覆盖符号证据就绪)；订单 Demo 的设计规模、Binding 状态和未实现项集中见 [集成说明](../demo/INTEGRATION.md)。
 
 这些文档解释实现与使用方式；精确字段和语法仍以 [设计规范索引](../skills/dec-design/references/dec-yaml-spec.md)、[实现消费契约](../skills/dec-implementation/references/dec-design-consumer-contract.md) 和框架源码为准。框架专题文档见 [dec-java-lite 文档入口](../dec-java-lite/README.md#文档)。

@@ -1,6 +1,6 @@
 # 五项体检反馈的确认与收尾
 
-记录日期：2026-10-20（Asia/Shanghai）。本记录接续 [上一轮体检修复](health-check-recovery-2026-10-19.md)，保留既有未提交改动。
+记录日期：2026-10-20（Asia/Shanghai）。本记录接续 [上一轮体检修复](health-check-recovery-2026-10-19.md)。本记录为当日修复与验证快照，不代表当前工作区状态。
 
 ## 逐项结果
 
@@ -34,6 +34,6 @@
 | Binding | 完整覆盖、符号、测试及当前证据核对通过；118/118，`evidenceVerified=True` |
 | 独立复审 | 运行时与最终脚本/生成物复审 PASS；编码兼容问题在复审中发现并修正后再次通过 |
 
-数据库验证使用单独的临时 MySQL 8.4 容器。测试在上一工作时段完成，收尾时重新验证摘要仍匹配当前工作区，未将旧证据视为永久有效。
+数据库验证使用单独的临时 MySQL 8.4 容器。测试完成后再次核对了摘要；这些证据只对应当时的输入，后续变更仍需重新验证。
 
-Binding 保留 114 VERIFIED、4 PLANNED，`releaseReady=False` 仍是预期事实。证据路径为 `demo/order-payment-app/target/dec-binding-evidence.json`。本次未提交或推送 Git。
+Binding 保留 114 VERIFIED、4 PLANNED，`releaseReady=False` 仍是预期事实。证据路径为 `demo/order-payment-app/target/dec-binding-evidence.json`。
