@@ -29,6 +29,7 @@ jobs:
     - name: Verify skill source manifest and script tests
       run: |-
         python skills/dec-design/scripts/check_manifest.py
+        python skills/dec-implementation/scripts/check_manifest.py
         python -m unittest discover -s skills/dec-design/tests -p 'test_*.py'
         python -m unittest discover -s skills/dec-implementation/tests -p 'test_*.py'
     - name: Validate canonical demo and binding
@@ -56,7 +57,16 @@ jobs:
         ./dec-java-lite/mvnw -B -f dec-java-lite/examples/expense-approval/generated/pom.xml test
     - name: Verify configurable API grouping
       run: |-
-        java -jar dec-java-lite/dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate --yaml demo/order-payment-yaml --output /tmp/dec-configured-demo --base-package com.example.orderpayment --generation-config demo/order-payment-generation.properties
+        dec_cli_jar=$(python3 - <<'PYCLI'
+        from pathlib import Path
+        jars = sorted(p for p in Path('dec-java-lite/dec-lite-cli/target').glob('dec-lite-cli-*.jar')
+                      if not p.name.endswith(('-sources.jar', '-javadoc.jar', '-tests.jar')))
+        if len(jars) != 1:
+            raise SystemExit(f'需要唯一 CLI jar，实际找到 {len(jars)} 个；请核对构建结果和旧版本残留')
+        print(jars[0])
+        PYCLI
+        )
+        java -jar "$dec_cli_jar" generate --yaml demo/order-payment-yaml --output /tmp/dec-configured-demo --base-package com.example.orderpayment --generation-config demo/order-payment-generation.properties
         ./dec-java-lite/mvnw -B -f /tmp/dec-configured-demo/pom.xml test
     - name: Test demo and verify current Binding evidence
       env:

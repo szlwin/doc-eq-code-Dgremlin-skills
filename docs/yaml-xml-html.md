@@ -1,16 +1,18 @@
-# YAML、XML 与 HTML 的关系
+# YAML、XML 与 HTML：同一份设计的三种看法
 
 [返回文档总览](README.md)
 
-## 1. 三种格式分别负责什么
+订单支付 Demo 里会同时看到 YAML、XML 和 HTML。它们不是三份各自维护的设计，而是同一份设计在不同场景下的三种看法：YAML 适合修改，XML 适合交换和运行时加载，HTML 适合人阅读。
 
-| 产物 | 权威性 | 主要使用者 | 更新方式 |
-| --- | --- | --- | --- |
-| canonical YAML | 唯一设计源 | 设计者、Skill、Validator、Java Parser | 正式 YAML I/O 脚本；或受控 XML 同步 |
-| generated XML | 派生的交换/运行时输入 | 外部 DEC 工具、Java XML Parser、打包应用 | YAML→XML 转换器 |
-| generated HTML | 派生的阅读与审阅视图 | 业务人员、开发者、Reviewer | YAML→HTML 生成器 |
+## 1. 谁是依据，谁是产物
 
-Java 的 YAML/XML 前端都进入同一 `DecProject` 与编译链。XML 可执行不代表 XML 是另一份权威设计源。HTML 不参与 Runtime，也不能回写 YAML。
+| 产物 | 主要使用者 | 怎样产生或更新 |
+| --- | --- | --- |
+| canonical YAML | 设计者、Skill、校验器、Java Parser | 正式 YAML I/O，或受控 XML 同步 |
+| generated XML | 外部 DEC 工具、Java XML Parser、打包应用 | 由 YAML 转换生成 |
+| generated HTML | 业务人员、开发者、Reviewer | 由 YAML 渲染生成 |
+
+Java 的 YAML/XML 前端最后都会进入同一个 `DecProject` 和编译链。XML 能被执行，不等于它变成了另一份权威源；HTML 也不参与 Runtime，不能直接回写 YAML。
 
 ```mermaid
 flowchart LR
@@ -23,22 +25,22 @@ flowchart LR
     E[用户或外部工具编辑的 XML] -->|sync_xml_to_yaml.py + existing YAML| Y
 ```
 
-## 2. 当前项目的产物路径
+## 2. 在 Demo 里分别去哪找
 
-| 路径 | 说明 |
+| 路径 | 你会看到什么 |
 | --- | --- |
-| [demo/order-payment-yaml](../demo/order-payment-yaml) | 订单支付 canonical 设计 |
+| [demo/order-payment-yaml](../demo/order-payment-yaml) | 订单支付的 canonical 设计源 |
 | [demo/order-payment-xml](../demo/order-payment-xml) | 对外导出的 XML |
 | [应用 dec/design](../demo/order-payment-app/src/main/resources/dec/design) | 随应用打包的 XML 镜像 |
 | [dec/design-files.txt](../demo/order-payment-app/src/main/resources/dec/design-files.txt) | Java 生成器维护的资源清单 |
-| [demo/design-html](../demo/design-html/index.html) | 多流程共享 HTML 站点 |
-| [DEC-DESIGN-INDEX.md](../demo/order-payment-app/DEC-DESIGN-INDEX.md) | 设计与代码之间的索引 |
+| [demo/design-html](../demo/design-html/index.html) | 多流程共享的阅读站点 |
+| [DEC-DESIGN-INDEX.md](../demo/order-payment-app/DEC-DESIGN-INDEX.md) | 设计节点与代码位置的索引 |
 
-Java 生成器维护文件清单，但不代替 Python Converter 生成 XML 内容。只更新导出 XML 而未更新应用镜像，会使运行中的应用继续执行旧设计。
+只更新 `demo/order-payment-xml` 而忘记更新应用里的 XML，应用仍会执行旧设计。资源清单只说明加载哪些文件，不负责生成 XML 内容。
 
 ## 3. 从 YAML 生成 XML 和 HTML
 
-以下命令从仓库根目录执行：
+命令从仓库根目录执行：
 
 ```sh
 python3 skills/dec-design/scripts/validate_dec_yaml.py demo/order-payment-yaml
@@ -53,13 +55,13 @@ python3 skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml \
   -o demo/design-html
 ```
 
-`yaml_to_xml.py --check` 检查转换能力，不是当前 XML 与 YAML 的逐文件漂移比较。要检查漂移，应在临时目录重新生成并与目标目录比较；命令见 [验证手册](development-and-verification.md)。
+`yaml_to_xml.py --check` 只检查转换器是否能处理这份设计，不是导出目录与 YAML 的逐文件漂移比较。需要检查实际产物时，应在临时目录重生成，再按[验证手册](development-and-verification.md)比较。
 
-`--emit-id-comments` 输出 `<!-- dec-id: ... -->`，不将 ID 擅自加入 XML 属性。它帮助运行时前端保持 ID 对应，也帮助外部编辑后的 rename 匹配。不同示例目录可能采用不同的注释快照策略；本项目订单 Demo 的导出 XML 和运行时镜像均使用该选项。
+`--emit-id-comments` 会写入 `<!-- dec-id: ... -->`，帮助运行时前端和外部编辑后的 rename 保持身份对应；它不会把 ID 擅自变成 XML 属性。
 
-## 4. 阅读 HTML
+## 4. 怎样阅读 HTML
 
-建议从 [站点首页](../demo/design-html/index.html) 进入 System，再查看其 View、RuleView、API、Enum 和 Information。全局类型页面提供稳定的跨页引用目标。
+可以从[站点首页](../demo/design-html/index.html)进入 System，再逐层查看 View、RuleView、API、Enum 和 Information。第一次阅读订单支付时，建议先看 `system/order/information.html`，再看 `directory/order-payment.html`。
 
 | 页面 | 用途 |
 | --- | --- |
@@ -70,36 +72,31 @@ python3 skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml \
 | `directory/<business>.html` | 单个流程的详细图 |
 | `datasources.html` | 逻辑数据源和连接索引 |
 
-Information 图的箭头为“依赖者 → 被依赖者”。节点四周的 `+` 可向上、下、左、右打开不同颜色的规则详情框，并以连线连接原节点；再次点击 `−` 收起。`ruleRef` 节点展开的是对应 RuleView 的规则内容，组合节点保留其组合语义。右侧详情菜单仍可查看和跳转引用。
+Information 图的箭头表示“当前节点依赖什么”。节点旁的 `+` 可以展开规则详情，`−` 收起；Directory 图则把阶段、Action、Dependency、Produce、Change 和 Back 放在同一张图里。缩放、平移、拖动只改变阅读方式，不改变设计。
 
-Directory 图区分阶段、Action、Dependency、Produce、Change 和 Back。依赖节点支持逐层展开，Change 可查看目标 Information 和变化内容，数据源信息展示流程默认、Action 覆盖及规则有效来源。图支持缩放、平移、拖动与重置。
+展示有问题时，应修改渲染器并重新生成整站，不要手工修一张 HTML。更细的展示约定见[HTML 生成规范](../skills/dec-design/references/design-html-generation.md)。
 
-更详细的展示约定见 [HTML 生成规范](../skills/dec-design/references/design-html-generation.md)。展示缺陷应修改生成器并重新生成，不能手工修补某一张 HTML 后把它当成长期维护源。
+## 5. 多个流程怎样放进一个站点
 
-## 5. 多流程的组织方式
-
-站点使用通用目录 `design-html/`，共享页面不带 `order-payment-` 前缀，每个 Business 单独生成 `directory/<business>.html`。生成多个流程时，一次传入全部相关 canonical 输入，例如：
+`design-html/` 是共享目录，公共页面不带某个流程的前缀，每个 Business 放在 `directory/<business>.html`。如果有多个流程，应一次把相关 canonical 输入都交给渲染器：
 
 ```sh
-# design/flow-a、design/flow-b 是待替换为实际项目路径的示意。
+# design/flow-a、design/flow-b 只是示意路径。
 python3 skills/dec-design/scripts/render_dec_graph.py design/flow-a design/flow-b \
   -o generated/design-html
 ```
 
-不要依次对同一个站点只传一个流程，否则共享索引会被最后一次输入覆盖。输入应避免重复装载相同设计 ID；Business/System 名称归一化后冲突会在写入前报错。
+不要先渲染 flow-a，再单独渲染 flow-b 到同一个站点；后一次会覆盖共享索引。多个输入应在交给渲染器前确认 Design ID 不重复；渲染器会在写入前报告归一化文件名冲突，但不会替你检查跨输入的重复 Design ID。
 
-HTML 能汇总多个 Business，不意味着一次 Workflow/BusinessQuery 编译会自动为共享 View 选择业务流程。运行时仍需按其图编译约束明确项目/流程切片。
+HTML 可以汇总多个 Business，但一次 Workflow 或 BusinessQuery 编译仍要明确使用哪一块流程图。
 
-## 6. XML 初次导入与后续同步不同
+## 6. XML 初次导入和后续同步不是一回事
 
-**没有现有 canonical YAML** 时，使用初次导入：
+还没有 canonical YAML 时，先做初次导入：
 
 ```sh
-# 路径为导入示意；输出应放在新的设计目录。
 python3 skills/dec-design/scripts/xml_to_yaml.py external/design-xml -o imported/design-yaml
 python3 skills/dec-design/scripts/validate_dec_yaml.py imported/design-yaml
 ```
 
-初次导入优先恢复 `dec-id`，缺少时按转换规则生成 ID，之后纳入 YAML 管理。
-
-**已经有 canonical YAML** 时，使用 `sync_xml_to_yaml.py --existing`，不能拿全量反向导入替代语义合并，否则可能丢失 YAML 独有元数据。场景与风险见 [XML 同步决策指南](xml-to-yaml-sync.md)，操作步骤以 [Skill 同步规范](../skills/dec-design/references/xml-yaml-sync.md) 为准。
+已经有 YAML 时，外部 XML 的修改要用 `sync_xml_to_yaml.py --existing` 做语义合并。不要用全量反向导入覆盖已有文件，否则可能丢掉 YAML 独有元数据。具体风险见[XML 同步决策指南](xml-to-yaml-sync.md)，操作步骤以[Skill 同步规范](../skills/dec-design/references/xml-yaml-sync.md)为准。

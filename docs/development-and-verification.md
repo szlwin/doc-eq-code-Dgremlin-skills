@@ -2,9 +2,9 @@
 
 [返回文档总览](README.md)
 
-所有命令从仓库根目录执行。XML 外部变更请先走 [同步指南](xml-to-yaml-sync.md)，不要在同步前重生成覆盖修改。
+这份手册按一次真实改动来写：先检查设计，再生成应用，最后用测试和 Binding 证据确认结果。除特别注明外，命令都从仓库根目录执行。XML 已被外部工具修改时，先看 [同步指南](xml-to-yaml-sync.md)，不要先重生成把修改覆盖掉。
 
-## 1. 环境
+## 1. 先准备环境
 
 - Python 3，安装两个 Skill 的依赖：PyYAML 6.x、jsonschema 4.x。
 - JDK 21，`JAVA_HOME` 指向对应 JDK。
@@ -20,7 +20,7 @@ java -version
 ./dec-java-lite/mvnw -version
 ```
 
-## 2. 设计校验与派生产物
+## 2. 先检查设计，再生成派生产物
 
 ```sh
 python3 skills/dec-design/scripts/validate_dec_yaml.py demo/order-payment-yaml
@@ -34,7 +34,7 @@ python3 skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml -o
 
 结构/引用校验成功不等于 Runtime 能执行所有扩展。新增 Rule、Action 或 DataSource 时，需同时核对编译器能力和实际适配器。
 
-## 3. 构建框架并生成应用
+## 3. 构建框架并生成应用骨架
 
 ```sh
 ./dec-java-lite/mvnw -f dec-java-lite/pom.xml install -DskipTests
@@ -80,7 +80,7 @@ java -jar "$dec_cli_jar" generate \
 
 配置样例会拆出支付子资源组。试验目录是生成骨架，不会自动复制当前 Demo 的手写实现；启用到正式工程时要迁移 ServiceImpl/Bean/Binding。
 
-## 4. 运行订单 Demo
+## 4. 跑一遍订单支付 Demo
 
 先在 MySQL 中准备专用数据库并设置连接参数：
 
@@ -98,7 +98,7 @@ export DEC_DB_USERNAME='root'
 ```sh
 curl -X POST http://localhost:8080/api/orders/101/submit \
   -H 'Content-Type: application/json' \
-  -d '{"status":"1","type":"1","userId":1,"productId":7,"productName":"Demo item","productPrice":14.95,"productCount":2,"remark":"demo-order"}'
+  -d '{"status":1,"type":1,"userId":1,"productId":7,"productName":"Demo item","productPrice":14.95,"productCount":2,"remark":"demo-order"}'
 curl -X POST http://localhost:8080/api/orders/101/payment
 curl -X POST http://localhost:8080/api/orders/101/payment/result \
   -H 'Content-Type: application/json' -d '{"resultCode":2}'
@@ -108,9 +108,9 @@ curl -X POST http://localhost:8080/api/orders/101/payment/result \
   -H 'Content-Type: application/json' -d '{"resultCode":1}'
 ```
 
-使用尚未占用的订单 ID；已有数据可能触发重复操作检查。`resultCode` 1 为成功，2 为失败。业务查询调用见 [Demo 查询示例](order-payment-demo.md#7-业务查询示例)。
+使用尚未占用的订单 ID；已有数据可能触发重复操作检查。`resultCode` 1 为成功，2 为失败。业务查询调用见 [Demo 查询示例](order-payment-demo.md#7-用业务阶段查询订单)。
 
-## 5. 按改动选择验证
+## 5. 根据改动选择验证范围
 
 | 改动 | 应执行的验证 |
 | --- | --- |
@@ -150,7 +150,7 @@ Demo 测试会清理 `dec_demo_*` 数据，必须连接专用测试库。框架�
 
 修改冲突映射时还要区分业务重复与基础设施故障：数据库主键冲突可按业务契约返回 409，网络或提交故障不能因此一概转成 409。测试依赖真实 MySQL，执行条件与数据库清理要求同本节说明。
 
-## 6. Binding：覆盖、符号、证据、就绪
+## 6. 用 Binding 说明“谁实现了什么”
 
 基础检查：
 
@@ -195,7 +195,7 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
 
 Demo 的当前状态与未实现项见 [集成说明](../demo/INTEGRATION.md)；只要仍有 PLANNED，发布就绪检查就应失败。不要批量改状态来消除失败。摘要是漂移检查，不是安全签名，也不证明断言一定充分。Java semanticDigest 与 Binding 设计摘要不同，详见 [Binding 契约](../skills/dec-implementation/references/implementation-binding.md)。
 
-## 7. 派生产物漂移检查
+## 7. 检查派生产物有没有漂移
 
 使用临时目录重生成，而不是修改受管文件来对齐：
 
@@ -216,9 +216,12 @@ Skill 文件变动后检查包清单，具体参数可用：
 
 ```sh
 python3 skills/dec-design/scripts/check_manifest.py --help
+python3 skills/dec-implementation/scripts/check_manifest.py
 ```
 
-## 8. 一次设计变更的完成条件
+`dec-design` 与 `dec-implementation` 各自维护独立的源码清单；修改对应 Skill 后先运行相应的校验脚本，再运行该 Skill 的 Python 测试。
+
+## 8. 一次设计变更什么时候算完成
 
 1. canonical 设计明确、ID 稳定、完整目录校验通过。
 2. XML 导出、应用镜像、HTML、Java 受管产物与设计一致。
@@ -227,7 +230,7 @@ python3 skills/dec-design/scripts/check_manifest.py --help
 5. Binding 符号和证据对应当前版本；未实现内容保持真实状态。
 6. 应用使用新打包设计重建 Runtime；不是只刷新浏览器里的 HTML。
 
-## 9. 常见问题定位
+## 9. 出问题时先查哪里
 
 | 问题 | 首先检查 |
 | --- | --- |

@@ -11,7 +11,7 @@ fe606ec80d87662b374794763c764c8977bacf0f8947bce7490261b8cbdc0d51  ./examples/orm
 0f0d0bd4b43f23c5989a15b6acfd0c29078997429b7b5ee7e16d5e483e9c54c0  ./examples/rule-order.yaml
 ce760f0df55994dbc03768a32476363156f80e6a546261358e02c638dfd0dbba  ./examples/rule-payment.yaml
 34c38586f6f46652da49b87d8a9c7fb8826d4ca9f8a2ec12a66dcc5a87a772f7  ./examples/rule-user.yaml
-54a94dbeffb50ce1a3963b14fba83764da5604e2ffcd614fe8463a267ef02128  ./examples/systems-order.yaml
+e38226ac09842dc85f3b2ea49a87acdca500113ec4fae61308d6b04426f5aa0b  ./examples/systems-order.yaml
 4b143c637d3da3d011de67cd7fc4d9ca7b81dabe30e7c379f75d3068e703f51b  ./examples/view-order.yaml
 58938f65533e17aac8e9bcf9812e4cd067dec1f09e169126eadc5f3917b4423a  ./references/business-visualization.md
 27ba36c6dec45bd7a529ef98eaf31df6bb6b3033a3dd5f1a3a05f474a447e44f  ./references/current-dec-compatibility.md

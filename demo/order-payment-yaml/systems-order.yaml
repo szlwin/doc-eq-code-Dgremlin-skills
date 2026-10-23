@@ -9,7 +9,7 @@ systems:
   viewRefs:
   - UserInfo
   ruleFiles:
-  - classpath:dec/generated/rule/rule-user.xml
+  - classpath:dec/design/rule-user.xml
   information:
   - id: INFO-USER-ACTIVATED
     name: activated
@@ -37,7 +37,7 @@ systems:
   viewRefs:
   - OrderInfo
   ruleFiles:
-  - classpath:dec/generated/rule/rule-order.xml
+  - classpath:dec/design/rule-order.xml
   information:
   - id: INFO-ORDER-ORDERED
     name: ordered
@@ -120,7 +120,7 @@ systems:
   viewRefs:
   - OrderInfo
   ruleFiles:
-  - classpath:dec/generated/rule/rule-payment.xml
+  - classpath:dec/design/rule-payment.xml
   information:
   - id: INFO-PAYMENT-INFO
     name: paymentInfo

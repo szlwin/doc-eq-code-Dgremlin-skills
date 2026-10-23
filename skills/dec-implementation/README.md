@@ -58,3 +58,13 @@ python3 scripts/xml_io.py read path/to/generated.xml
 
 
 可信度检查使用 `--require-symbols`（需要 JDK 21）与 `--require-evidence`；后者的证据必须由 `scripts/run_binding_verification.py` 包装真实测试生成。`--require-ready` 同时要求当前符号/测试证据有效且所有 Binding 为 VERIFIED，详见 [Binding 规范](references/implementation-binding.md)。
+
+## Skill 文件清单
+
+Skill 的受管源码由 `FILE_MANIFEST.sha256` 记录。修改 Skill 文件后运行：
+
+```sh
+python3 scripts/check_manifest.py
+```
+
+需要刷新清单时使用 `python3 scripts/check_manifest.py --write`，然后再次执行校验；清单脚本本身和对应测试也属于受管源码。

@@ -8,7 +8,7 @@
 | YAML → XML/HTML | 10 份 XML、38 个 HTML 页面，可重新生成 |
 | Java 生成 | 1 组 OrdersController/OrdersService 承载 6 个 API，DTO、View、Enum、DAO、Mapper 受 manifest 管理 |
 | 应用执行 | 下单、支付发起、结果成功/失败、短信 Action、回退、查询由 DEC Runtime 驱动 |
-| 验证 | 直接 Runtime 场景、Spring HTTP、DAO/Entity 状态与 Enum JSON 测试；Binding 118/118 完整，114 VERIFIED、4 PLANNED |
+| 验证 | 直接 Runtime 场景、Spring HTTP、DAO/Entity 状态与 Enum JSON 测试；Binding 118/118 完整且全部 VERIFIED |
 
 应用按同一 canonical 设计加载 `dec/design/*.xml`，使用 `RuleViewCompiler`、`InformationEngine`、`DirectoryEngine` 与显式 `DataOperationAdapter`/`CustomActionRegistry`。生成的 Information 类和 Business Flow 类提供信息树与 Directory 流程的只读导航投影；它们列出依赖、Action、Produce、case 和 Back，但不执行状态转换。生成的 `OrdersService` 是接口，手写 `OrdersServiceImpl` 统一实现 6 个 API 方法。事务回滚时不发布成功模型或发送提交后短信；提交后短信失败不能撤销已经提交的数据。
 
@@ -23,4 +23,4 @@ MySQL 通过实际 JDBC 访问 Demo 表；支付服务、MongoDB 与短信由本
 事务框架新增显式外部托管/Runtime 自管模式和 `dec-lite-spring` 桥接。Demo 使用外部托管，最终写回与一致性校验位于事务完成前。框架通过 H2 实际数据库验证两种模式的写回失败、校验失败、提交失败、rollback-only、误接入拒绝和提交结果不确定；Demo 的 MySQL 场景验证最终写回/校验失败时订单与支付整体回滚。短信仍按现有 afterCommit 契约处理，未新增可靠投递机制。
 
 
-Binding 验证增加 Java AST 符号检查、JUnit 实际执行证据和设计/Binding/源码/报告摘要关联。使用 `run_binding_verification.py` 包装本次 `clean test`，将证据写入 `order-payment-app/target/dec-binding-evidence.json`。`--require-complete --require-evidence` 通过时，证明当前 114 个 VERIFIED 的声明与测试证据匹配并覆盖全部 118 个 ID；4 个 PLANNED 仍未完成，`--require-ready` 必须拒绝发布就绪。证据位于构建目录，修改输入后须重新生成，不将其视为永久认证。
+Binding 验证增加 Java AST 符号检查、JUnit 实际执行证据和设计/Binding/源码/报告摘要关联。使用 `run_binding_verification.py` 包装本次 `clean test`，将证据写入 `order-payment-app/target/dec-binding-evidence.json`。`--require-complete --require-evidence --require-ready` 均已通过，证明 118 个 VERIFIED 声明与测试证据匹配并覆盖全部 Design ID。四个新增场景分别通过等待态 Information、RuleView、规则和支付完成 Information 的真实运行回归覆盖。证据位于构建目录，修改输入后须重新生成，不将其视为永久认证。

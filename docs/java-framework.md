@@ -2,19 +2,23 @@
 
 [返回文档总览](README.md) · [模块地图](architecture.md#3-java-模块地图)
 
-`dec-java-lite` 使用 Java 21，生成 Spring Boot/MyBatis 工程，生成依赖版本以 [集中配置](../dec-java-lite/dec-lite-generator/src/main/resources/generation-versions.properties) 为准。它提供设计前端、共享编译链、业务 Runtime 和生成器；实际支付、短信、数据库映射由应用适配器接入。
+`dec-java-lite` 是订单 Demo 背后的执行框架。它使用 Java 21，可以生成 Spring Boot/MyBatis 工程；具体依赖版本以[集中配置](../dec-java-lite/dec-lite-generator/src/main/resources/generation-versions.properties)为准。框架负责读设计、编译规则、运行流程和生成接口，支付平台、短信和数据库连接仍由应用自己接入。
 
-## 1. 解析、编译与快照
+## 1. 设计文件怎样变成可执行计划
+
+打开 Demo 时，应用并不是每次请求都重新读 YAML。启动阶段先把设计解析成 `DecProject`，编译成可复用的计划；请求到来后，只创建本次请求自己的模型和事务环境。
 
 `DecYamlParser` 和 `DecXmlParser` 将输入转换为 `DecProject`。两种前端共享下游校验和编译，避免 YAML 与 XML 各有一套执行含义。XML 的 `dec-id` 注释有助于恢复 YAML ID；无注释时可能生成对应身份，不应假设天然与现有 Binding 一致。
 
-解析器拒绝危险或不支持的输入：例如 XML DTD/外部实体、未知语义结构、旧 `directory-config`；YAML 重复键或自定义 Java tag 也不能被当作合法设计。单份设计输入有限制，当前为 8 MB，classpath 清单另有限制。详见 [输入契约](../dec-java-lite/docs/canonical-input.md)。
+解析器拒绝危险或不支持的输入：例如 XML DTD/外部实体、未知语义结构（包括旧 `directory-config` 根）；YAML 重复键或自定义 Java tag 也不能被当作合法设计。单份设计输入有限制，当前为 8 MB，classpath 清单另有限制。详见 [输入契约](../dec-java-lite/docs/canonical-input.md)。
 
 编译器将引用、表达式、图和规则转换为可复用结构。`SemanticDigest` 用于标识执行语义；Binding 的设计摘要则覆盖其定义的设计文件结构，两者用途和算法不同，不应互相替代。
 
 `RuntimeCatalog` 在候选设计编译和就绪检查通过后才替换快照；失败保留旧版本，已有会话继续使用自己的版本。Demo 直接在启动构建 Runner，并未自动启用这套热更新流程。
 
 ## 2. Information 执行
+
+Information 负责回答“订单现在是否满足某个条件”。在支付 Demo 里，它会判断订单是否已订购、是否可支付、支付结果是否成功。
 
 核心组件是 `InformationParser`、`InformationEngine`、`InformationEngineContext`、`RuleViewRegistry` 与 `ModelContext`。
 
@@ -28,6 +32,8 @@
 模型表达式中的集合谓词使“所有订单明细均支付成功”可以由设计表达。金额比较使用精确数值语义，不能为了方便把大整数和金额一律转成 double。
 
 ## 3. RuleView、DSL 与外部操作
+
+RuleView 是 Runtime 实际执行规则的地方。它可以检查当前模型，也可以通过适配器读取或写入外部数据。
 
 `RuleViewCompiler` 编译不可变规则，执行时通过绑定过程注入本次适配器、模型与作用域。Runner 复用编译结果，不在每个请求重新调用旧式 `register()` 编译路径。
 
@@ -43,7 +49,9 @@ payInfo.resultCode : null;
 
 `RuleDataAdapter` 可将通用规则操作桥接到应用实现的 `RuleDataAccess`。驱动负责参数绑定、物理访问和参与事务，框架处理读取结果的合并或集合回填。保留了 `cmd` 并不代表框架内置了所有 SQL/NoSQL 命令解释器。
 
-## 4. DirectoryWorkflowRunner 与完成回调
+## 4. DirectoryWorkflowRunner：把流程跑完并确认结果
+
+订单支付的 success/error 分支来自编译后的 Directory，Workflow 不需要再复制一份状态机。Runner 负责推进流程，应用通过完成回调把结果写回并重新核对。
 
 Runner 复用图、规则和 Information 编译结果，统一完成阶段识别、依赖检查、Action 执行、case 分类、Change、Back 和结果验证。应用 Workflow 传入模型转换、payload、适配器、事务模式和完成回调。
 
@@ -51,7 +59,9 @@ Runner 复用图、规则和 Information 编译结果，统一完成阶段识别
 
 这使 Workflow 保持应用编排职责，不需要在 `receivePaymentResult` 内再次写一份 success/error 状态判断。流程分支来自编译后的 canonical Directory。
 
-## 5. 两种明确的事务模式
+## 5. 两种事务接法
+
+Demo 通常由 Spring 开启事务，但框架也支持没有外层事务的入口。两种模式的关键区别是：谁拥有物理事务，谁负责最后提交。
 
 | 模式 | 谁开启/提交物理事务 | 接入方式 |
 | --- | --- | --- |
@@ -65,6 +75,8 @@ Runner 复用图、规则和 Information 编译结果，统一完成阶段识别
 两种模式都要求动作、最终写回和校验先于物理提交。空的 ActionTransaction、Store 新建或无实际事务的 UnitOfWork 都不能满足契约。更多时序见 [Directory Runtime](../dec-java-lite/docs/directory-runtime.md) 和 [Session/事务](../dec-java-lite/docs/session-transaction-runtime.md)。
 
 ## 6. 自定义 Action 与流程监听器
+
+设计可以声明“支付失败后发送通知”，但真正调用短信平台仍要由应用提供 Action。监听器则适合观察流程中每个 Action 的前后时点。
 
 自定义动作实现 `CustomAction.name()` 和 `execute(ActionExecutionContext)`，注册到 `CustomActionRegistry`。Spring 生成配置收集 Bean；非 Spring 接入需要自己组装注册表。名称重复、缺失实现都明确失败。
 
@@ -81,7 +93,9 @@ Object value = context.read("id");
 
 截止时间检查发生在执行检查点，不会强制终止阻塞线程。真正的外部请求还需配置客户端超时；已经发送的远程副作用不会因超时自动撤销。
 
-## 7. 数据源声明与按次选择
+## 7. 逻辑数据源怎样落到实际适配器
+
+设计里写的是 `data1`、`paymentService`、`mongo1` 这样的逻辑名称；应用在请求中把它们映射到实际实现。
 
 有两层选择：设计决定逻辑来源，应用决定其本次实现。
 
@@ -97,7 +111,9 @@ Information 识别没有 Action 覆盖，使用 Rule→RuleView→Business。Cus
 
 这只路由 DEC 外部操作，不自动切换应用所有 DAO，也不会把远程服务加入 JDBC 原子事务。详见 [Action Runtime](../dec-java-lite/docs/action-runtime.md)。
 
-## 8. 面向业务阶段的查询
+## 8. 按业务阶段查询
+
+订单查询不是再写一套状态枚举，而是沿着设计中的 Directory 和 Information 找当前事实。
 
 `BusinessQueryRuntime` 对设计编译一次，每次执行绑定独立的求值器。`BusinessQueryNames` 将显式别名映射到现有设计 ID/名称，不维护另一套状态值。
 
@@ -118,7 +134,9 @@ SQL 使用绑定参数。`SqlTranslator` 的表名映射只映射 FROM/JOIN 的�
 
 上述语义是当前事实查询，不保存事件历史。单 Runner/编译图仍有单根约束，多流程应用应明确选择图切片。详见 [Query Runtime](../dec-java-lite/docs/query-runtime.md)。
 
-## 9. 生成器及文件所有权
+## 9. 生成器生成什么，应用负责什么
+
+生成器提供稳定的工程骨架和设计索引；事务编排、外部服务和手写适配仍属于应用。
 
 `GeneratorPipeline` 是协调入口，细分职责包括：
 

@@ -3,6 +3,12 @@ package com.example.orderpayment.demo;
 import com.dec.lite.query.BusinessQuery;
 import com.dec.lite.query.QueryCompilationException;
 import com.dec.lite.query.QueryResult;
+import com.dec.lite.action.RuleViewCompiler;
+import com.dec.lite.information.InformationEngine;
+import com.dec.lite.information.InformationEngineContext;
+import com.dec.lite.information.InformationKey;
+import com.dec.lite.information.InformationParser;
+import com.dec.lite.parser.DecXmlParser;
 import com.example.orderpayment.order.dto.SubmitOrderRequest;
 import com.example.orderpayment.order.enums.OrderStatus;
 import com.example.orderpayment.order.enums.OrderType;
@@ -66,6 +72,23 @@ class OrderQueryTest {
         assertTrue(queries.explain(BusinessQuery.find("订单").eq("支付结果")).contains("dec_demo_order_info"));
         verifyNoInteractions(sms);
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_payment_error", Integer.class));
+    }
+
+    @Test void optionalInformationBranchesAreEvaluatedFromTheDemoDesign() throws Exception {
+        InformationEngine information = demoInformationEngine();
+
+        var waiting = queries.find(BusinessQuery.find("订单").eq("已订购")).models().getFirst();
+        assertEquals(com.dec.lite.information.RecognitionResult.Status.TRUE,
+                information.evaluate(new InformationKey("order", "waitPay"), waiting).status());
+        assertEquals(com.dec.lite.information.RecognitionResult.Status.TRUE,
+                information.evaluate(new InformationKey("order", "payable"), waiting).status());
+
+        var success = queries.find(BusinessQuery.find("订单").eq("支付成功")).models().getFirst();
+        assertEquals(com.dec.lite.information.RecognitionResult.Status.TRUE,
+                information.evaluate(new InformationKey("payment", "completed"), success).status());
+        var error = queries.find(BusinessQuery.find("订单").eq("支付失败")).models().getFirst();
+        assertEquals(com.dec.lite.information.RecognitionResult.Status.TRUE,
+                information.evaluate(new InformationKey("payment", "completed"), error).status());
     }
 
     @Test void generatedOrdersControllerExposesFourBusinessQueriesAndTypedArray() throws Exception {
@@ -137,5 +160,12 @@ class OrderQueryTest {
 
     private static List<Integer> ids(QueryResult result) {
         return result.models().stream().map(row -> ((Number) row.read("id")).intValue()).toList();
+    }
+
+    private static InformationEngine demoInformationEngine() throws Exception {
+        var project = new DecXmlParser().parseClasspath(OrderQueryTest.class.getClassLoader(), "dec/design-files.txt");
+        var compilation = new InformationParser().parse(project);
+        var registry = new RuleViewCompiler().register(project, null);
+        return new InformationEngine(new InformationEngineContext(compilation, registry));
     }
 }

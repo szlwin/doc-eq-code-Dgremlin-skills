@@ -94,7 +94,7 @@ Demo 默认连接 `jdbc:mysql://127.0.0.1:3306/demo-test2`，用户名为 `root`
 ```sh
 curl -X POST http://localhost:8080/api/orders/101/submit \
   -H 'Content-Type: application/json' \
-  -d '{"status":"1","type":"1","userId":1,"productId":7,"productName":"Demo item","productPrice":14.95,"productCount":2,"remark":"demo-order"}'
+  -d '{"status":1,"type":1,"userId":1,"productId":7,"productName":"Demo item","productPrice":14.95,"productCount":2,"remark":"demo-order"}'
 curl -X POST http://localhost:8080/api/orders/101/payment
 curl -X POST http://localhost:8080/api/orders/101/payment/result \
   -H 'Content-Type: application/json' -d '{"resultCode":2}'
@@ -119,7 +119,7 @@ curl -X POST http://localhost:8080/api/orders/101/payment/result \
 事务接入使用 `dec-lite-spring` 的 `SpringWorkflowTransactions.externallyManaged()`，由方法上的 `@Transactional` 拥有真实 JDBC 事务。Runtime 检查外部事务有效性；Directory Actions 与最终写回/回读校验均处于该事务内，失败标记回滚。Demo 不再传空 `ActionTransaction`。Runtime 自管模式的完整数据库验证位于框架 `dec-lite-spring` 测试，Demo 保持外层 Spring 托管。
 
 
-设计资源通过生成的 `dec/design-files.txt` 和框架 `DecXmlParser.parseClasspath(...)` 直接加载；Workflow 不再维护文件列表或临时目录。应用启动构建一个 Runner，RuleView 编译结果由 Runner 保存，每个请求只绑定自己的 adapter、模型和事务。更新设计需要重新构建 Runner。`LocalOrderStore` 直接暴露 DAO 访问器，已移除仅转发 DAO 的 UnitOfWork/begin 包装；Store 生命周期不代表事务生命周期。
+设计资源通过生成的 `dec/design-files.txt` 和框架 `new DecXmlParser().parseClasspath(classLoader, "dec/design-files.txt")` 直接加载；Workflow 不再维护文件列表或临时目录。应用启动构建一个 Runner，RuleView 编译结果由 Runner 保存，每个请求只绑定自己的 adapter、模型和事务。更新设计需要重新构建 Runner。`LocalOrderStore` 直接暴露 DAO 访问器，已移除仅转发 DAO 的 UnitOfWork/begin 包装；Store 生命周期不代表事务生命周期。
 
 
 新增通用性回归覆盖同订单并发支付、重复并发及乱序回调、多订单明细、事务回滚和提交后短信失败。明细按 orderId/payId 外键完整读取，并逐条写回状态；不再以“明细主键等于订单主键”或 get(0) 代表集合。支付替身为每条订单明细创建对应支付明细，测试同时验证其他订单不受影响。

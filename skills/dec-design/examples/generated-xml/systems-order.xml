@@ -8,7 +8,7 @@
       <view-ref name="UserInfo"/>
     </view-info>
     <rule-file-info>
-      <rule-file path="classpath:dec/generated/rule/rule-user.xml"/>
+      <rule-file path="classpath:dec/design/rule-user.xml"/>
     </rule-file-info>
     <information-info>
       <information name="activated" view-ref="UserInfo" rule-ref="isActivated"/>
@@ -25,7 +25,7 @@
       <view-ref name="OrderInfo"/>
     </view-info>
     <rule-file-info>
-      <rule-file path="classpath:dec/generated/rule/rule-order.xml"/>
+      <rule-file path="classpath:dec/design/rule-order.xml"/>
     </rule-file-info>
     <information-info>
       <information name="ordered" view-ref="OrderInfo" rule-data="status = 1&#10;and&#10;every(orderDetailList, status = 1)&#10;">
@@ -70,7 +70,7 @@ every(orderDetailList, status : 4);]]></change-data>
       <view-ref name="OrderInfo"/>
     </view-info>
     <rule-file-info>
-      <rule-file path="classpath:dec/generated/rule/rule-payment.xml"/>
+      <rule-file path="classpath:dec/design/rule-payment.xml"/>
     </rule-file-info>
     <information-info>
       <information name="paymentInfo" view-ref="OrderInfo" rule-ref="hasPaymentInfo"/>

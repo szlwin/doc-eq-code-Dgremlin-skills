@@ -147,8 +147,10 @@ class QueryCompilerTest {
 
         Path disjunction = Files.createTempDirectory("dec-query-or-");
         copyFixture(original, disjunction);
-        Files.writeString(disjunction.resolve("systems-order.yaml"), Files.readString(original.resolve("systems-order.yaml"))
-                .replace("status = 2\n          and\n          every", "status = 2\n          or\n          every"));
+        String source = Files.readString(original.resolve("systems-order.yaml"));
+        String unsafePredicate = source.replaceFirst("(status = 2\\R\\h*)and(\\R\\h*every)", "$1or$2");
+        assertNotEquals(source, unsafePredicate, "Fixture must contain the conjunction being tested");
+        Files.writeString(disjunction.resolve("systems-order.yaml"), unsafePredicate);
         DecProject project = new DecYamlParser().parse(disjunction);
         InformationCompilation compiled = new InformationParser().parse(project);
         QueryPlan plan = new QueryCompiler(project, new DirectoryGraphCompiler().compile(project, compiled), compiled)

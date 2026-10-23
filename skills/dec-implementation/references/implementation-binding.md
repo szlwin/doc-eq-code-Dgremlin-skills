@@ -85,7 +85,8 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
   --binding demo/order-payment-implementation-binding.yaml \
   --project-root demo/order-payment-app --require-complete --require-evidence
 
-# 实现就绪防漂移核对：Demo 当前仍有 4 个 PLANNED，因此此检查应失败
+# 实现就绪防漂移核对：若仍有 PLANNED、证据过期或存在其他漂移，此检查会失败。
+# 当前 Demo 的 118/118 Binding 均为 VERIFIED，且证据新鲜时，该检查应通过。
 # 将上面的 --require-complete --require-evidence 替换为 --require-ready
 ```
 

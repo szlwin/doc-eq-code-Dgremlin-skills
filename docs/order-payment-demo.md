@@ -2,9 +2,9 @@
 
 [返回文档总览](README.md)
 
-示例位于本仓库 [demo/order-payment-app](../demo/order-payment-app)，使用当前 `dec-java-lite`。它演示设计如何落到真实 Spring/MySQL 应用，并保留支付平台、MongoDB 和短信的本地替身。
+这份 Demo 是阅读整个项目最直接的入口：从 [canonical 设计](../demo/order-payment-yaml) 出发，经过生成代码和手写接线，最后在 Spring/MySQL 应用里跑完订单支付。支付平台、MongoDB 和短信仍使用本地替身，所以它展示的是接线和事务边界，不是假装已经接通生产服务。
 
-## 1. 先看哪些文件
+## 1. 建议先看这几处
 
 | 入口 | 内容 |
 | --- | --- |
@@ -16,7 +16,7 @@
 | [Implementation Binding](../demo/order-payment-implementation-binding.yaml) | 实现符号、Runtime 节点、测试与状态 |
 | [应用 README](../demo/order-payment-app/README.md) | 更完整的运行与场景说明 |
 
-## 2. 哪些代码生成，哪些代码手写
+## 2. 生成代码和手写代码怎样配合
 
 以下 Java 路径相对 `demo/order-payment-app/src/main/java/com/example/orderpayment/`。
 
@@ -42,7 +42,7 @@
 
 准确的生成归属以 [dec-generated-manifest.txt](../demo/order-payment-app/dec-generated-manifest.txt) 为准，不能因为类在某个 package 就认定整个目录都可覆盖。生成器不会生成假成功的 ServiceImpl 或外部服务实现。
 
-## 3. 六个接口
+## 3. 六个接口分别做什么
 
 入口为 [OrdersController.java](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/controller/OrdersController.java)。
 
@@ -57,7 +57,7 @@
 
 这些方法按 `order + orders` 资源归为一个 Controller/Service，而不是每个方法一个文件。请求 DTO 仍按各自 API 契约生成。
 
-## 4. success/error 分支在哪里执行
+## 4. 支付成功和失败的分支在哪里执行
 
 [OrderWorkflow](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java) 不重新维护支付结果分支规则。它传入回调值并请求 Runtime 推进到 `OrderPaymentFlow.PAY_RESULT`。
 
@@ -78,7 +78,7 @@ receivePaymentResult
 
 Back 执行设计中的 `resetPayResult` 等回退动作，再恢复对应事实。它是当前事务的一次新操作，不会“取消曾经提交过的数据库事务”。
 
-## 5. SmsNotifyAction 和流程监听器
+## 5. 失败通知和流程监听器
 
 设计中的 `ACT-SMS-NOTIFY / smsNotify` 没有 `ruleRef`，因此按名称查找 [SmsNotifyAction](../demo/order-payment-app/src/main/java/com/example/orderpayment/payment/action/SmsNotifyAction.java)。生成的配置收集 CustomAction Bean，Workflow 注入注册表，不直接调用该类。
 
@@ -96,7 +96,7 @@ Back 执行设计中的 `resetPayResult` 等回退动作，再恢复对应事实
 
 监听器 after 不等于短信已送达，也不应再次发送同一短信。监听器实例不存请求状态，不抄写状态机。
 
-## 6. DataSource 的设计与本地实现
+## 6. 设计里的数据源怎样接到本地实现
 
 流程默认逻辑源为 `data1`。发起支付 Action 显式指定 `paymentService`，记录错误指定 `mongo1`，回退重置指定 `data1`。有效路由按 Action→Rule→RuleView→Business 解析，HTML 可查看这些声明和来源。
 
@@ -112,7 +112,7 @@ workflow.receivePaymentResult(orderId, PayResultCode.SUCCESS, selection);
 
 本地 `data1` 经 MySQL JDBC 访问 `dec_demo_*` 表。`paymentService` 是本地支付替身，`mongo1` 的错误记录由本地表模拟，短信是日志实现。它们能验证流程接线，但不代表真实第三方平台已经集成。
 
-## 7. 业务查询示例
+## 7. 用业务阶段查询订单
 
 Java 示例见 [OrderQueryExamples](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/query/OrderQueryExamples.java)，服务接线见 [OrderQueryService](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/service/OrderQueryService.java)。
 
@@ -147,7 +147,7 @@ curl --get 'http://localhost:8080/api/orders' \
 
 查询使用 Spring 只读事务及事务感知连接；新事务请求 REPEATABLE_READ，加入已有事务时以外层事务的隔离级别为准。不能绕过 Spring 代理手动 `new OrderQueryService` 后调用查询。
 
-## 8. 如何运行与验证
+## 8. 怎样运行和验证这个例子
 
 环境与构建命令见 [开发与验证手册](development-and-verification.md)。数据库测试须使用专用测试库，因为测试会清理其中的 `dec_demo_*` 数据。
 
@@ -155,11 +155,11 @@ curl --get 'http://localhost:8080/api/orders' \
 
 其他场景覆盖同订单并发支付、重复/乱序回调、最终写回失败、回读不一致、监听器失败和提交后短信失败。跨领域的费用审批示例位于 [expense-approval](../dec-java-lite/examples/expense-approval/README.md)，用于检查框架是否过度依赖订单领域。
 
-## 9. 当前范围与限制
+## 9. 这个 Demo 没有承诺什么
 
 - submit API 按设计一次提交一个商品；多明细测试通过 DAO 准备聚合，验证一对多模型与 Runtime，而不是宣称已有批量下单 API。
 - 重复/非法推进被拒绝，但现有设计没有 callbackId/paymentAttemptId，不能可靠区分 Back 后不同支付尝试的迟到回调。
 - 当前查询不是事件历史查询；短信不是可靠消息投递；多适配器不是跨源原子事务。
-- Binding 尚有 4 个 `PLANNED`：`RV-ORDER-IS-WAIT-PAY`、`RULE-ORDER-IS-WAIT-PAY`、`INFO-ORDER-WAIT-PAY`、`INFO-PAYMENT-COMPLETED`。不能仅因其已登记就称全部实现完成。
+- 四个此前未触发的可选节点已补入 Demo 场景并通过真实运行验证：`RV-ORDER-IS-WAIT-PAY`、`RULE-ORDER-IS-WAIT-PAY`、`INFO-ORDER-WAIT-PAY`、`INFO-PAYMENT-COMPLETED`。`OrderQueryTest#optionalInformationBranchesAreEvaluatedFromTheDemoDesign` 从当前 XML 编译 RuleView/Information，并对等待态、支付成功和支付失败模型执行识别断言；Binding 现为 118/118 `VERIFIED`，`--require-ready` 通过。
 
 这些边界是继续扩展设计、适配和验证的起点，详见 [通用性场景矩阵](../dec-java-lite/docs/generality-scenarios.md)。

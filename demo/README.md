@@ -22,7 +22,7 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
   --project-root demo/order-payment-app --require-complete --require-evidence
 ```
 
-业务代码通过 DEC Runtime 执行下单、支付发起、支付成功/失败分类、错误通知、结果回退和查询。生成的 `order/information/OrderInformation`、`payment/information/PaymentInformation` 和 `business/OrderPaymentFlow` 是与信息树、Directory 流程对应的只读设计投影：前者展示 Information 的识别方式、依赖和 change-data，后者展示 Directory、Action、Produce、case 和 Back。运行时仍负责真正执行。参见 `order-payment-app/README.md` 的运行命令与调用样例。生成代码的 Design ID 注释和 `order-payment-app/DEC-DESIGN-INDEX.md` 可回溯到 `order-payment-yaml/`；手写实现由 Binding 定位。Binding 对 118 个 Design ID 全覆盖，其中 114 个 `VERIFIED`、4 个 `PLANNED`；后者是当前场景未触发的可选 RuleView/Information 节点。本地 DAO/Mapper 已用于 Demo 的 Entity 读写，真实外部 DataSource 接入仍需生产集成验证。
+业务代码通过 DEC Runtime 执行下单、支付发起、支付成功/失败分类、错误通知、结果回退和查询。生成的 `order/information/OrderInformation`、`payment/information/PaymentInformation` 和 `business/OrderPaymentFlow` 是与信息树、Directory 流程对应的只读设计投影：前者展示 Information 的识别方式、依赖和 change-data，后者展示 Directory、Action、Produce、case 和 Back。运行时仍负责真正执行。参见 `order-payment-app/README.md` 的运行命令与调用样例。生成代码的 Design ID 注释和 `order-payment-app/DEC-DESIGN-INDEX.md` 可回溯到 `order-payment-yaml/`；手写实现由 Binding 定位。Binding 对 118 个 Design ID 全覆盖并全部 `VERIFIED`；四个此前未触发的可选 RuleView/Information 节点已由 `OrderQueryTest` 通过真实 XML、Runtime 和 MySQL 场景覆盖。本地 DAO/Mapper 已用于 Demo 的 Entity 读写，真实外部 DataSource 接入仍需生产集成验证。
 
 `order-payment-html-recovery/` 是历史 HTML 回收时的临时输出目录，已被 Git 忽略，不参与 canonical 设计或 Demo 构建。`order-payment-app/src/main/resources/dec/design/` 是运行时打包用的 XML 副本；CI 会将其与 `order-payment-xml/` 逐文件比较。
 

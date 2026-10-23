@@ -704,12 +704,24 @@ bindings:
     symbol: LocalOrderStore
 - designId: RV-ORDER-IS-WAIT-PAY
   strategy: REUSE
-  status: PLANNED
-  notes: Compiled by DEC Runtime; this optional Information branch is not exercised by the current local Demo scenarios.
+  status: VERIFIED
+  notes: Compiled and evaluated by DEC Runtime against the persisted waiting-order model in the Demo query regression.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#optionalInformationBranchesAreEvaluatedFromTheDemoDesign
+  runtimeManaged: true
+  runtimeCapability: Canonical RuleView/Information compilation and execution
 - designId: RULE-ORDER-IS-WAIT-PAY
   strategy: REUSE
-  status: PLANNED
-  notes: Compiled by DEC Runtime; this optional Information branch is not exercised by the current local Demo scenarios.
+  status: VERIFIED
+  notes: The checkPattern status predicate is executed through the isWaitPay RuleView in the Demo query regression.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#optionalInformationBranchesAreEvaluatedFromTheDemoDesign
+  runtimeManaged: true
+  runtimeCapability: Canonical Rule execution through compiled RuleView
 - designId: RV-CONFIRM-PAY-SUCCESS
   strategy: REUSE
   status: VERIFIED
@@ -1028,8 +1040,14 @@ bindings:
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: INFO-ORDER-WAIT-PAY
   strategy: REUSE
-  status: PLANNED
-  notes: Compiled by DEC Runtime; this optional Information branch is not exercised by the current local Demo scenarios.
+  status: VERIFIED
+  notes: The Demo evaluates order.waitPay directly from a persisted order model and verifies its payable fallback.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#optionalInformationBranchesAreEvaluatedFromTheDemoDesign
+  runtimeManaged: true
+  runtimeCapability: Canonical Information DAG evaluation
 - designId: INFO-ORDER-PAYABLE
   strategy: REUSE
   status: VERIFIED
@@ -1122,8 +1140,14 @@ bindings:
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: INFO-PAYMENT-COMPLETED
   strategy: REUSE
-  status: PLANNED
-  notes: Compiled by DEC Runtime; this optional Information branch is not exercised by the current local Demo scenarios.
+  status: VERIFIED
+  notes: The Demo evaluates payment.completed for both persisted success and error result models.
+  tests:
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderQueryTest.java
+    symbol: OrderQueryTest#optionalInformationBranchesAreEvaluatedFromTheDemoDesign
+  runtimeManaged: true
+  runtimeCapability: Canonical Information expression evaluation
 - designId: SYS-COMMON
   strategy: REUSE
   status: VERIFIED

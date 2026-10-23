@@ -180,6 +180,8 @@ python3 scripts/validate_binding.py \
 
 `--require-complete` 只检查 ID 覆盖率，允许 `PLANNED`/`BLOCKED`。`--require-ready` 是实现就绪的防漂移核对（完整覆盖、符号、当前报告摘要匹配、全部为 `VERIFIED`），不是测试真实性或发布安全证明。它依赖可信测试命令和 CI；本地可修改的 JUnit XML 与 mtime 不能证明报告来源。仍须核对真实场景与注册表。生成代码能编译但 Service 尚未绑定 Runtime 时，Binding 保持 `PLANNED`。
 
+Skill 源码清单由 `scripts/check_manifest.py` 维护。修改 `SKILL.md`、references、scripts、schemas、examples 或 tests 后，先运行 `python3 scripts/check_manifest.py`；需要刷新清单时运行 `python3 scripts/check_manifest.py --write`，再执行一次校验。
+
 Binding 指向真实 module/file/symbol/test 或明确 Runtime capability。
 
 ### Step 9：符合性 Review
