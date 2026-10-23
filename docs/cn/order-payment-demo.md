@@ -2,19 +2,19 @@
 
 [返回文档总览](README.md)
 
-这份 Demo 是阅读整个项目最直接的入口：从 [canonical 设计](../demo/order-payment-yaml) 出发，经过生成代码和手写接线，最后在 Spring/MySQL 应用里跑完订单支付。支付平台、MongoDB 和短信仍使用本地替身，所以它展示的是接线和事务边界，不是假装已经接通生产服务。
+这份 Demo 是阅读整个项目最直接的入口：从 [canonical 设计](../../demo/order-payment-yaml) 出发，经过生成代码和手写接线，最后在 Spring/MySQL 应用里跑完订单支付。支付平台、MongoDB 和短信仍使用本地替身，所以它展示的是接线和事务边界，不是假装已经接通生产服务。
 
 ## 1. 建议先看这几处
 
 | 入口 | 内容 |
 | --- | --- |
-| [canonical 设计](../demo/order-payment-yaml) | 数据、View、规则、信息树、API 和流程 |
-| [设计首页](../demo/design-html/index.html) | 从 System 或 Business 浏览设计 |
-| [订单信息树](../demo/design-html/system/order/information.html) | ordered/payable/waitPay 等事实及规则 |
-| [订单支付流程](../demo/design-html/directory/order-payment.html) | Action、case、Produce、Change、Back 和数据源 |
-| [设计索引](../demo/order-payment-app/DEC-DESIGN-INDEX.md) | 按 Design ID 找到代码及设计定位 |
-| [Implementation Binding](../demo/order-payment-implementation-binding.yaml) | 实现符号、Runtime 节点、测试与状态 |
-| [应用 README](../demo/order-payment-app/README.md) | 更完整的运行与场景说明 |
+| [canonical 设计](../../demo/order-payment-yaml) | 数据、View、规则、信息树、API 和流程 |
+| [设计首页](../../demo/design-html/index.html) | 从 System 或 Business 浏览设计 |
+| [订单信息树](../../demo/design-html/system/order/information.html) | ordered/payable/waitPay 等事实及规则 |
+| [订单支付流程](../../demo/design-html/directory/order-payment.html) | Action、case、Produce、Change、Back 和数据源 |
+| [设计索引](../../demo/order-payment-app/DEC-DESIGN-INDEX.md) | 按 Design ID 找到代码及设计定位 |
+| [Implementation Binding](../../demo/order-payment-implementation-binding.yaml) | 实现符号、Runtime 节点、测试与状态 |
+| [应用 README](../../demo/order-payment-app/README.md) | 更完整的运行与场景说明 |
 
 ## 2. 生成代码和手写代码怎样配合
 
@@ -40,11 +40,11 @@
 | `order/service/OrderQueryService` | 手写 | 业务查询运行时与 MySQL 接线 |
 | `order/query/OrderQueryExamples` | 手写 | 四种业务查询调用示例 |
 
-准确的生成归属以 [dec-generated-manifest.txt](../demo/order-payment-app/dec-generated-manifest.txt) 为准，不能因为类在某个 package 就认定整个目录都可覆盖。生成器不会生成假成功的 ServiceImpl 或外部服务实现。
+准确的生成归属以 [dec-generated-manifest.txt](../../demo/order-payment-app/dec-generated-manifest.txt) 为准，不能因为类在某个 package 就认定整个目录都可覆盖。生成器不会生成假成功的 ServiceImpl 或外部服务实现。
 
 ## 3. 六个接口分别做什么
 
-入口为 [OrdersController.java](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/controller/OrdersController.java)。
+入口为 [OrdersController.java](../../demo/order-payment-app/src/main/java/com/example/orderpayment/order/controller/OrdersController.java)。
 
 | 方法与路径 | 用途 | 主要接入 |
 | --- | --- | --- |
@@ -59,7 +59,7 @@
 
 ## 4. 支付成功和失败的分支在哪里执行
 
-[OrderWorkflow](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java) 不重新维护支付结果分支规则。它传入回调值并请求 Runtime 推进到 `OrderPaymentFlow.PAY_RESULT`。
+[OrderWorkflow](../../demo/order-payment-app/src/main/java/com/example/orderpayment/order/workflow/OrderWorkflow.java) 不重新维护支付结果分支规则。它传入回调值并请求 Runtime 推进到 `OrderPaymentFlow.PAY_RESULT`。
 
 运行链路为：
 
@@ -80,7 +80,7 @@ Back 执行设计中的 `resetPayResult` 等回退动作，再恢复对应事实
 
 ## 5. 失败通知和流程监听器
 
-设计中的 `ACT-SMS-NOTIFY / smsNotify` 没有 `ruleRef`，因此按名称查找 [SmsNotifyAction](../demo/order-payment-app/src/main/java/com/example/orderpayment/payment/action/SmsNotifyAction.java)。生成的配置收集 CustomAction Bean，Workflow 注入注册表，不直接调用该类。
+设计中的 `ACT-SMS-NOTIFY / smsNotify` 没有 `ruleRef`，因此按名称查找 [SmsNotifyAction](../../demo/order-payment-app/src/main/java/com/example/orderpayment/payment/action/SmsNotifyAction.java)。生成的配置收集 CustomAction Bean，Workflow 注入注册表，不直接调用该类。
 
 该动作在 Spring 事务同步中注册 `afterCommit`，提交成功后调用 `SmsSender.sendPaymentError`。当前 `LoggingSmsSender` 只打印日志；替换为真实平台时应提供明确唯一的 `SmsSender` 实现。
 
@@ -92,7 +92,7 @@ Back 执行设计中的 `resetPayResult` 等回退动作，再恢复对应事实
 
 数据库回滚时不发送。提交后发送失败不能撤销订单，也不会由重复业务回调自动补发；当前没有持久化 Outbox 和可靠重试承诺。
 
-[OrderPaymentListener](../demo/order-payment-app/src/main/java/com/example/orderpayment/business/OrderPaymentListener.java) 通过 `businessId()` 绑定 `BUS-ORDER-PAYMENT`，接收该流程全部 Action 的 before/after，在类内按 Action ID 区分处理。它可以直接调用 `context.view(OrderInfo.class)` 读取当前模型快照，需要写入时使用 `context.write`。
+[OrderPaymentListener](../../demo/order-payment-app/src/main/java/com/example/orderpayment/business/OrderPaymentListener.java) 通过 `businessId()` 绑定 `BUS-ORDER-PAYMENT`，接收该流程全部 Action 的 before/after，在类内按 Action ID 区分处理。它可以直接调用 `context.view(OrderInfo.class)` 读取当前模型快照，需要写入时使用 `context.write`。
 
 监听器 after 不等于短信已送达，也不应再次发送同一短信。监听器实例不存请求状态，不抄写状态机。
 
@@ -100,7 +100,7 @@ Back 执行设计中的 `resetPayResult` 等回退动作，再恢复对应事实
 
 流程默认逻辑源为 `data1`。发起支付 Action 显式指定 `paymentService`，记录错误指定 `mongo1`，回退重置指定 `data1`。有效路由按 Action→Rule→RuleView→Business 解析，HTML 可查看这些声明和来源。
 
-应用通过 [OrderDataSourceConfiguration](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/workflow/OrderDataSourceConfiguration.java) 注册本地 DEC 适配器。Java 调用方可按次选择已注册的其他实现：
+应用通过 [OrderDataSourceConfiguration](../../demo/order-payment-app/src/main/java/com/example/orderpayment/order/workflow/OrderDataSourceConfiguration.java) 注册本地 DEC 适配器。Java 调用方可按次选择已注册的其他实现：
 
 ```java
 var selection = new java.util.HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES);
@@ -114,7 +114,7 @@ workflow.receivePaymentResult(orderId, PayResultCode.SUCCESS, selection);
 
 ## 7. 用业务阶段查询订单
 
-Java 示例见 [OrderQueryExamples](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/query/OrderQueryExamples.java)，服务接线见 [OrderQueryService](../demo/order-payment-app/src/main/java/com/example/orderpayment/order/service/OrderQueryService.java)。
+Java 示例见 [OrderQueryExamples](../../demo/order-payment-app/src/main/java/com/example/orderpayment/order/query/OrderQueryExamples.java)，服务接线见 [OrderQueryService](../../demo/order-payment-app/src/main/java/com/example/orderpayment/order/service/OrderQueryService.java)。
 
 ```java
 // orders 是注入的 OrderQueryService；返回 QueryResult。
@@ -151,9 +151,9 @@ curl --get 'http://localhost:8080/api/orders' \
 
 环境与构建命令见 [开发与验证手册](development-and-verification.md)。数据库测试须使用专用测试库，因为测试会清理其中的 `dec_demo_*` 数据。
 
-[OrderQueryTest](../demo/order-payment-app/src/test/java/com/example/orderpayment/demo/OrderQueryTest.java) 通过真实 Workflow 创建 701～704 四个订单，分别为已订购、支付中、支付成功、支付失败。四类查询预期结果依次为 `[703,704]`、`[701,702,703,704]`、`[701,702,703]`、`[701,702,703]`，同时覆盖用户缺失、多明细、参数绑定和 Back 后的变化。
+[OrderQueryTest](../../demo/order-payment-app/src/test/java/com/example/orderpayment/demo/OrderQueryTest.java) 通过真实 Workflow 创建 701～704 四个订单，分别为已订购、支付中、支付成功、支付失败。四类查询预期结果依次为 `[703,704]`、`[701,702,703,704]`、`[701,702,703]`、`[701,702,703]`，同时覆盖用户缺失、多明细、参数绑定和 Back 后的变化。
 
-其他场景覆盖同订单并发支付、重复/乱序回调、最终写回失败、回读不一致、监听器失败和提交后短信失败。跨领域的费用审批示例位于 [expense-approval](../dec-java-lite/examples/expense-approval/README.md)，用于检查框架是否过度依赖订单领域。
+其他场景覆盖同订单并发支付、重复/乱序回调、最终写回失败、回读不一致、监听器失败和提交后短信失败。跨领域的费用审批示例位于 [expense-approval](../../dec-java-lite/examples/expense-approval/README.md)，用于检查框架是否过度依赖订单领域。
 
 ## 9. 这个 Demo 没有承诺什么
 
@@ -162,4 +162,4 @@ curl --get 'http://localhost:8080/api/orders' \
 - 当前查询不是事件历史查询；短信不是可靠消息投递；多适配器不是跨源原子事务。
 - 四个此前未触发的可选节点已补入 Demo 场景并通过真实运行验证：`RV-ORDER-IS-WAIT-PAY`、`RULE-ORDER-IS-WAIT-PAY`、`INFO-ORDER-WAIT-PAY`、`INFO-PAYMENT-COMPLETED`。`OrderQueryTest#optionalInformationBranchesAreEvaluatedFromTheDemoDesign` 从当前 XML 编译 RuleView/Information，并对等待态、支付成功和支付失败模型执行识别断言；Binding 现为 118/118 `VERIFIED`，`--require-ready` 通过。
 
-这些边界是继续扩展设计、适配和验证的起点，详见 [通用性场景矩阵](../dec-java-lite/docs/generality-scenarios.md)。
+这些边界是继续扩展设计、适配和验证的起点，详见 [通用性场景矩阵](../../dec-java-lite/docs/generality-scenarios.md)。

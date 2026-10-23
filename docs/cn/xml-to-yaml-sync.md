@@ -4,18 +4,18 @@
 
 外部工具可以参与设计编辑，但每次回写完成后，canonical YAML 仍是唯一权威源。本篇帮助维护者判断何时同步、如何审阅风险、遇到问题该停在哪里。
 
-**参数、身份匹配规则、删除授权、报告和回滚的权威操作规范见 [Skill 同步规范](../skills/dec-design/references/xml-yaml-sync.md)。** 该规范的命令从 `skills/dec-design/` 目录执行，输入和输出路径需按实际工程调整；本目录的 [开发与验证手册](development-and-verification.md) 则从仓库根目录执行。
+**参数、身份匹配规则、删除授权、报告和回滚的权威操作规范见 [Skill 同步规范](../../skills/dec-design/references/xml-yaml-sync.md)。** 该规范的命令从 `skills/dec-design/` 目录执行，输入和输出路径需按实际工程调整；本目录的 [开发与验证手册](development-and-verification.md) 则从仓库根目录执行。
 
 ## 1. 先确定要做哪一种变更
 
 | 当前情况 | 选择 |
 | --- | --- |
-| 只有 XML，尚未建立 canonical YAML | 按 [首次导入规范](../skills/dec-design/references/xml-to-yaml.md) 建立设计源 |
-| 已有 YAML，外部工具修改了对应 XML | 按 [同步规范](../skills/dec-design/references/xml-yaml-sync.md) 合并回现有设计 |
+| 只有 XML，尚未建立 canonical YAML | 按 [首次导入规范](../../skills/dec-design/references/xml-to-yaml.md) 建立设计源 |
+| 已有 YAML，外部工具修改了对应 XML | 按 [同步规范](../../skills/dec-design/references/xml-yaml-sync.md) 合并回现有设计 |
 | 正在仓库内直接修改业务设计 | 修改 canonical YAML，再派生 XML、HTML 和代码 |
 | 希望 YAML 与 XML 各自独立编辑、实时互相覆盖 | 先约定交付版本和回写窗口；当前工具不提供双主协作 |
 
-已有 YAML 时，全量反向导入不能替代同步，否则可能丢失稳定身份和 YAML 独有元数据。准备交给外部编辑的文件，应按 [XML 导出规范](../skills/dec-design/references/yaml-to-xml.md) 保留身份信息，并记录对应的设计版本。
+已有 YAML 时，全量反向导入不能替代同步，否则可能丢失稳定身份和 YAML 独有元数据。准备交给外部编辑的文件，应按 [XML 导出规范](../../skills/dec-design/references/yaml-to-xml.md) 保留身份信息，并记录对应的设计版本。
 
 ## 2. 收到外部修改后，先保护原件
 
@@ -38,7 +38,7 @@
 
 ## 4. 怎样判断可以继续
 
-预检查通过后，还要确认实际写回的完整设计能够通过目录级校验。涉及跨文件引用的变化尤其如此：预检查成功不代表所有引用有效，更不代表 Runtime 行为已经验证。检查的准确范围和失败处理见 [同步规范](../skills/dec-design/references/xml-yaml-sync.md)。
+预检查通过后，还要确认实际写回的完整设计能够通过目录级校验。涉及跨文件引用的变化尤其如此：预检查成功不代表所有引用有效，更不代表 Runtime 行为已经验证。检查的准确范围和失败处理见 [同步规范](../../skills/dec-design/references/xml-yaml-sync.md)。
 
 若出现歧义、校验回滚或异常，保留外部原件、报告与错误输出，先定位问题；不要继续生成覆盖现场。同步报告和 YAML 差异都符合预期，才进入后续验证。
 

@@ -29,12 +29,12 @@ flowchart LR
 
 | 路径 | 你会看到什么 |
 | --- | --- |
-| [demo/order-payment-yaml](../demo/order-payment-yaml) | 订单支付的 canonical 设计源 |
-| [demo/order-payment-xml](../demo/order-payment-xml) | 对外导出的 XML |
-| [应用 dec/design](../demo/order-payment-app/src/main/resources/dec/design) | 随应用打包的 XML 镜像 |
-| [dec/design-files.txt](../demo/order-payment-app/src/main/resources/dec/design-files.txt) | Java 生成器维护的资源清单 |
-| [demo/design-html](../demo/design-html/index.html) | 多流程共享的阅读站点 |
-| [DEC-DESIGN-INDEX.md](../demo/order-payment-app/DEC-DESIGN-INDEX.md) | 设计节点与代码位置的索引 |
+| [demo/order-payment-yaml](../../demo/order-payment-yaml) | 订单支付的 canonical 设计源 |
+| [demo/order-payment-xml](../../demo/order-payment-xml) | 对外导出的 XML |
+| [应用 dec/design](../../demo/order-payment-app/src/main/resources/dec/design) | 随应用打包的 XML 镜像 |
+| [dec/design-files.txt](../../demo/order-payment-app/src/main/resources/dec/design-files.txt) | Java 生成器维护的资源清单 |
+| [demo/design-html](../../demo/design-html/index.html) | 多流程共享的阅读站点 |
+| [DEC-DESIGN-INDEX.md](../../demo/order-payment-app/DEC-DESIGN-INDEX.md) | 设计节点与代码位置的索引 |
 
 只更新 `demo/order-payment-xml` 而忘记更新应用里的 XML，应用仍会执行旧设计。资源清单只说明加载哪些文件，不负责生成 XML 内容。
 
@@ -61,7 +61,7 @@ python3 skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml \
 
 ## 4. 怎样阅读 HTML
 
-可以从[站点首页](../demo/design-html/index.html)进入 System，再逐层查看 View、RuleView、API、Enum 和 Information。第一次阅读订单支付时，建议先看 `system/order/information.html`，再看 `directory/order-payment.html`。
+可以从[站点首页](../../demo/design-html/index.html)进入 System，再逐层查看 View、RuleView、API、Enum 和 Information。第一次阅读订单支付时，建议先看 `system/order/information.html`，再看 `directory/order-payment.html`。
 
 | 页面 | 用途 |
 | --- | --- |
@@ -74,7 +74,7 @@ python3 skills/dec-design/scripts/render_dec_graph.py demo/order-payment-yaml \
 
 Information 图的箭头表示“当前节点依赖什么”。节点旁的 `+` 可以展开规则详情，`−` 收起；Directory 图则把阶段、Action、Dependency、Produce、Change 和 Back 放在同一张图里。缩放、平移、拖动只改变阅读方式，不改变设计。
 
-展示有问题时，应修改渲染器并重新生成整站，不要手工修一张 HTML。更细的展示约定见[HTML 生成规范](../skills/dec-design/references/design-html-generation.md)。
+展示有问题时，应修改渲染器并重新生成整站，不要手工修一张 HTML。更细的展示约定见[HTML 生成规范](../../skills/dec-design/references/design-html-generation.md)。
 
 ## 5. 多个流程怎样放进一个站点
 
@@ -99,4 +99,4 @@ python3 skills/dec-design/scripts/xml_to_yaml.py external/design-xml -o imported
 python3 skills/dec-design/scripts/validate_dec_yaml.py imported/design-yaml
 ```
 
-已经有 YAML 时，外部 XML 的修改要用 `sync_xml_to_yaml.py --existing` 做语义合并。不要用全量反向导入覆盖已有文件，否则可能丢掉 YAML 独有元数据。具体风险见[XML 同步决策指南](xml-to-yaml-sync.md)，操作步骤以[Skill 同步规范](../skills/dec-design/references/xml-yaml-sync.md)为准。
+已经有 YAML 时，外部 XML 的修改要用 `sync_xml_to_yaml.py --existing` 做语义合并。不要用全量反向导入覆盖已有文件，否则可能丢掉 YAML 独有元数据。具体风险见[XML 同步决策指南](xml-to-yaml-sync.md)，操作步骤以[Skill 同步规范](../../skills/dec-design/references/xml-yaml-sync.md)为准。

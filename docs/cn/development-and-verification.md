@@ -144,7 +144,7 @@ Demo 测试会清理 `dec_demo_*` 数据，必须连接专用测试库。框架�
 
 ### 并发测试应证明什么
 
-并发回归需要确定性地制造竞争窗口，并核对失败后的持久化结果。[OrderApiTest](../demo/order-payment-app/src/test/java/com/example/orderpayment/demo/OrderApiTest.java) 的 `concurrentHttpSubmissionsReturnOneSuccessAndOneConflictWithoutPartialWrites` 用 barrier 让两个请求都读到“订单不存在”后再继续，避免实际只测到顺序重复请求。
+并发回归需要确定性地制造竞争窗口，并核对失败后的持久化结果。[OrderApiTest](../../demo/order-payment-app/src/test/java/com/example/orderpayment/demo/OrderApiTest.java) 的 `concurrentHttpSubmissionsReturnOneSuccessAndOneConflictWithoutPartialWrites` 用 barrier 让两个请求都读到“订单不存在”后再继续，避免实际只测到顺序重复请求。
 
 测试覆盖相同新用户、相同已有用户、不同新用户争抢同一订单 ID，分别断言 HTTP 状态为一成功、一冲突（200/409），且最终只有一笔订单、一条明细和一个用户；不同新用户场景还验证失败请求的用户初始化被回滚。这种“竞争窗口 + 接口结果 + 数据完整性”的组合，比只断言抛出异常更能说明事务行为。
 
@@ -193,7 +193,7 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
 | `--require-evidence` | 声明测试有本次通过报告，并匹配当前输入 |
 | `--require-ready` | 完整、符号及证据合格，且全部为 VERIFIED |
 
-Demo 的当前状态与未实现项见 [集成说明](../demo/INTEGRATION.md)；只要仍有 PLANNED，发布就绪检查就应失败。不要批量改状态来消除失败。摘要是漂移检查，不是安全签名，也不证明断言一定充分。Java semanticDigest 与 Binding 设计摘要不同，详见 [Binding 契约](../skills/dec-implementation/references/implementation-binding.md)。
+Demo 的当前状态与未实现项见 [集成说明](../../demo/INTEGRATION.md)；只要仍有 PLANNED，发布就绪检查就应失败。不要批量改状态来消除失败。摘要是漂移检查，不是安全签名，也不证明断言一定充分。Java semanticDigest 与 Binding 设计摘要不同，详见 [Binding 契约](../../skills/dec-implementation/references/implementation-binding.md)。
 
 ## 7. 检查派生产物有没有漂移
 
@@ -243,4 +243,4 @@ python3 skills/dec-implementation/scripts/check_manifest.py
 | 查询少数据/报候选上限 | 当前事实是否成立、关系是否装配、是否达到有界候选扫描限制 |
 | Binding 证据失效 | 设计、源码、配置、报告或依赖是否变化，是否需要重新运行测试 |
 
-框架本身已有详细专题文档和场景测试；继续定位可从 [框架 README](../dec-java-lite/README.md) 进入。
+框架本身已有详细专题文档和场景测试；继续定位可从 [框架 README](../../dec-java-lite/README.md) 进入。

@@ -2,7 +2,7 @@
 
 [返回文档总览](README.md)
 
-读订单支付 Demo 时，可以把一份设计看成几张互相引用的表：有的表描述数据，有的表描述判断，有的表描述流程。它们合在一起，才回答“现在是什么情况”和“下一步能做什么”。本文先讲这种关系；逐字段限制仍以[规范索引](../skills/dec-design/references/dec-yaml-spec.md)为准。
+读订单支付 Demo 时，可以把一份设计看成几张互相引用的表：有的表描述数据，有的表描述判断，有的表描述流程。它们合在一起，才回答“现在是什么情况”和“下一步能做什么”。本文先讲这种关系；逐字段限制仍以[规范索引](../../skills/dec-design/references/dec-yaml-spec.md)为准。
 
 ## 1. 八类 canonical YAML
 
@@ -10,14 +10,14 @@
 
 | kind | 主要结构 | 在订单 Demo 中解决的问题 | 详细规范 |
 | --- | --- | --- | --- |
-| `config` | DataSource、Connection、文件引用 | 外部能力是什么，设计怎样装配 | [config](../skills/dec-design/references/yaml-spec/config.md) |
-| `enum` | `enums` | 支付结果等公共枚举使用哪些稳定值 | [enum](../skills/dec-design/references/yaml-spec/enum.md) |
-| `data` | `datas` | 订单、明细和支付数据怎样落到表 | [data](../skills/dec-design/references/yaml-spec/data.md) |
-| `view` | `views` | 一次业务处理要看到哪些聚合数据 | [view](../skills/dec-design/references/yaml-spec/view.md) |
-| `rule` | `ruleViews` | 怎样检查、读取或更新这些数据 | [rule](../skills/dec-design/references/yaml-spec/rule.md) |
-| `api` | `apis` | HTTP 输入、校验和响应是什么 | [api](../skills/dec-design/references/yaml-spec/api.md) |
-| `systems` | `systems` | Information 属于哪个业务系统 | [system-information](../skills/dec-design/references/yaml-spec/system-information.md) |
-| `business` | `business.directories` | 提交订单和支付流程怎样推进 | [business](../skills/dec-design/references/yaml-spec/business.md) |
+| `config` | DataSource、Connection、文件引用 | 外部能力是什么，设计怎样装配 | [config](../../skills/dec-design/references/yaml-spec/config.md) |
+| `enum` | `enums` | 支付结果等公共枚举使用哪些稳定值 | [enum](../../skills/dec-design/references/yaml-spec/enum.md) |
+| `data` | `datas` | 订单、明细和支付数据怎样落到表 | [data](../../skills/dec-design/references/yaml-spec/data.md) |
+| `view` | `views` | 一次业务处理要看到哪些聚合数据 | [view](../../skills/dec-design/references/yaml-spec/view.md) |
+| `rule` | `ruleViews` | 怎样检查、读取或更新这些数据 | [rule](../../skills/dec-design/references/yaml-spec/rule.md) |
+| `api` | `apis` | HTTP 输入、校验和响应是什么 | [api](../../skills/dec-design/references/yaml-spec/api.md) |
+| `systems` | `systems` | Information 属于哪个业务系统 | [system-information](../../skills/dec-design/references/yaml-spec/system-information.md) |
+| `business` | `business.directories` | 提交订单和支付流程怎样推进 | [business](../../skills/dec-design/references/yaml-spec/business.md) |
 
 引用是大小写敏感的精确引用。中文名称用于阅读，不能拿相似名称猜另一个节点；Java 类名或 SDK 类型也不应塞进业务设计。
 
@@ -45,7 +45,7 @@ RuleView 可以理解为“围绕一个 View 的规则清单”。它有稳定 I
 | `insert` / `update` / `delete` | 写入或删除外部数据 |
 | `dsl` | 执行受支持的模型脚本 |
 
-新设计使用 `dsl` 和命令字段 `cmd`。`grammer`、`sql` 是兼容输入，不表示任意旧规则或任意脚本都能运行；最终还要看编译器、驱动和应用适配器支持什么。可执行范围见[规则兼容性](../dec-java-lite/docs/rule-compatibility.md)。
+新设计使用 `dsl` 和命令字段 `cmd`。`grammer`、`sql` 是兼容输入，不表示任意旧规则或任意脚本都能运行；最终还要看编译器、驱动和应用适配器支持什么。可执行范围见[规则兼容性](../../dec-java-lite/docs/rule-compatibility.md)。
 
 ## 4. Information：描述当前事实
 
@@ -85,7 +85,7 @@ flowchart LR
 | case | 结果阶段的分支，例如 `payment.success → success` |
 | Back | 明确的回退边和回退动作 |
 
-`subDirectories` 不总是“从父节点走向子节点”的箭头；在本设计中，`paying` 引用 `ordered` 表示前置阶段。Back 也不是数据库技术上的 rollback，而是一次新的业务操作。完整定义见[业务 YAML](../demo/order-payment-yaml/business-order-payment.yaml)，可视化见[流程 HTML](../demo/design-html/directory/order-payment.html)。
+`subDirectories` 不总是“从父节点走向子节点”的箭头；在本设计中，`paying` 引用 `ordered` 表示前置阶段。Back 也不是数据库技术上的 rollback，而是一次新的业务操作。完整定义见[业务 YAML](../../demo/order-payment-yaml/business-order-payment.yaml)，可视化见[流程 HTML](../../demo/design-html/directory/order-payment.html)。
 
 ## 6. 自定义 Action 与逻辑数据源
 

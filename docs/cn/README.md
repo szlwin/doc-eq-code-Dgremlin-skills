@@ -49,6 +49,6 @@ docs/                        本组项目说明文档
 
 ## 如何判断“设计已经实现”
 
-实现完成需要与当前设计和源码相符的行为测试及 Binding 证据，覆盖完整也不等于发布就绪。设计与实现的约定见 [项目理念](philosophy.md#把这份约定交给下一个人)，执行方法见 [开发与验证手册](development-and-verification.md#6-用-binding-说明谁实现了什么)；订单 Demo 的设计规模、Binding 状态和未实现项集中见 [集成说明](../demo/INTEGRATION.md)。
+实现完成需要与当前设计和源码相符的行为测试及 Binding 证据，覆盖完整也不等于发布就绪。设计与实现的约定见 [项目理念](philosophy.md#把这份约定交给下一个人)，执行方法见 [开发与验证手册](development-and-verification.md#6-用-binding-说明谁实现了什么)；订单 Demo 的设计规模、Binding 状态和未实现项集中见 [集成说明](../../demo/INTEGRATION.md)。
 
-这些文档解释实现与使用方式；精确字段和语法仍以 [设计规范索引](../skills/dec-design/references/dec-yaml-spec.md)、[实现消费契约](../skills/dec-implementation/references/dec-design-consumer-contract.md) 和框架源码为准。框架专题文档见 [dec-java-lite 文档入口](../dec-java-lite/README.md#文档)。
+这些文档解释实现与使用方式；精确字段和语法仍以 [设计规范索引](../../skills/dec-design/references/dec-yaml-spec.md)、[实现消费契约](../../skills/dec-implementation/references/dec-design-consumer-contract.md) 和框架源码为准。框架专题文档见 [dec-java-lite 文档入口](../../dec-java-lite/README.md#文档)。

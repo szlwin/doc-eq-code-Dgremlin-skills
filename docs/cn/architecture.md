@@ -48,7 +48,7 @@ HTML、设计索引和生成的 Information/Flow 类是这些层之间的导航�
 
 ## 3. Java 模块地图
 
-所有模块位于 [dec-java-lite](../dec-java-lite)。可以先按下面的用途找模块；具体 Maven 依赖仍以各模块 POM 为准。
+所有模块位于 [dec-java-lite](../../dec-java-lite)。可以先按下面的用途找模块；具体 Maven 依赖仍以各模块 POM 为准。
 
 | 模块 | 主要职责 |
 | --- | --- |

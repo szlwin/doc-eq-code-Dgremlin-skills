@@ -2,7 +2,7 @@
 
 [返回文档总览](README.md) · [模块地图](architecture.md#3-java-模块地图)
 
-`dec-java-lite` 是订单 Demo 背后的执行框架。它使用 Java 21，可以生成 Spring Boot/MyBatis 工程；具体依赖版本以[集中配置](../dec-java-lite/dec-lite-generator/src/main/resources/generation-versions.properties)为准。框架负责读设计、编译规则、运行流程和生成接口，支付平台、短信和数据库连接仍由应用自己接入。
+`dec-java-lite` 是订单 Demo 背后的执行框架。它使用 Java 21，可以生成 Spring Boot/MyBatis 工程；具体依赖版本以[集中配置](../../dec-java-lite/dec-lite-generator/src/main/resources/generation-versions.properties)为准。框架负责读设计、编译规则、运行流程和生成接口，支付平台、短信和数据库连接仍由应用自己接入。
 
 ## 1. 设计文件怎样变成可执行计划
 
@@ -10,7 +10,7 @@
 
 `DecYamlParser` 和 `DecXmlParser` 将输入转换为 `DecProject`。两种前端共享下游校验和编译，避免 YAML 与 XML 各有一套执行含义。XML 的 `dec-id` 注释有助于恢复 YAML ID；无注释时可能生成对应身份，不应假设天然与现有 Binding 一致。
 
-解析器拒绝危险或不支持的输入：例如 XML DTD/外部实体、未知语义结构（包括旧 `directory-config` 根）；YAML 重复键或自定义 Java tag 也不能被当作合法设计。单份设计输入有限制，当前为 8 MB，classpath 清单另有限制。详见 [输入契约](../dec-java-lite/docs/canonical-input.md)。
+解析器拒绝危险或不支持的输入：例如 XML DTD/外部实体、未知语义结构（包括旧 `directory-config` 根）；YAML 重复键或自定义 Java tag 也不能被当作合法设计。单份设计输入有限制，当前为 8 MB，classpath 清单另有限制。详见 [输入契约](../../dec-java-lite/docs/canonical-input.md)。
 
 编译器将引用、表达式、图和规则转换为可复用结构。`SemanticDigest` 用于标识执行语义；Binding 的设计摘要则覆盖其定义的设计文件结构，两者用途和算法不同，不应互相替代。
 
@@ -45,7 +45,7 @@ DSL 不是直接执行 Java 或任意脚本。当前支持受约束的赋值、�
 payInfo.resultCode : null;
 ```
 
-写入经过 Invocation/ModelContext 的权限与变更追踪；`#` 局部变量不会成为持久模型字段。旧语言中的任意函数、`.sum`、`.compute` 等不能自动视为可用。完整支持范围见 [规则兼容性](../dec-java-lite/docs/rule-compatibility.md)。
+写入经过 Invocation/ModelContext 的权限与变更追踪；`#` 局部变量不会成为持久模型字段。旧语言中的任意函数、`.sum`、`.compute` 等不能自动视为可用。完整支持范围见 [规则兼容性](../../dec-java-lite/docs/rule-compatibility.md)。
 
 `RuleDataAdapter` 可将通用规则操作桥接到应用实现的 `RuleDataAccess`。驱动负责参数绑定、物理访问和参与事务，框架处理读取结果的合并或集合回填。保留了 `cmd` 并不代表框架内置了所有 SQL/NoSQL 命令解释器。
 
@@ -72,7 +72,7 @@ Demo 通常由 Spring 开启事务，但框架也支持没有外层事务的入�
 
 自管模式适合没有外层事务的明确入口，当前契约限制在支持的单路由/资源边界；不能以选择多个适配器代替分布式事务。提交异常还可能是结果未知，不能一律声称已回滚。
 
-两种模式都要求动作、最终写回和校验先于物理提交。空的 ActionTransaction、Store 新建或无实际事务的 UnitOfWork 都不能满足契约。更多时序见 [Directory Runtime](../dec-java-lite/docs/directory-runtime.md) 和 [Session/事务](../dec-java-lite/docs/session-transaction-runtime.md)。
+两种模式都要求动作、最终写回和校验先于物理提交。空的 ActionTransaction、Store 新建或无实际事务的 UnitOfWork 都不能满足契约。更多时序见 [Directory Runtime](../../dec-java-lite/docs/directory-runtime.md) 和 [Session/事务](../../dec-java-lite/docs/session-transaction-runtime.md)。
 
 ## 6. 自定义 Action 与流程监听器
 
@@ -109,7 +109,7 @@ Information 识别没有 Action 覆盖，使用 Rule→RuleView→Business。Cus
 
 手动注册形如 `new DataSourceAdapter("tenant-a", adapter)`，在本次请求选择 `Map.of("data1", "tenant-a", ...)`。缺失、未知或不完整路由在绑定时被拒绝。声明来源的规则元数据保持不可变，选择不能泄漏到下一请求。
 
-这只路由 DEC 外部操作，不自动切换应用所有 DAO，也不会把远程服务加入 JDBC 原子事务。详见 [Action Runtime](../dec-java-lite/docs/action-runtime.md)。
+这只路由 DEC 外部操作，不自动切换应用所有 DAO，也不会把远程服务加入 JDBC 原子事务。详见 [Action Runtime](../../dec-java-lite/docs/action-runtime.md)。
 
 ## 8. 按业务阶段查询
 
@@ -132,7 +132,7 @@ Information 识别没有 Action 覆盖，使用 Rule→RuleView→Business。Cus
 
 SQL 使用绑定参数。`SqlTranslator` 的表名映射只映射 FROM/JOIN 的逻辑表到部署表，不能替换设计谓词。查询连接来自声明路由和应用 ConnectionRouter；Spring 接入使用事务感知连接，不由查询 Session 擅自提交外层事务。
 
-上述语义是当前事实查询，不保存事件历史。单 Runner/编译图仍有单根约束，多流程应用应明确选择图切片。详见 [Query Runtime](../dec-java-lite/docs/query-runtime.md)。
+上述语义是当前事实查询，不保存事件历史。单 Runner/编译图仍有单根约束，多流程应用应明确选择图切片。详见 [Query Runtime](../../dec-java-lite/docs/query-runtime.md)。
 
 ## 9. 生成器生成什么，应用负责什么
 
@@ -154,4 +154,4 @@ SQL 使用绑定参数。`SqlTranslator` 的表名映射只映射 FROM/JOIN 的�
 
 `.dec-generated` 和 `dec-generated-manifest.txt` 确定覆盖范围。旧清单中安全的受管路径可以被更新/清理；手写文件不应加入该清单。路径越界、符号链接和输入冲突不会静默覆盖。生成代码中需要修复的问题，应修改模型或模板后重生成。
 
-代码中的 `Design ID + YAML#路径 + XML#路径` 与 `DEC-DESIGN-INDEX.md` 便于阅读；它们不代替验证手写行为的 Binding 和测试。生成配置用法见 [生成说明](../dec-java-lite/docs/how-to-generate.md)。
+代码中的 `Design ID + YAML#路径 + XML#路径` 与 `DEC-DESIGN-INDEX.md` 便于阅读；它们不代替验证手写行为的 Binding 和测试。生成配置用法见 [生成说明](../../dec-java-lite/docs/how-to-generate.md)。

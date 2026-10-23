@@ -1,6 +1,6 @@
 # dec-design → dec-implementation → dec-java-lite 验证
 
-设计输入是 `order-payment-yaml/` 的 10 份 canonical YAML。当前设计有 118 个稳定 Design ID、6 个 API、19 个 Information。YAML 是唯一设计源；XML 和 HTML 均由正式转换脚本生成。生成器负责传输/模型骨架及 Information/Business 只读设计投影，`order-payment-app/src/main/java/com/example/orderpayment/order/`、`payment/` 和 `user/` 负责本地适配和运行时接线。完整项目说明见 [文档总览](../docs/README.md)。
+设计输入是 `order-payment-yaml/` 的 10 份 canonical YAML。当前设计有 118 个稳定 Design ID、6 个 API、19 个 Information。YAML 是唯一设计源；XML 和 HTML 均由正式转换脚本生成。生成器负责传输/模型骨架及 Information/Business 只读设计投影，`order-payment-app/src/main/java/com/example/orderpayment/order/`、`payment/` 和 `user/` 负责本地适配和运行时接线。完整项目说明见 [文档总览](../docs/cn/README.md)。
 
 | 环节 | 当前状态 |
 | --- | --- |
