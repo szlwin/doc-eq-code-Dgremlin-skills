@@ -8,6 +8,19 @@ import java.util.*;
 final class RuleExpression {
     @FunctionalInterface interface Expression { Object evaluate(Scope scope); }
     record Scope(Map<String, Object> model, Map<String, Object> variables) {
+        /**
+         * Build the scope used while evaluating one collection or query row.
+         *
+         * A row is deliberately isolated from the surrounding View.  This is
+         * shared by checkDataPattern, every/any and the DSL every body so a
+         * missing row field never falls back to a same-named View field.
+         */
+        static Scope isolatedRow(Map<?, ?> row, Map<String, Object> variables) {
+            var values = new LinkedHashMap<String, Object>();
+            row.forEach((key, value) -> values.put(String.valueOf(key), value));
+            return new Scope(values, variables);
+        }
+
         Object read(String path) {
             if (path.startsWith("#")) {
                 if (!variables.containsKey(path)) throw new MissingValue(path);
@@ -184,8 +197,7 @@ final class RuleExpression {
                     if (!(value instanceof List<?> list)) throw error("quantifier requires list: " + path);
                     for (Object item : list) {
                         if (!(item instanceof Map<?, ?> map)) throw error("quantifier requires object items");
-                        var row = new LinkedHashMap<String, Object>(); map.forEach((k,v) -> row.put(String.valueOf(k),v));
-                        boolean result = bool(predicate.evaluate(new Scope(row, s.variables())));
+                        boolean result = bool(predicate.evaluate(Scope.isolatedRow(map, s.variables())));
                         if (name.equals("every") && !result) return false;
                         if (name.equals("any") && result) return true;
                     }

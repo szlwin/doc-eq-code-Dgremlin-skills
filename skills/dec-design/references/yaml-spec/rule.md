@@ -74,7 +74,7 @@ effectiveDataSource(rule) =
 
 ### 表达式作用域
 
-普通 checkPattern/DSL 读取当前 View；checkDataPattern 使用“查询行覆盖 View”的临时顶层映射，同名行别名优先，不改写 View。every/any 谓词及 DSL every 内部只读取当前集合项，嵌套 every 进入嵌套项，不隐式回退根模型。`#变量` 在一次 RuleView 调用内共享，可显式传入 DSL 外层值。字段缺失必须报告未决，不能因作用域不同而静默补值。
+普通 checkPattern/DSL 读取当前 View；checkDataPattern、every/any 谓词及 DSL every 内部都使用当前查询行或集合项的独立顶层映射，不隐式回退根模型。嵌套 every 进入嵌套项。`#变量` 在一次 RuleView 调用内共享，可显式传入 DSL 外层值。字段缺失必须报告未决，不能因作用域不同而静默补值。
 
 独立关键字不能作为属性操作数；可使用明确的限定字段（如 `item.and`）。改写查询别名或集合表达式时，应覆盖同名字段和缺失字段的场景。
 
@@ -124,9 +124,9 @@ error:
 选择 dec-java-lite 时，设计校验通过不等于所有历史表达式可执行。Runtime 编译阶段检查下列语法；不支持的表达式报告 capability/design gap，不能在 Service 复制条件绕过：
 
 - `check/checkData`：支持以 `;` 连接的 `NOTNULL/NULL/EQUAL/NOTEQUAL/GREATER/GREATEREQUAL/LESS/LESSEQUAL`，二元校验用 `:` 接常量，字符串加引号，例如 `NOTNULL;NOTEQUAL:2`。
-- `checkPattern/checkDataPattern`：支持字段路径、列表下标、字段比较、数字算术、括号、短路布尔运算、`exists/every/any`；`checkDataPattern` 对查询返回的每行在临时别名上下文中校验，空结果为 FALSE，不将别名写回 View。
+- `checkPattern/checkDataPattern`：支持字段路径、列表下标、字段比较、数字算术、括号、短路布尔运算、`exists/every/any`；`checkDataPattern` 对查询返回的每行在独立行上下文中校验，空结果为 FALSE，不将行字段写回 View。
 - `checkData` 必须真实读源后校验返回对象，空结果按 null 校验；不能用当前 View 中已有的非空字段冒充数据库存在。集合目标的逐项读取/匹配由适配器兑现，不能漏查部分项目后报告全部通过。
-- `dsl` 支持模型赋值、`#变量`、`if ... then ... else ...`、算术、`every(list, field : expression)` 和 `error("code","message") : predicate`。临时变量限一次 RuleView 调用；写入由 Runtime 追踪。
+- `dsl` 支持模型赋值、`#变量`、`if ... then ... else ...`、算术、`every(list, field : expression)` 和 `error(code,message) : predicate`。error 的 code/message 在运行时当前作用域求值，可引用模型字段、集合项字段和 `#变量`；临时变量限一次 RuleView 调用，写入由 Runtime 追踪。
 - `get/query/insert/update/delete` 需要真实 DataSource adapter；`cmd` 是传给驱动的设计命令，框架不会把 DEC 逻辑 SQL 自动视作可直接执行的 JDBC SQL。
 
 历史 santr/smarter 的集合过滤、`.sum`、`.compute` 及其他校验器未全部迁移，不能宣称完整兼容；Information/Query 自身的表达式语法没有因此扩大。无驱动、缺路由或未支持的语法必须明确失败。

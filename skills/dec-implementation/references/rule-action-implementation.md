@@ -21,8 +21,8 @@ Canonical Rule types：`check/checkPattern/checkData/checkDataPattern/insert/upd
 
 `CompiledRule` 必须完整保留 `property/pattern/process/cmd/error/customer`，执行时更换有效 dataSource 也不能丢字段。`customer` 与原 `CustomerInfo` 一致，只允许平铺字符串值。RuleView 按声明顺序执行，任一规则非 TRUE 即停止；错误诊断保留 Rule ID 及配置的 code/message/level。
 
-- `check/checkPattern/dsl` 使用 Runtime 的模型校验和表达式能力；不得按 Rule ID 在 adapter 中复制业务表达式。当前支持范围见框架 `docs/rule-compatibility.md` 和设计 skill 的 `yaml-spec/rule.md`。不支持的历史表达式应在编译阶段失败，并报告 gap。
-- `checkData/checkDataPattern` 是外部读操作，必须实现 `DataOperationAdapter.read`，不能委托旧的写操作 lambda 或只检查当前内存模型。读调用不得修改 View 或 produce；查询别名只在每行校验作用域内有效，不会写回或修改原模型中的同名字段。没有结果时 checkData 按 null 校验，checkDataPattern 为 FALSE。
+- `check/checkPattern/dsl` 使用 Runtime 的模型校验和表达式能力；不得按 Rule ID 在 adapter 中复制业务表达式。当前支持范围见框架 `docs/rule-compatibility.md` 和设计 skill 的 `yaml-spec/rule.md`。DSL `error(code,message)` 的两个参数在运行时求值，可引用当前模型、集合项和 `#变量`；不支持的历史表达式应在编译阶段失败，并报告 gap。
+- `checkData/checkDataPattern` 是外部读操作，必须实现 `DataOperationAdapter.read`，不能委托旧的写操作 lambda 或只检查当前内存模型。读调用不得修改 View 或 produce；checkDataPattern、量词和 DSL 集合项都在独立的当前行作用域内求值，不会隐式回退同名 View 字段。没有结果时 checkData 按 null 校验，checkDataPattern 为 FALSE。
 - 通用接入优先 `new RuleDataAdapter(ruleDataAccess)`。`RuleDataAccess.Request` 携带完整 Rule、操作、View、不可变模型/参数与当前 transaction；驱动按 operation/property/cmd 访问外部资源，返回 rows/affectedRows，不用订单专属 Rule ID 分支。
 - `get` 返回单对象（多行报错，空结果 FALSE），`query` 写集合；insert 可返回生成键，集合条数必须匹配。写入和 Produce 由桥接层走 Invocation 追踪。Information 中 get/query 仅判定存在，不写模型；需要对查询值判断时使用 checkDataPattern。Information 禁止 insert/update/delete。
 - 驱动承担 Data/View 映射、逻辑命令翻译、参数绑定、集合逐项校验与物理资源接入。连接/提交不能隐藏在桥接层；必须加入 WorkflowTransaction 的既有事务。通用接口和内存契约测试不等于已支持所有 JDBC/Redis/远程后端。
@@ -95,4 +95,4 @@ Action 与 Back Action 的 `dataSource` 显式覆盖当前 Action 的外部 Rule
 
 无 SQL query 的 Rule 通过直接 one-to-many 关联的父键/子外键建立条件并回填集合；缺失父键在 I/O 前失败。SingleQueryConvert 提供 BaseData 条件查询，非空字段 AND 等值、NullData 为 IS NULL，空条件拒绝。生成器/adapter 不得复制业务过滤条件或擅自全表查询。验证须包括实际 SQL 参数、生成键/显式键、空结果、不同父对象隔离，以及后续项失败时 ModelContainer 回滚先前写入。
 
-checkData 的每个空读必须保留为 null 后校验；集合不能过滤缺失项目。checkDataPattern 的查询仍使用完整模型参数，property 元数据不自动限定 SQL 范围；对每行使用独立别名上下文，成功、失败和异常均不得污染原模型。回归至少覆盖这些分支及 get/query 回填、update/delete 父类执行路径。真实 MySQL 未执行时必须在结论中区分内存连接契约验证与集成验证。
+checkData 的每个空读必须保留为 null 后校验；集合不能过滤缺失项目。checkDataPattern 的查询仍使用完整模型参数，property 元数据不自动限定 SQL 范围；对每行使用独立行上下文，成功、失败和异常均不得污染原模型。需要比较 View 字段时由驱动显式投影到查询行，不能依赖求值时的隐式回退。回归至少覆盖这些分支及 get/query 回填、update/delete 父类执行路径。真实 MySQL 未执行时必须在结论中区分内存连接契约验证与集成验证。

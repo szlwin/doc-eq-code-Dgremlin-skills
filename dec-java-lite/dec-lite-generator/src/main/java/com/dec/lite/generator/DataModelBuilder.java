@@ -12,6 +12,21 @@ import static com.dec.lite.generator.JavaModelSupport.*;
 
 /** Builds and validates Data, Enum and View template models. */
 final class DataModelBuilder {
+    private record ViewFieldsContext(Map<String, Map<String, Object>> dataByName,
+                                     Map<String, String> enumTypes,
+                                     Map<String, String> enumPackages,
+                                     Map<String, Map<String, String>> dataEnumRefs,
+                                     List<Map<String, Object>> projectionModels,
+                                     String currentPackage,
+                                     String parentClass,
+                                     DesignMeta meta) {
+        ViewFieldsContext child(String property, String childClass) {
+            return new ViewFieldsContext(dataByName, enumTypes, enumPackages, dataEnumRefs, projectionModels,
+                    currentPackage, childClass, meta.withId(parentClass + "." + property)
+                            .withPathSuffix(".properties." + property));
+        }
+    }
+
     static Map<String, Object> entityModel(Map<String, Object> definition, String basePackage,
                                              Map<String, String> enumTypes, Map<String, String> enumPackages,
                                              Map<String, Map<String, String>> dataEnumRefs) {
@@ -19,11 +34,7 @@ final class DataModelBuilder {
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("package", systemPackage(definition, basePackage) + ".entity");
         model.put("className", className(name));
-        model.put("designId", requiredText(definition, "id", "data"));
-        model.put("designSource", definition.get("designSource"));
-        model.put("designXml", definition.get("designXml"));
-        model.put("designPath", definition.get("designPath"));
-        model.put("designName", name);
+        model.putAll(designMeta(definition, name, "").asModel());
         model.put("fields", fieldsFromProperties(definition.get("properties"), enumTypes, enumPackages,
                 dataEnumRefs.getOrDefault(name, Map.of())));
         return model;
@@ -55,11 +66,7 @@ final class DataModelBuilder {
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("package", enumPackages.get(name));
         model.put("className", className(name));
-        model.put("designId", requiredText(definition, "id", "enum"));
-        model.put("designSource", definition.get("designSource"));
-        model.put("designXml", definition.get("designXml"));
-        model.put("designPath", definition.get("designPath"));
-        model.put("designName", name);
+        model.putAll(designMeta(definition, name, "").asModel());
         model.put("description", String.valueOf(definition.getOrDefault("desc", "")));
         model.put("values", values);
         return model;
@@ -76,15 +83,11 @@ final class DataModelBuilder {
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("package", viewPackages.get(name));
         model.put("className", className(name));
-        model.put("designId", requiredText(definition, "id", "view"));
-        model.put("designSource", definition.get("designSource"));
-        model.put("designXml", definition.get("designXml"));
-        model.put("designPath", definition.get("designPath"));
-        model.put("designName", name);
-        model.put("fields", viewFields(definition.get("properties"), definition.get("targetMain"), dataByName,
-                enumTypes, enumPackages, dataEnumRefs, className(name), projectionModels,
-                String.valueOf(model.get("package")), String.valueOf(model.get("designSource")),
-                String.valueOf(model.get("designXml")), String.valueOf(model.get("designPath")), name));
+        DesignMeta meta = designMeta(definition, name, "");
+        model.putAll(meta.asModel());
+        model.put("fields", viewFields(definition.get("properties"), definition.get("targetMain"),
+                new ViewFieldsContext(dataByName, enumTypes, enumPackages, dataEnumRefs, projectionModels,
+                        String.valueOf(model.get("package")), className(name), meta)));
         return model;
     }
 
@@ -142,12 +145,7 @@ final class DataModelBuilder {
     }
 
     private static List<Map<String, Object>> viewFields(Object properties, Object targetMain,
-                                                  Map<String, Map<String, Object>> dataByName,
-                                                  Map<String, String> enumTypes, Map<String, String> enumPackages,
-                                                  Map<String, Map<String, String>> dataEnumRefs,
-                                                  String parentClass,
-                                                  List<Map<String, Object>> projectionModels, String currentPackage,
-                                                  String designSource, String designXml, String designPath, String designName) {
+                                                        ViewFieldsContext context) {
         if (!(properties instanceof Map<?, ?> raw)) return List.of();
         List<Map<String, Object>> fields = new ArrayList<>();
         for (Map.Entry<String, Object> entry : stringMap(raw).entrySet()) {
@@ -160,23 +158,25 @@ final class DataModelBuilder {
                     throw new GenerationException("DESIGN_GAP unsupported view relation: " + relation);
                 }
                 String childData = String.valueOf(property.get("data"));
-                Map<String, Object> child = dataByName.get(childData);
+                Map<String, Object> child = context.dataByName().get(childData);
                 if (child == null) throw new GenerationException("DESIGN_GAP view relation references unknown data " + childData);
-                validateRelation(property, child, targetMain, dataByName);
-                String childType = parentClass + className(entry.getKey());
+                validateRelation(property, child, targetMain, context.dataByName());
+                String childType = context.parentClass() + className(entry.getKey());
+                ViewFieldsContext childContext = context.child(entry.getKey(), childType);
                 List<Map<String, Object>> childFields = viewFields(property.get("properties"), childData,
-                        dataByName, enumTypes, enumPackages, dataEnumRefs, childType, projectionModels, currentPackage,
-                        designSource, designXml, designPath + ".properties." + entry.getKey(), designName);
-                projectionModels.add(Map.of("package", currentPackage, "className", childType,
-                        "designId", parentClass + "." + entry.getKey(), "designSource", designSource,
-                        "designXml", designXml, "designPath", designPath + ".properties." + entry.getKey(),
-                        "designName", designName, "fields", childFields));
+                        childContext);
+                Map<String, Object> projection = new LinkedHashMap<>();
+                projection.put("package", context.currentPackage());
+                projection.put("className", childType);
+                projection.putAll(childContext.meta().asModel());
+                projection.put("fields", childFields);
+                context.projectionModels().add(projection);
                 type = "one-to-many".equals(relation) ? "List<" + childType + ">" : childType;
                 if ("one-to-many".equals(relation)) imports.add("java.util.List");
             } else {
                 String ref = property.get("ref") instanceof String text ? text : fieldName;
                 String dataName = property.get("data") instanceof String text ? text : String.valueOf(targetMain);
-                Map<String, Object> data = dataName == null ? null : dataByName.get(dataName);
+                Map<String, Object> data = dataName == null ? null : context.dataByName().get(dataName);
                 if (data == null) throw new GenerationException("DESIGN_GAP view references unknown data " + dataName);
                 Object dataProperties = data == null ? null : data.get("properties");
                 Object rawType = dataProperties instanceof Map<?, ?> map ? castMap(map).get(ref) : null;
@@ -184,11 +184,11 @@ final class DataModelBuilder {
                 Map<String, Object> rawProperty = rawType instanceof Map<?, ?> map ? castMap(map) : Map.of("type", rawType == null ? "object" : rawType);
                 Object relEnum = property.get("relEnum");
                 if (relEnum == null) relEnum = rawProperty.get("relEnum");
-                if (relEnum == null) relEnum = dataEnumRefs.getOrDefault(dataName, Map.of()).get(ref);
-                type = javaType(rawProperty.get("type"), relEnum, enumTypes);
+                if (relEnum == null) relEnum = context.dataEnumRefs().getOrDefault(dataName, Map.of()).get(ref);
+                type = javaType(rawProperty.get("type"), relEnum, context.enumTypes());
                 imports.addAll(importsForJavaType(type));
-                if (relEnum instanceof String rel && enumTypes.containsKey(rel)) {
-                    imports.add(enumPackages.get(rel) + "." + enumTypes.get(rel));
+                if (relEnum instanceof String rel && context.enumTypes().containsKey(rel)) {
+                    imports.add(context.enumPackages().get(rel) + "." + context.enumTypes().get(rel));
                 }
             }
             fields.add(Map.of("name", fieldName, "type", type, "annotations", List.of(), "imports", imports));

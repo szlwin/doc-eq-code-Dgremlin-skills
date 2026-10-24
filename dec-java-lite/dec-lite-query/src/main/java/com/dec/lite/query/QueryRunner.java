@@ -39,7 +39,7 @@ public final class QueryRunner {
         }
     }
     private QueryResult runInternal(QueryPlan plan) {
-        int maximum = plan.runtimeOnly() ? plan.candidateLimit() : Math.max(plan.candidateLimit(), plan.offset() + plan.size());
+        int maximum = plan.candidateLimit();
         int scanned = 0; int selected = 0; List<ModelContext> result = new ArrayList<>();
         List<String> trace = new ArrayList<>(plan.trace()); trace.add("candidateLimit=" + maximum);
         boolean exhausted = false;
@@ -67,7 +67,10 @@ public final class QueryRunner {
             if (candidates.size() < batchSize) { exhausted = true; break; }
         }
         if (!exhausted && scanned >= maximum && result.size() < plan.size())
-            throw new QueryExecutionException("candidateLimit reached before page completion: " + maximum);
+            throw new QueryExecutionException("candidateLimit reached before page completion: limit=" + maximum
+                    + ", offset=" + plan.offset() + ", size=" + plan.size()
+                    + ", scanned=" + scanned + ", selected=" + selected);
+        trace.add("scanCost=" + scanned + " selected=" + selected + " returned=" + result.size());
         trace.add("postFilter=" + plan.runtimeOnly() + " returned=" + result.size());
         if (session != null) session.trace("QUERY_COMPLETED", plan.directory(), "scanned=" + scanned + " returned=" + result.size());
         return new QueryResult(result, scanned, trace);

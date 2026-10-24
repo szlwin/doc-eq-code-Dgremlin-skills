@@ -46,16 +46,40 @@ class RuleProgramTest {
         }
     }
 
-    @Test void rowOverlayAndQuantifierItemScopesRemainExplicitAndDoNotModifyModel() {
+    @Test void rowAndCollectionItemScopesAreIsolatedAndDoNotModifyModel() {
         var key = new RuleViewKey("order", "OrderInfo", "test");
         var model = new ModelContext(Map.of("value", 10, "limit", 5, "items", List.of(Map.of("value", 2))));
         var rule = new CompiledRule("R", "read", "checkDataPattern", "items", "value = 2 and limit = 5", null, "db");
-        var adapter = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(Map.of("value", 2))));
+        var adapter = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(Map.of("value", 2, "limit", 5))));
         var registry = new RuleViewCompiler().bind(Map.of(key, new CompiledRuleView(key, "RV", List.of(rule))), adapter);
         assertEquals(RecognitionResult.Status.TRUE, registry.invoke(key, model, Map.of(), new MutationSet()).status());
         assertEquals(10, model.read("value"));
+        var missingRowField = new CompiledRule("R2", "read", "checkDataPattern", "items", "value = 2 and limit = 5", null, "db");
+        var missingRow = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(Map.of("value", 2))));
+        var unresolved = new RuleViewCompiler().bind(Map.of(key, new CompiledRuleView(key, "RV", List.of(missingRowField))), missingRow)
+                .invoke(key, model, Map.of(), new MutationSet());
+        assertEquals(RecognitionResult.Status.UNRESOLVED, unresolved.status());
         assertThrows(RuleExpression.MissingValue.class, () -> RuleExpression.compile("every(items, value < limit)")
                 .evaluate(new RuleExpression.Scope(model.values(), Map.of())));
+        var dsl = new CompiledRule("R3", "write", "dsl", null, null,
+                "every(items, value : value + limit);", "db");
+        var dslResult = new RuleViewCompiler().bind(
+                        Map.of(key, new CompiledRuleView(key, "RV", List.of(dsl))), null)
+                .invoke(key, model, Map.of(), new MutationSet());
+        assertEquals(RecognitionResult.Status.UNRESOLVED, dslResult.status());
+    }
+
+    @Test void dslErrorEvaluatesCodeAndMessageAtExecutionTime() {
+        var key = new RuleViewKey("order", "OrderInfo", "test");
+        var rule = new CompiledRule("R4", "validate", "dsl", null, null,
+                "error(errorCode, errorMessage) : false;", "db");
+        var registry = new RuleViewCompiler().bind(
+                Map.of(key, new CompiledRuleView(key, "RV", List.of(rule))), null);
+        var result = registry.invoke(key,
+                new ModelContext(Map.of("errorCode", "C42", "errorMessage", "invalid order")),
+                Map.of(), new MutationSet());
+        assertEquals(RecognitionResult.Status.ERROR, result.status());
+        assertTrue(result.errors().toString().contains("[C42] invalid order"), result.errors().toString());
     }
 
     @Test void missingDataPropertyFailsBeforeDriverCallWithActionDiagnostic() {

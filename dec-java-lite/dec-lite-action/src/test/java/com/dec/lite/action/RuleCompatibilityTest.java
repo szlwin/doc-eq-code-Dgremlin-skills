@@ -42,7 +42,8 @@ class RuleCompatibilityTest {
             calls.add(request.operation() + ":" + property);
             if (rule.type().equals("checkDataPattern")) {
                 assertEquals("select a.id as u_id from userT a where a.id = #userT.id", rule.cmd());
-                return Result.read(user == null ? List.of() : List.of(Map.of("u_id", user.get("id"))));
+                return Result.read(user == null ? List.of() : List.of(Map.of(
+                        "u_id", user.get("id"), "userId", request.model().get("userId"))));
             }
             return switch (request.operation()) {
                 case "insert" -> {
@@ -131,10 +132,11 @@ class RuleCompatibilityTest {
     }
     @Test void dataPatternChecksAllRowsAndRestoresShadowedAliasesOnSuccessAndFailure() {
         var model = model(); model.write("u_id", 99L, null); var before = model.values();
-        var adapter = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(Map.of("u_id",1L),Map.of("u_id",2L))));
+        var adapter = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(
+                Map.of("u_id", 1L, "userId", 1L), Map.of("u_id", 2L, "userId", 1L))));
         assertEquals(RecognitionResult.Status.FALSE,invoke(registry(adapter,rule("checkDataPattern","userT","u_id = userId",null)),model).status());
         assertEquals(before,model.values());
-        var valid = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(Map.of("u_id",1L))));
+        var valid = new RuleDataAdapter(request -> RuleDataAccess.Result.read(List.of(Map.of("u_id",1L, "userId", 1L))));
         success(invoke(registry(valid,rule("checkDataPattern","userT","u_id = userId",null)),model));
         assertEquals(before,model.values());
     }
@@ -189,7 +191,8 @@ class RuleCompatibilityTest {
         assertNull(driver.user);assertEquals(before,model.values());
     }
     @Test void dataValidationCanRecognizeInformationWithoutModifyingItsModel() {
-        var adapter=new RuleDataAdapter(request->RuleDataAccess.Result.read(List.of(Map.of("u_id",1L))));
+        var adapter=new RuleDataAdapter(request->RuleDataAccess.Result.read(List.of(Map.of(
+                "u_id", 1L, "userId", request.model().get("userId")))));
         var registry=registry(adapter,rule("checkDataPattern","userT","u_id = userId",null));
         var definition=new InformationDefinition("I",new InformationKey("compatibility","exists"),"OrderInfo","test",null,null,null,Path.of("system.yaml"));
         var model=model();var before=model.values();success(registry.invoke(definition,model));assertEquals(before,model.values());

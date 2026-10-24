@@ -65,9 +65,8 @@ public final class RuleViewInterpreter {
             boolean passed;
             if (expression == null) passed = rule.checks().test(row);
             else {
-                Map<String,Object> scope = new LinkedHashMap<>(invocation.context().values());
-                scope.putAll(row); // Legacy query aliases temporarily shadow same-named model fields.
-                passed = RuleExpression.bool(expression.evaluate(new RuleExpression.Scope(scope, variables)));
+                passed = RuleExpression.bool(expression.evaluate(
+                        RuleExpression.Scope.isolatedRow(row, variables)));
             }
             if (!passed) return result(false, rule, invocation);
         }

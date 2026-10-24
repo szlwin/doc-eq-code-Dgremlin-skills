@@ -67,8 +67,10 @@ public final class QueryCompiler {
         }
         QuerySchema.Data root = joins.root();
         boolean runtimeOnly = branches.stream().anyMatch(QueryPlan.CaseBranch::postFilter);
-        if (runtimeOnly && query.offset() + query.size() > query.candidateLimit())
-            throw new QueryCompilationException("runtime-only query page exceeds candidateLimit");
+        long pageEnd = (long) query.offset() + query.size();
+        if (pageEnd > query.candidateLimit())
+            throw new QueryCompilationException("query page exceeds candidateLimit: offset+size="
+                    + pageEnd + ", candidateLimit=" + query.candidateLimit());
         List<String> trace = new ArrayList<>();
         trace.addAll(selectionTrace);
         trace.add("selectedCases=" + branches.stream().map(QueryPlan.CaseBranch::name).toList());
@@ -77,6 +79,7 @@ public final class QueryCompiler {
         trace.add("joins=" + joins.joins().stream().map(JoinPlan::path).toList());
         trace.add("pushdown=" + !conditions.get(0).equals(SqlPredicate.all()));
         trace.add("postFilter=" + runtimeOnly);
+        trace.add("scanBudget=" + query.candidateLimit() + " pageEnd=" + pageEnd);
         trace.add("route=" + schema.route(root).connection());
         SqlPredicate predicate = SqlPredicate.and(conditions);
         return new QueryPlan(directory.name(), view.name(), root.table(), root.column(root.idProperty()),

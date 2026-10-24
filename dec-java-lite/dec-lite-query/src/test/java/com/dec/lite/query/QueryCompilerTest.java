@@ -91,7 +91,9 @@ class QueryCompilerTest {
         String sql = new SqlTranslator(new MySqlDialect()).candidates(paying, 0, 10).sql();
         assertTrue(sql.contains("`t0`.`o_status` = ?"), sql);
         assertTrue(paying.runtimeOnly()); // every(orderDetailList) remains a post-filter
+        assertTrue(paying.trace().stream().anyMatch(trace -> trace.startsWith("scanBudget=")));
         assertThrows(QueryCompilationException.class, () -> compiler.compile(DirectoryQuery.find("PayResult").page(1000, 50)));
+        assertThrows(QueryCompilationException.class, () -> compiler.compile(DirectoryQuery.find("ordered").page(1000, 1)));
         assertThrows(QueryCompilationException.class, () -> compiler.compile(DirectoryQuery.find("PayResult").whereIn("id", List.of())));
     }
     @Test void queryRunnerClassifiesCasesAndAssemblesPagedOneToManyRows() throws Exception {
@@ -114,6 +116,7 @@ class QueryCompilerTest {
         assertEquals(12L, result.models().get(0).read("user.id"));
         assertEquals(1, ((List<?>) result.models().get(0).read("orderDetailList")).size());
         assertEquals(2, result.scannedCandidates());
+        assertTrue(result.trace().stream().anyMatch(trace -> trace.startsWith("scanCost=")), result.trace().toString());
         assertEquals(2, seen.size());
         QueryPlan firstPage = fixture.compiler().compile(DirectoryQuery.find("PayResult").with("orderDetailList").page(0, 1));
         QueryResult first = new QueryRunner(executor, new SqlTranslator(new MySqlDialect()), engine).run(firstPage);

@@ -36,11 +36,12 @@ final class RuleDsl {
                 if (path.startsWith("error(") && path.endsWith(")")) {
                     var args = RuleText.split(path.substring(6, path.length() - 1), ',');
                     if (args.size() != 2) throw new ActionExecutionException("error requires code and message");
-                    Object code = RuleExpression.compile(args.get(0)).evaluate(new RuleExpression.Scope(Map.of(), Map.of()));
-                    Object message = RuleExpression.compile(args.get(1)).evaluate(new RuleExpression.Scope(Map.of(), Map.of()));
+                    RuleExpression.Expression code = RuleExpression.compile(args.get(0));
+                    RuleExpression.Expression message = RuleExpression.compile(args.get(1));
                     statements.add((invocation, vars, prefix) -> {
-                        if (!RuleExpression.bool(value.evaluate(scope(invocation, vars, prefix))))
-                            throw new ActionExecutionException("[" + code + "] " + message);
+                        RuleExpression.Scope current = scope(invocation, vars, prefix);
+                        if (!RuleExpression.bool(value.evaluate(current)))
+                            throw new ActionExecutionException("[" + code.evaluate(current) + "] " + message.evaluate(current));
                     });
                 } else {
                     validatePath(path, true);
@@ -59,8 +60,7 @@ final class RuleDsl {
         if (prefix.isEmpty()) return new RuleExpression.Scope(invocation.context().values(), variables);
         Object value = invocation.context().read(prefix.substring(0, prefix.length() - 1));
         if (!(value instanceof Map<?, ?> map)) throw new ActionExecutionException("DSL collection item must be object");
-        var model = new LinkedHashMap<String,Object>(); map.forEach((k,v) -> model.put(String.valueOf(k),v));
-        return new RuleExpression.Scope(model, variables);
+        return RuleExpression.Scope.isolatedRow(map, variables);
     }
     private static void validatePath(String path, boolean variable) {
         if (variable && path.matches("#[A-Za-z_][A-Za-z0-9_]*")) return;

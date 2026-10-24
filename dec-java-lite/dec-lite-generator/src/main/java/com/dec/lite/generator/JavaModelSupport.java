@@ -12,6 +12,30 @@ import java.util.regex.Pattern;
 
 /** Shared Java naming, types and canonical map access; no I/O. */
 final class JavaModelSupport {
+    record DesignMeta(String id, Object source, Object xml, String path, String name) {
+        Map<String, Object> asModel() {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("designId", id);
+            result.put("designSource", source);
+            result.put("designXml", xml);
+            result.put("designPath", path);
+            result.put("designName", name);
+            return result;
+        }
+
+        DesignMeta withId(String value) { return new DesignMeta(value, source, xml, path, name); }
+        DesignMeta withPathSuffix(String suffix) {
+            return new DesignMeta(id, source, xml, path == null ? null : path + suffix, name);
+        }
+    }
+
+    static DesignMeta designMeta(Map<String, Object> definition, String name, String extraPath) {
+        String path = definition.get("designPath") == null ? null : String.valueOf(definition.get("designPath"));
+        if (path != null && extraPath != null) path += extraPath;
+        return new DesignMeta(requiredText(definition, "id", "design"), definition.get("designSource"),
+                definition.get("designXml"), path, name);
+    }
+
     static final Pattern JAVA_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_$]");
     static boolean hasValidationType(Object raw, String type) {
         if (!(raw instanceof Collection<?> collection)) return false;

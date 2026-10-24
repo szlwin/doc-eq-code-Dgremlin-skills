@@ -31,11 +31,8 @@ final class ApiModelBuilder {
         model.put("resource", resource);
         model.put("groupClassName", configured == null ? className(resource) : configured);
         model.put("groupIdentity", (configured == null ? "resource:" : "configured:") + resource);
-        model.put("designId", requiredText(definition, "id", "api"));
-        model.put("designSource", definition.get("designSource"));
-        model.put("designXml", definition.get("designXml"));
-        model.put("designPath", definition.get("designPath"));
-        model.put("designName", name);
+        DesignMeta meta = designMeta(definition, name, "");
+        model.putAll(meta.asModel());
         model.put("methodName", methodName(name));
         model.put("url", requiredText(definition, "url", "api"));
         model.put("httpMethod", requiredText(definition, "method", "api"));
@@ -115,11 +112,7 @@ final class ApiModelBuilder {
             Map<String, Object> request = new LinkedHashMap<>();
             request.put("package", systemPackage + ".dto");
             request.put("className", requestClass);
-            request.put("designId", definition.get("id"));
-            request.put("designSource", definition.get("designSource"));
-            request.put("designXml", definition.get("designXml"));
-            request.put("designPath", definition.get("designPath"));
-            request.put("designName", name);
+            request.putAll(meta.asModel());
             request.put("fields", bodyFields);
             request.put("expressions", expressionValidations);
             request.put("imports", importsForFields(bodyFields, !expressionValidations.isEmpty()));
@@ -161,15 +154,12 @@ final class ApiModelBuilder {
                         fields.add(Map.of("name", javaIdentifier(fieldName), "type", type,
                                 "annotations", List.of(), "imports", imports));
                     }
-                    model.put("responseModel", Map.of(
-                            "package", systemPackage + ".view",
-                            "className", model.get("responseType"),
-                            "designId", model.get("designId"),
-                            "designSource", model.get("designSource"),
-                            "designXml", model.get("designXml"),
-                            "designPath", model.get("designPath") + ".response",
-                            "designName", model.get("designName"),
-                            "fields", fields));
+                    Map<String, Object> responseModel = new LinkedHashMap<>();
+                    responseModel.put("package", systemPackage + ".view");
+                    responseModel.put("className", model.get("responseType"));
+                    responseModel.putAll(meta.withPathSuffix(".response").asModel());
+                    responseModel.put("fields", fields);
+                    model.put("responseModel", responseModel);
                 }
             }
         }
