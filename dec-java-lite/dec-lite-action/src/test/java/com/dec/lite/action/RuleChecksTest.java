@@ -22,4 +22,13 @@ class RuleChecksTest {
         for (String value : List.of(";", "NOTNULL:1", "GREATER", "EQUAL:", "UNKNOWN", "LESS:1.2.3"))
             assertThrows(ActionExecutionException.class, () -> RuleChecks.compile(value), value);
     }
+
+    @Test void numericChecksTreatNonNumericActualAsExecutionError() {
+        for (String pattern : List.of("GREATER:2", "GREATEREQUAL:2", "LESS:2", "LESSEQUAL:2")) {
+            var failure = assertThrows(ActionExecutionException.class, () -> RuleChecks.test("5", pattern), pattern);
+            assertTrue(failure.getMessage().contains(pattern.substring(0, pattern.indexOf(':'))), failure.getMessage());
+            assertTrue(failure.getMessage().contains("numeric Rule operand required: 5"), failure.getMessage());
+        }
+        assertFalse(RuleChecks.test("5", "EQUAL:2"));
+    }
 }

@@ -92,4 +92,17 @@ class RuleProgramTest {
         assertTrue(result.errors().toString().contains("ActionExecutionException"));
         assertTrue(result.errors().toString().contains("RULE-BROKEN requires property"));
     }
+
+    @Test void numericCheckTypeMismatchBecomesRuleError() {
+        var key = new RuleViewKey("order", "OrderInfo", "test");
+        var rule = new CompiledRule("RULE-NUMERIC", "validate", "check", "value", "GREATER:2", null, "db");
+        var registry = new RuleViewCompiler().bind(
+                Map.of(key, new CompiledRuleView(key, "RV", List.of(rule))), null);
+
+        var result = registry.invoke(key, new ModelContext(Map.of("value", "5")), Map.of(), new MutationSet());
+
+        assertEquals(RecognitionResult.Status.ERROR, result.status());
+        assertTrue(result.errors().toString().contains("RULE-NUMERIC"), result.errors().toString());
+        assertTrue(result.errors().toString().contains("GREATER"), result.errors().toString());
+    }
 }

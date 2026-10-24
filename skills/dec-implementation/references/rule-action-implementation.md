@@ -21,7 +21,7 @@ Canonical Rule types：`check/checkPattern/checkData/checkDataPattern/insert/upd
 
 `CompiledRule` 必须完整保留 `property/pattern/process/cmd/error/customer`，执行时更换有效 dataSource 也不能丢字段。`customer` 与原 `CustomerInfo` 一致，只允许平铺字符串值。RuleView 按声明顺序执行，任一规则非 TRUE 即停止；错误诊断保留 Rule ID 及配置的 code/message/level。
 
-- `check/checkPattern/dsl` 使用 Runtime 的模型校验和表达式能力；不得按 Rule ID 在 adapter 中复制业务表达式。当前支持范围见框架 `docs/rule-compatibility.md` 和设计 skill 的 `yaml-spec/rule.md`。DSL `error(code,message)` 的两个参数在运行时求值，可引用当前模型、集合项和 `#变量`；不支持的历史表达式应在编译阶段失败，并报告 gap。
+- `check/checkPattern/dsl` 使用 Runtime 的模型校验和表达式能力；不得按 Rule ID 在 adapter 中复制业务表达式。当前支持范围见框架 `docs/rule-compatibility.md` 和设计 skill 的 `yaml-spec/rule.md`。`check` 的 `EQUAL/NOTEQUAL` 类型不一致只产生 FALSE；四种数值比较对非空非数值 actual 抛 `ActionExecutionException`，由 RuleView 归类为 ERROR，`null` 仍为 FALSE。DSL `error(code,message)` 的两个参数在运行时求值，可引用当前模型、集合项和 `#变量`；不支持的历史表达式应在编译阶段失败，并报告 gap。
 - `checkData/checkDataPattern` 是外部读操作，必须实现 `DataOperationAdapter.read`，不能委托旧的写操作 lambda 或只检查当前内存模型。读调用不得修改 View 或 produce；checkDataPattern、量词和 DSL 集合项都在独立的当前行作用域内求值，不会隐式回退同名 View 字段。没有结果时 checkData 按 null 校验，checkDataPattern 为 FALSE。
 - 通用接入优先 `new RuleDataAdapter(ruleDataAccess)`。`RuleDataAccess.Request` 携带完整 Rule、操作、View、不可变模型/参数与当前 transaction；驱动按 operation/property/cmd 访问外部资源，返回 rows/affectedRows，不用订单专属 Rule ID 分支。
 - `get` 返回单对象（多行报错，空结果 FALSE），`query` 写集合；insert 可返回生成键，集合条数必须匹配。写入和 Produce 由桥接层走 Invocation 追踪。Information 中 get/query 仅判定存在，不写模型；需要对查询值判断时使用 checkDataPattern。Information 禁止 insert/update/delete。

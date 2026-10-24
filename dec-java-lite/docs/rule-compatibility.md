@@ -16,7 +16,7 @@ Canonical YAML uses `dsl/process/cmd`; XML uses `grammer/customer-process/sql`. 
 
 ## Executable rules
 
-- `check`: property checks separated by `;`: NOTNULL, NULL, EQUAL, NOTEQUAL, GREATER, GREATEREQUAL, LESS, LESSEQUAL. Binary operands follow `:`; quote strings. Example: `NOTNULL;NOTEQUAL:2`.
+- `check`: property checks separated by `;`: NOTNULL, NULL, EQUAL, NOTEQUAL, GREATER, GREATEREQUAL, LESS, LESSEQUAL. Binary operands follow `:`; quote strings. Example: `NOTNULL;NOTEQUAL:2`. `EQUAL`/`NOTEQUAL` use value equality, so a type mismatch is a failed check. The four numeric checks require a numeric actual value; a non-null non-`Number` actual is an execution error (`ERROR`), while `null` evaluates to FALSE. The error includes the check name and the original numeric operand diagnostic.
 - `checkPattern`: field paths/indexes, field-to-field comparisons, numbers/strings/booleans/null, arithmetic `+ - * / %`, comparison `= == != <> < <= > >=`, parentheses, short-circuit `and/or/not` and `&&/||/!`. `exists(path)`, `every(list, predicate)` and `any(list, predicate)` are supported; collection predicates read item fields.
 - `checkData`: calls adapter.read with get semantics, then checks each returned object. No rows means checking null. It never treats an existing View property as evidence of a database row.
 - `checkDataPattern`: calls adapter.read with query semantics, evaluates every returned row in an isolated row scope, and returns FALSE on an empty result. The row does not fall back to same-named View fields. The View, produced values and mutations remain unchanged. The adapter still receives the complete View as query input, so a driver can project any comparison fields explicitly.

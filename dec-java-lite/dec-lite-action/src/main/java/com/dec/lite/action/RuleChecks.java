@@ -20,10 +20,10 @@ final class RuleChecks {
                 case "NULL" -> actual == null;
                 case "EQUAL" -> RuleExpression.equal(actual, check.expected());
                 case "NOTEQUAL" -> !RuleExpression.equal(actual, check.expected());
-                case "GREATER" -> actual != null && RuleExpression.number(actual).compareTo(RuleExpression.number(check.expected())) > 0;
-                case "GREATEREQUAL" -> actual != null && RuleExpression.number(actual).compareTo(RuleExpression.number(check.expected())) >= 0;
-                case "LESS" -> actual != null && RuleExpression.number(actual).compareTo(RuleExpression.number(check.expected())) < 0;
-                case "LESSEQUAL" -> actual != null && RuleExpression.number(actual).compareTo(RuleExpression.number(check.expected())) <= 0;
+                case "GREATER" -> actual != null && compareNumbers(check.name(), actual, check.expected()) > 0;
+                case "GREATEREQUAL" -> actual != null && compareNumbers(check.name(), actual, check.expected()) >= 0;
+                case "LESS" -> actual != null && compareNumbers(check.name(), actual, check.expected()) < 0;
+                case "LESSEQUAL" -> actual != null && compareNumbers(check.name(), actual, check.expected()) <= 0;
                 default -> throw new ActionExecutionException("Unsupported property check " + check.name());
             };
             if (!success) return false;
@@ -31,6 +31,16 @@ final class RuleChecks {
         return true;
         }
     }
+
+    private static int compareNumbers(String checkName, Object actual, Object expected) {
+        try {
+            return RuleExpression.number(actual).compareTo(RuleExpression.number(expected));
+        } catch (ActionExecutionException failure) {
+            throw new ActionExecutionException("Property check " + checkName + " requires numeric operands: "
+                    + failure.getMessage(), failure);
+        }
+    }
+
     private static List<Check> parse(String pattern) {
         if (pattern == null || pattern.isBlank()) throw new ActionExecutionException("check requires pattern");
         var result = new java.util.ArrayList<Check>();

@@ -123,7 +123,7 @@ error:
 
 选择 dec-java-lite 时，设计校验通过不等于所有历史表达式可执行。Runtime 编译阶段检查下列语法；不支持的表达式报告 capability/design gap，不能在 Service 复制条件绕过：
 
-- `check/checkData`：支持以 `;` 连接的 `NOTNULL/NULL/EQUAL/NOTEQUAL/GREATER/GREATEREQUAL/LESS/LESSEQUAL`，二元校验用 `:` 接常量，字符串加引号，例如 `NOTNULL;NOTEQUAL:2`。
+- `check/checkData`：支持以 `;` 连接的 `NOTNULL/NULL/EQUAL/NOTEQUAL/GREATER/GREATEREQUAL/LESS/LESSEQUAL`，二元校验用 `:` 接常量，字符串加引号，例如 `NOTNULL;NOTEQUAL:2`。`EQUAL/NOTEQUAL` 遇到类型不一致时按值不相等处理；`GREATER/GREATEREQUAL/LESS/LESSEQUAL` 要求 actual 为数值，非空非数值 actual 直接抛执行异常并使 Rule 结果为 `ERROR`，`null` 则为 `FALSE`。
 - `checkPattern/checkDataPattern`：支持字段路径、列表下标、字段比较、数字算术、括号、短路布尔运算、`exists/every/any`；`checkDataPattern` 对查询返回的每行在独立行上下文中校验，空结果为 FALSE，不将行字段写回 View。
 - `checkData` 必须真实读源后校验返回对象，空结果按 null 校验；不能用当前 View 中已有的非空字段冒充数据库存在。集合目标的逐项读取/匹配由适配器兑现，不能漏查部分项目后报告全部通过。
 - `dsl` 支持模型赋值、`#变量`、`if ... then ... else ...`、算术、`every(list, field : expression)` 和 `error(code,message) : predicate`。error 的 code/message 在运行时当前作用域求值，可引用模型字段、集合项字段和 `#变量`；临时变量限一次 RuleView 调用，写入由 Runtime 追踪。
