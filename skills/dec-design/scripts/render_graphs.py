@@ -287,7 +287,8 @@ def article_business_graph(business: Mapping[str,Any], cat: Mapping[str,Any], pa
             inner += f'<text x="{ax+36}" y="{ay+88}" text-anchor="middle" class="node-detail">{h(route_label)}</text>'
             parts.append(_interactive_group(aid,inner)); templates.append(f'<template class="node-template" data-detail-id="{h(aid)}">{action_detail_html(a,pages,business,cat)}</template>')
             for j,p in enumerate([p for p in as_list(a.get("produces")) if isinstance(p,Mapping) and p.get("ref")]):
-                pid=f"produce:{name}:{i}:{j}"; px,py=ax-6+j*145,ay+105
+                # Leave room below the Action's DataSource caption for the PRODUCE edge label.
+                pid=f"produce:{name}:{i}:{j}"; px,py=ax-6+j*145,ay+155
                 parts.append(_edge_path(ax+36,ay+72,px+68,py,kind="produce",label="PRODUCE",source_id=aid,target_id=pid))
                 inner=f'<rect x="{px}" y="{py}" width="136" height="48" rx="8" class="produce-node"/><text x="{px+68}" y="{py+29}" text-anchor="middle" class="node-detail">{h(p.get("ref"))}</text>'
                 parts.append(_interactive_group(pid,inner)); info=p.get("informationRef")

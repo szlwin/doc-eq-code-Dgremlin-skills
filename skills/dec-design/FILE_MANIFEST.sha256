@@ -41,7 +41,7 @@ efb9df28f55e44aaabe8006be4f0f1e67de8222ed16ea7a5897c301520cb1abf  ./references/y
 da3f0de6857effd8678acde0e0077b7dd01c4ef9dc0ea33c43e35ab2b454840d  ./references/yaml-spec/cross-file.md
 3fcca876fe745977f7a793e7f10f1dc72760dabf3f16264f7f02180f5347b0fc  ./references/yaml-spec/data.md
 1f6cc94a0fa9a642bd61367be7f9fce1e30ddb21dd99308539478f8eb1782f7c  ./references/yaml-spec/enum.md
-3eb98606574674f01a99148e13d7908f61ae8ebaf1c20303ded9371809101b93  ./references/yaml-spec/rule.md
+fc9c314cdf957902bf55b9c00401f6160583e62d5c5121791dd13bc39444dc0d  ./references/yaml-spec/rule.md
 1bdd719eb63e13438da2cf87132055b6e9c8963f1d0db9bb75e3b37e4a78d82a  ./references/yaml-spec/system-information.md
 d93c56dcbad6782d90178f76ecd5910da496625e07e53fa57330120331ad6172  ./references/yaml-spec/view.md
 dd3baee39e6fe96ceb36de9a15443c37a07e20c0de84cdd66dba30081edd7952  ./references/yaml-to-xml.md
@@ -63,7 +63,7 @@ d9c014e5df8981783d3828cb8056bff1e7e723cded083657b8a2bde4f8d149ff  ./schemas/view
 2aa56e22efcf09cb0735d2d76446e41930cff6819c00d0dec337ec539b6e7fa3  ./scripts/render_common.py
 251686bf34271cba121f83a0ce89832e62753c7c8bbf34d56334f1072cded802  ./scripts/render_dec_graph.py
 16953cc4c1e4d2e3bc039b4083b965508ebc4b0c7086ebe83b6a26e16b751261  ./scripts/render_details.py
-f796a19d2684f98ce7b06cb5567024dacdaadbe39af58be1116eb6480978dfcb  ./scripts/render_graphs.py
+d53b55de56ac5979ebe13a651bba084dd92741bbce633cdc67134b158f00dc1f  ./scripts/render_graphs.py
 5a9e10b696c8743d1ec97e52e5ad472b77828ca0b169aaa4abeea9baaab2b318  ./scripts/render_pages.py
 e79d259c63e41357e2c0b3e33ad1b44e2571fbba7ee9e55881b18d30f3a43ccd  ./scripts/safe_xml.py
 6a538e836b06ca07f0debbeef176d9584b9d696a4a3d1e2d7a40925a262bddfc  ./scripts/sync_xml_to_yaml.py

@@ -16,6 +16,7 @@
 | [Skill 使用与维护](skills.md) | 两个 Skill 的输入输出、规范分片、脚本、语义要求与工程约定 |
 | [Java 框架详解](java-framework.md) | 编译与执行、DSL、事务、监听器、数据源、查询、生成器与扩展点 |
 | [订单支付示例详解](order-payment-demo.md) | 设计到代码映射、六个 API、成功/失败分支、短信、查询示例及限制 |
+| [文档即编码(六)：与AI的结合](doc-eq-code-6-ai.md) | 设计文档与 AI 协作的优势、订单支付 Demo 讲解和 HTML 阅读图 |
 | [开发与验证手册](development-and-verification.md) | 环境、生成、运行、测试、Binding 证据、变更检查与故障定位 |
 
 历史检查与修复快照见 [历史记录](history/README.md)。
