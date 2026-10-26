@@ -2,6 +2,8 @@ package com.dec.lite.information;
 
 import java.util.List;
 import java.util.Objects;
+import com.dec.lite.runtime.RuntimeFailure;
+import com.dec.lite.runtime.RuntimeErrorCode;
 
 /** Immutable Information recognition result. UNRESOLVED is distinct from FALSE. */
 public record RecognitionResult(
@@ -10,7 +12,12 @@ public record RecognitionResult(
         List<InformationKey> dependencies,
         List<String> errors,
         String modelVersion,
-        List<TraceEvent> trace) {
+        List<TraceEvent> trace,
+        RuntimeFailure failure) {
+    public RecognitionResult(Status status, List<String> evidence, List<InformationKey> dependencies,
+                             List<String> errors, String modelVersion, List<TraceEvent> trace) {
+        this(status, evidence, dependencies, errors, modelVersion, trace, null);
+    }
     public RecognitionResult(Status status, List<String> evidence, List<InformationKey> dependencies,
                              List<String> errors, String modelVersion) {
         this(status, evidence, dependencies, errors, modelVersion, List.of());
@@ -33,6 +40,13 @@ public record RecognitionResult(
         return new RecognitionResult(Status.ERROR, List.of(), List.of(), List.of(message), modelVersion);
     }
 
+    public static RecognitionResult error(String modelVersion, String message, RuntimeException cause) {
+        RuntimeFailure failure = cause instanceof RuntimeFailure typed ? typed :
+                new RuntimeFailure(cause instanceof SecurityException ? RuntimeErrorCode.ACCESS_DENIED : RuntimeErrorCode.ACTION,
+                        null, null, message, cause);
+        return new RecognitionResult(Status.ERROR, List.of(), List.of(), List.of(message), modelVersion, List.of(), failure);
+    }
+
     public static RecognitionResult unresolved(String modelVersion, String message) {
         return new RecognitionResult(Status.UNRESOLVED, List.of(), List.of(), List.of(message), modelVersion);
     }
@@ -42,6 +56,6 @@ public record RecognitionResult(
     public RecognitionResult withTrace(TraceEvent event) {
         java.util.ArrayList<TraceEvent> values = new java.util.ArrayList<>(trace);
         values.add(event);
-        return new RecognitionResult(status, evidence, dependencies, errors, modelVersion, values);
+        return new RecognitionResult(status, evidence, dependencies, errors, modelVersion, values, failure);
     }
 }

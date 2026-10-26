@@ -1,0 +1,16 @@
+id: chinese-design
+title: 从中文需求建立可校验的设计
+description: 从中文需求建立可校验的设计；检查实际文件与工具调用。
+input:
+  prompt: |-
+    为费用申请建立设计，保存到 design/。实体 expense 的属性为 id(integer)、status(integer)、amount(decimal)、reviewerEnabled(boolean)，由 approvalDb(MySQL) 映射到 expense_request；视图 ExpenseInfo 暴露这些属性。expense 系统内：draft 状态0、submitted 状态1、approved 状态2，eligible 条件 amount <= 1000 and reviewerEnabled = true。业务目录 draft 为根，按 draft → submitted → approved 推进，各阶段声明相应状态变更；submitted 和 approved 分别调用 Custom Action recordSubmitted、recordApproved，approved 依赖 eligible。不得添加其他业务规则。校验并导出 XML 到 export/。
+    请使用已安装的 dec-design Skill，在当前工作区内完成。不要调用其他项目 Skill。
+context:
+  files:
+    case.json: '{"case": "chinese-design"}'
+expect:
+  exit_code: 0
+judge:
+  type: script
+  script_path: evals/judge.py
+  timeout_seconds: 45

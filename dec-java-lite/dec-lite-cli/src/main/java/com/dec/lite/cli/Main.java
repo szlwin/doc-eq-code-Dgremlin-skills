@@ -126,6 +126,17 @@ public class Main {
                 Path generationConfig = optionPath(args, "--generation-config");
                 var options = generationConfig == null ? com.dec.lite.generator.GenerationOptions.defaults()
                         : com.dec.lite.generator.GenerationOptions.load(generationConfig);
+                if (java.util.Arrays.asList(args).contains("--dry-run")) {
+                    var plan = new GeneratorPipeline().preview(project, output, basePackage, options);
+                    plan.created().forEach(p -> System.out.println("CREATE " + p));
+                    plan.updated().forEach(p -> System.out.println("UPDATE " + p));
+                    plan.deleted().forEach(p -> System.out.println("DELETE " + p));
+                    plan.unchanged().forEach(p -> System.out.println("UNCHANGED " + p));
+                    plan.preserved().forEach(p -> System.out.println("PRESERVE " + p));
+                    plan.conflicts().forEach(p -> System.out.println("CONFLICT " + p));
+                    System.out.println("metadata=.dec-generated,dec-generated-manifest.txt (written only on commit)");
+                    return plan.conflicts().isEmpty() ? 0 : 1;
+                }
                 GeneratorPipeline.GenerationResult result = new GeneratorPipeline()
                         .generate(project, output, basePackage, options);
                 System.out.println("generated=" + result.files().size());
@@ -193,7 +204,7 @@ public class Main {
         System.out.println("       directory options: [--target <directory>]");
         System.out.println("       query options: --directory <name> [--eq <case>] [--from <directory>] [--to <directory-or-case>] [--with <relation>] [--where property=value] [--offset N] [--size N] [--candidate-limit N]");
         System.out.println("       business query: --view <View-name-or-ID> [--eq <Directory> | --start <Directory> --end <Directory>] [--with <relation>] [--where property=value] [--offset N] [--size N] [--candidate-limit N]");
-        System.out.println("       generate options: --output <directory> [--base-package <package>] [--generation-config <properties-file>]");
+        System.out.println("       generate options: --output <directory> [--base-package <package>] [--generation-config <properties-file>] [--dry-run]");
     }
 
     private static void printInformation(InformationCompilation compilation) {

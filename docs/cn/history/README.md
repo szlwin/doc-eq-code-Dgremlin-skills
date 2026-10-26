@@ -6,5 +6,7 @@
 
 - [2026-10-19 全面体检修复与中断恢复](health-check-recovery-2026-10-19.md)
 - [2026-10-20 五项体检反馈收尾](health-check-followup-2026-10-20.md)
+- [2026-10-26 质量增强与 Agent 评测执行记录](quality-improvements-2026-10-26.md)
+  — [机器可读评测结果](quality-agent-evals-2026-10-26.json)，保留直接通过、误判、执行错误与重评的区别。
 
 模块版本变化仍分别记录在 [Java 框架 CHANGELOG](../../../dec-java-lite/CHANGELOG.md)、[设计 Skill CHANGELOG](../../../skills/dec-design/CHANGELOG.md) 和 [实现 Skill CHANGELOG](../../../skills/dec-implementation/CHANGELOG.md)。

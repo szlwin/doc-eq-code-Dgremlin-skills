@@ -18,6 +18,23 @@ public final class ModelExpressionCompiler {
 
     public record CompiledExpression(Node node, Set<String> readPaths, String canonical) {
         public RecognitionResult evaluate(ModelContext context) { return node.evaluate(context.values(), context.version()); }
+        /** Necessary equalities from the parsed AST; never extract conditions from OR/NOT/quantifiers. */
+        public EqualityProjection necessaryEqualities() { return equalities(node); }
+    }
+
+    public record Equality(String path, Object value) { }
+    public record EqualityProjection(List<Equality> conditions, boolean complete) {
+        public EqualityProjection { conditions = List.copyOf(conditions); }
+    }
+    private static EqualityProjection equalities(Node node) {
+        if (node instanceof Compare compare && "=".equals(compare.op()))
+            return new EqualityProjection(List.of(new Equality(compare.path(), compare.literal().value())), true);
+        if (node instanceof Binary binary && "and".equals(binary.op())) {
+            var left = equalities(binary.left()); var right = equalities(binary.right());
+            var conditions = new ArrayList<>(left.conditions()); conditions.addAll(right.conditions());
+            return new EqualityProjection(conditions, left.complete() && right.complete());
+        }
+        return new EqualityProjection(List.of(), false);
     }
 
     interface Node {
@@ -105,8 +122,7 @@ public final class ModelExpressionCompiler {
             boolean matches;
             try {
                 if ("=".equals(op) || "!=".equals(op)) {
-                    boolean equal = actual instanceof Number a && expected instanceof Number b
-                            ? decimal(a).compareTo(decimal(b)) == 0 : java.util.Objects.equals(actual, expected);
+                    boolean equal = com.dec.lite.data.DecValueEquality.equal(actual, expected);
                     matches = "=".equals(op) ? equal : !equal;
                 } else {
                     if (!(actual instanceof Number a) || !(expected instanceof Number b))
@@ -129,7 +145,7 @@ public final class ModelExpressionCompiler {
         public String canonical() { return "compare(" + path + op + literal.source() + ")"; }
     }
     private record Unary(Node child) implements Node {
-        public RecognitionResult evaluate(Object scope, String version) { RecognitionResult result = child.evaluate(scope, version); return new RecognitionResult(result.status() == RecognitionResult.Status.TRUE ? RecognitionResult.Status.FALSE : result.status() == RecognitionResult.Status.FALSE ? RecognitionResult.Status.TRUE : result.status(), result.evidence(), result.dependencies(), result.errors(), version, result.trace()); }
+        public RecognitionResult evaluate(Object scope, String version) { RecognitionResult result = child.evaluate(scope, version); return new RecognitionResult(result.status() == RecognitionResult.Status.TRUE ? RecognitionResult.Status.FALSE : result.status() == RecognitionResult.Status.FALSE ? RecognitionResult.Status.TRUE : result.status(), result.evidence(), result.dependencies(), result.errors(), version, result.trace(), result.failure()); }
         public Set<String> readPaths() { return child.readPaths(); }
         public String canonical() { return "not(" + child.canonical() + ")"; }
     }
@@ -185,6 +201,6 @@ public final class ModelExpressionCompiler {
         java.util.LinkedHashSet<String> errors = new java.util.LinkedHashSet<>(left.errors()); errors.addAll(right.errors());
         java.util.ArrayList<TraceEvent> trace = new java.util.ArrayList<>(left.trace()); trace.addAll(right.trace());
         java.util.LinkedHashSet<InformationKey> dependencies = new java.util.LinkedHashSet<>(left.dependencies()); dependencies.addAll(right.dependencies());
-        return new RecognitionResult(status, evidence.stream().toList(), dependencies.stream().toList(), errors.stream().toList(), version, trace);
+        return new RecognitionResult(status, evidence.stream().toList(), dependencies.stream().toList(), errors.stream().toList(), version, trace, left.failure() != null ? left.failure() : right.failure());
     }
 }

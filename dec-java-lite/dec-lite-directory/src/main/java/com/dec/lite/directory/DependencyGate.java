@@ -11,6 +11,7 @@ public final class DependencyGate {
     public void verify(List<InformationKey> dependencies, InformationEngine information, ModelContext model) {
         for (InformationKey key : dependencies) {
             RecognitionResult result = information.evaluate(key, model);
+            if (result.failure() != null) throw result.failure();
             if (result.status() != RecognitionResult.Status.TRUE) {
                 throw new DirectoryExecutionException("Dependency is not TRUE: " + key + " (" + result.status() + ")");
             }

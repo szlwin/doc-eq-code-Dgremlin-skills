@@ -136,7 +136,7 @@ public final class ExecutionSession implements AutoCloseable {
                 RuntimeErrorCode code = result.status() == ActionStatus.SKIPPED ? RuntimeErrorCode.DEPENDENCY :
                         result.failureCode() == null ? RuntimeErrorCode.ACTION : result.failureCode();
                 throw new RuntimeFailure(code, action.id(), action.source(),
-                        result.error() == null ? String.join("; ", result.diagnostics()) : result.error(), null);
+                        result.error() == null ? String.join("; ", result.diagnostics()) : result.error(), result.cause());
             }
             afterAction(action, result);
             scope.commit();

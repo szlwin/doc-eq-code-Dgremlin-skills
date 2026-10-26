@@ -1,0 +1,5 @@
+version: dec/v1
+kind: config
+dataSources:
+- name: approvalDb
+  type: MySQL

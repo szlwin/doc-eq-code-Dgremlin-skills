@@ -66,7 +66,11 @@ java -jar "$dec_cli_jar" generate \
   --base-package com.example.orderpayment
 ```
 
-这里的 `-DskipTests` 只用于先安装依赖，不是测试通过的证明。生成器维护自己的 manifest 范围，手写代码仍需按改变后的接口进行调整。XML 由上一节的 Converter 生成，不会由 Java 生成器自动从任意路径收集。
+这里的 `-DskipTests` 只用于先安装依赖，不是测试通过的证明。
+
+生成器先在暂存目录完成渲染，再检查全部输出路径：已有文件只有被旧 manifest 管理时才可替换，新目标若与未受管的手写文件或目录冲突，会列出路径并拒绝生成。渲染失败不修改旧输出，提交期间发生可捕获的 I/O 失败时会尝试恢复原文件与清单；这不提供断电恢复或并发生成保证。手写代码仍需按改变后的接口进行调整。
+
+XML 由上一节的 Converter 生成，不会由 Java 生成器自动从任意路径收集。
 
 要试验独立 API 分组配置，使用一个新的输出目录：
 
@@ -178,7 +182,7 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
   --design demo/order-payment-yaml \
   --binding demo/order-payment-implementation-binding.yaml \
   --project-root demo/order-payment-app \
-  --require-complete --require-evidence
+  --require-ready
 ```
 
 包装器的测试命令和 `--input` 相对 `project-root` 解析；先安装本次源码对应的框架依赖。最后一个附加输入包含生成配置，即使当前使用默认分组，也可将该工程配置文件纳入变更追踪。
@@ -192,6 +196,8 @@ python3 skills/dec-implementation/scripts/validate_binding.py \
 | `--require-symbols` | 指定文件中的真实 Java 声明存在且无歧义 |
 | `--require-evidence` | 声明测试有本次通过报告，并匹配当前输入 |
 | `--require-ready` | 完整、符号及证据合格，且全部为 VERIFIED |
+
+CI 最后一步使用 `--require-ready`；开发中的结构检查可以允许 PLANNED，但不能替代就绪门禁。
 
 Demo 的当前状态与未实现项见 [集成说明](../../demo/INTEGRATION.md)；只要仍有 PLANNED，发布就绪检查就应失败。不要批量改状态来消除失败。摘要是漂移检查，不是安全签名，也不证明断言一定充分。Java semanticDigest 与 Binding 设计摘要不同，详见 [Binding 契约](../../skills/dec-implementation/references/implementation-binding.md)。
 
@@ -244,3 +250,20 @@ python3 skills/dec-implementation/scripts/check_manifest.py
 | Binding 证据失效 | 设计、源码、配置、报告或依赖是否变化，是否需要重新运行测试 |
 
 框架本身已有详细专题文档和场景测试；继续定位可从 [框架 README](../../dec-java-lite/README.md) 进入。
+
+## Agent 评测、语义对等与生成工程接线
+
+两个 Skill 的 Agent 用例分别位于 [dec-design/evals](../../skills/dec-design/evals/README.md) 和 [dec-implementation/evals](../../skills/dec-implementation/evals/README.md)。`skill-up validate` 只验证配置；`skill-up run` 才运行模型并收集产物与调用轨迹。脚本单测、单次模型通过、重复抽样及 without_skill 对照应分别报告。
+
+框架 reactor 内的 `SemanticVariantsParityTest` 调用正式 Python validator/converter，检查 YAML/XML 在 Java 中的语义摘要、Runtime 正反例及下推覆盖范围。`ExpressionCompilerTest` 实际编译生成的 Java 表达式并与 Runtime 对照；`MySqlBusinessQueryIntegrationTest` 在真实 MySQL 上验证 SQL 候选集不会漏掉 Runtime 认可的数据。API 请求表达式与 Information 语言并非同一语法全集，对照测试限定在共享子集，不把“可解析”当作“全部支持”。
+
+在专用 MySQL 测试库设置 `DEC_MYSQL_JDBC_URL`、`DEC_MYSQL_USER`、`DEC_MYSQL_PASSWORD` 后，从仓库根目录运行：
+
+```sh
+./dec-java-lite/mvnw -B -f dec-java-lite/pom.xml install -Prelease-artifacts,mysql-it
+python3 dec-java-lite/tools/verify_generated_projects.py
+```
+
+生成工程脚本在临时目录验证原始费用设计、添加测试 API 后的默认分组、迁移至 Approvals 分组三种工程：启动 Spring、通过生成 Controller/Service 接线、执行 MySQL 提交与回滚，并核对应用 JAR 中的 XML 和资源清单。它显式提供测试 Mapper/CustomAction，不能被解释为生成器自动实现了应用业务或生产驱动。测试报告保存在 `dec-java-lite/target/generated-project-smoke/`，CI 会归档。订单 Demo 的真实 API 分组编译门禁与应用测试继续保留。
+
+生成前可使用 `generate --dry-run`；覆盖/拒绝/恢复边界及手写 Service 迁移要求见 [所有权契约](../../dec-java-lite/docs/generator-ownership.md)。准备上线时按 [生产验收清单](production-acceptance.md) 逐项形成证据，不以 Binding VERIFIED 代替生产化验收。

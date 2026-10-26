@@ -27,11 +27,15 @@ class BusinessQueryTest {
     }
     /** Existing canonical mappings/flow, with test Information declared as model predicates rather than provider callbacks. */
     static Fixture fixture(int successStatus) throws Exception {
+        return fixture(successStatus, Map.of());
+    }
+    static Fixture fixture(int successStatus, Map<String, String> overrides) throws Exception {
         DecProject source = new DecYamlParser().parse(Path.of(BusinessQueryTest.class.getClassLoader().getResource("mix").toURI()));
         DecProject project = new DecProject();
-        Map<String, String> expressions = Map.of("order.ordered", "status = 1", "order.paying", "status = 2",
+        Map<String, String> expressions = new LinkedHashMap<>(Map.of("order.ordered", "status = 1", "order.paying", "status = 2",
                 "payment.hasResult", "status = " + successStatus + " or status = 4", "payment.success", "status = " + successStatus,
-                "payment.error", "status = 4", "order.paySuccessStatus", "status = " + successStatus, "order.payErrorStatus", "status = 4");
+                "payment.error", "status = 4", "order.paySuccessStatus", "status = " + successStatus, "order.payErrorStatus", "status = 4"));
+        expressions.putAll(overrides);
         for (var document : source.getDocuments()) {
             if (document.kind() != DecKind.SYSTEMS) { project.addDocument(document); continue; }
             Map<String, Object> root = new LinkedHashMap<>(document.root()); List<Object> systems = new ArrayList<>();

@@ -21,6 +21,10 @@ class OrderApiTest {
     @Autowired JdbcTemplate jdbc;
     @org.springframework.boot.test.mock.mockito.SpyBean
     com.example.orderpayment.order.dao.OrderDao orderDao;
+    @org.springframework.boot.test.mock.mockito.SpyBean
+    com.example.orderpayment.payment.dao.PayDao payDao;
+    @org.springframework.boot.test.mock.mockito.SpyBean
+    com.example.orderpayment.payment.dao.PayDetailDao payDetailDao;
 
     @BeforeEach
     void clearDatabase() {
@@ -95,6 +99,36 @@ class OrderApiTest {
                         {"status":1,"type":1,"userId":%d,"productId":7,
                          "productName":"Demo item","productPrice":14.95,"productCount":2}
                         """.formatted(userId))).andReturn().getResponse().getStatus();
+    }
+
+    @Test void paymentConnectionFailureIsServiceUnavailableAndPreservesCause() throws Exception {
+        org.junit.jupiter.api.Assertions.assertEquals(200, submitStatus(581L, 1));
+        var unavailable = new org.springframework.dao.DataAccessResourceFailureException("payment database unavailable");
+        org.mockito.Mockito.doThrow(unavailable).when(payDao).insert(org.mockito.ArgumentMatchers.any());
+        var result = mvc.perform(post("/api/orders/581/payment"))
+                .andExpect(status().isServiceUnavailable()).andReturn();
+        Throwable cause = result.getResolvedException();
+        while (cause != null && cause != unavailable) cause = cause.getCause();
+        org.junit.jupiter.api.Assertions.assertSame(unavailable, cause);
+        assertPaymentRolledBack(581L);
+    }
+
+    @Test void failureAfterPaymentWritesRollsBackBothPaymentRowsAndOrderState() throws Exception {
+        org.junit.jupiter.api.Assertions.assertEquals(200, submitStatus(582L, 1));
+        org.mockito.Mockito.doAnswer(call -> {
+            call.callRealMethod();
+            throw new org.springframework.dao.DataAccessResourceFailureException("connection failed after detail write");
+        }).when(payDetailDao).insert(org.mockito.ArgumentMatchers.any());
+        mvc.perform(post("/api/orders/582/payment")).andExpect(status().isServiceUnavailable());
+        assertPaymentRolledBack(582L);
+    }
+
+    private void assertPaymentRolledBack(long id) throws Exception {
+        mvc.perform(get("/api/orders/{id}", id)).andExpect(status().isOk()).andExpect(jsonPath("$.status").value(1));
+        org.junit.jupiter.api.Assertions.assertEquals(1, jdbc.queryForObject(
+                "SELECT od_status FROM dec_demo_order_detail_info WHERE od_order_id=?", Integer.class, id));
+        org.junit.jupiter.api.Assertions.assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_pay_info", Integer.class));
+        org.junit.jupiter.api.Assertions.assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM dec_demo_pay_detail_info", Integer.class));
     }
 
     @Test void rejectsInvalidTransportInputBeforeCreatingOrder() throws Exception {

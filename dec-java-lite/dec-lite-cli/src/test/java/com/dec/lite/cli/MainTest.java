@@ -12,6 +12,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MainTest {
     @org.junit.jupiter.api.io.TempDir java.nio.file.Path temp;
 
+    @Test void dryRunDoesNotCreateOutputAndReportsConflictsWithNonzeroExit() throws Exception {
+        var output = temp.resolve("preview");
+        var first = run("generate", "--yaml", "../../demo/order-payment-yaml", "--output", output.toString(), "--dry-run");
+        assertEquals(0, first.code(), first.error());
+        assertTrue(first.output().contains("CREATE pom.xml"));
+        assertTrue(!java.nio.file.Files.exists(output));
+        assertEquals(0, run("generate", "--yaml", "../../demo/order-payment-yaml", "--output", output.toString()).code());
+        var collision = output.resolve("src/main/java/com/dec/generated/order/service/OrderPaymentsService.java");
+        java.nio.file.Files.writeString(collision, "handwritten");
+        var preview = run("generate", "--yaml", "../../demo/order-payment-yaml", "--output", output.toString(),
+                "--generation-config", "../../demo/order-payment-generation.properties", "--dry-run");
+        assertEquals(1, preview.code(), preview.error());
+        assertTrue(preview.output().contains("CONFLICT src/main/java/com/dec/generated/order/service/OrderPaymentsService.java"));
+        assertEquals("handwritten", java.nio.file.Files.readString(collision));
+    }
+
     @Test void explainsBusinessRangesAndRejectsMixedSelectorModes() {
         Result result = run("query", "--yaml", "../fixtures/mix", "--view", "OrderInfo", "--start", "ordered", "--end", "success", "--with", "user");
         assertEquals(0, result.code(), result.error());

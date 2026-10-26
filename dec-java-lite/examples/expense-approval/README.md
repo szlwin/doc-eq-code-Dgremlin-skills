@@ -22,3 +22,5 @@ python3 skills/dec-design/scripts/yaml_to_xml.py dec-java-lite/fixtures/expense-
 ```
 
 订单并发、多明细、回调及副作用失败的覆盖和边界见 `../../docs/generality-scenarios.md`。
+
+补充启动与接线回归：reactor 安装完成并配置专用 MySQL 测试库环境变量后，运行 `python3 dec-java-lite/tools/verify_generated_projects.py`。该脚本在临时生成工程中提供明确的 Mapper/CustomAction，实现 Spring 启动、审批提交/回滚、生成 API 默认分组及分组迁移测试，同时检查应用 JAR 中的 XML 清单；不修改本目录的生成文件。详见[开发与验证](../../../docs/cn/development-and-verification.md)。

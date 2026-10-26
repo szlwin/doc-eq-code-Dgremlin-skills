@@ -48,7 +48,7 @@ public final class InformationExpression {
         RecognitionResult second = right.evaluate(resolver, version);
         return combine("or", first, second, version);
     }
-    private static RecognitionResult invert(RecognitionResult value, String version) { return new RecognitionResult(value.status() == RecognitionResult.Status.TRUE ? RecognitionResult.Status.FALSE : value.status() == RecognitionResult.Status.FALSE ? RecognitionResult.Status.TRUE : value.status(), value.evidence(), value.dependencies(), value.errors(), version, value.trace()); }
+    private static RecognitionResult invert(RecognitionResult value, String version) { return new RecognitionResult(value.status() == RecognitionResult.Status.TRUE ? RecognitionResult.Status.FALSE : value.status() == RecognitionResult.Status.FALSE ? RecognitionResult.Status.TRUE : value.status(), value.evidence(), value.dependencies(), value.errors(), version, value.trace(), value.failure()); }
     private static RecognitionResult combine(String op, RecognitionResult left, RecognitionResult right, String version) {
         if (left.status() == RecognitionResult.Status.ERROR) return merge(left, right, version, RecognitionResult.Status.ERROR);
         if (right.status() == RecognitionResult.Status.ERROR) return merge(left, right, version, RecognitionResult.Status.ERROR);
@@ -66,6 +66,6 @@ public final class InformationExpression {
         java.util.LinkedHashSet<String> errors = new java.util.LinkedHashSet<>(left.errors()); errors.addAll(right.errors());
         java.util.ArrayList<TraceEvent> trace = new java.util.ArrayList<>(left.trace()); trace.addAll(right.trace());
         java.util.LinkedHashSet<InformationKey> dependencies = new java.util.LinkedHashSet<>(left.dependencies()); dependencies.addAll(right.dependencies());
-        return new RecognitionResult(status, evidence.stream().toList(), dependencies.stream().toList(), errors.stream().toList(), version, trace);
+        return new RecognitionResult(status, evidence.stream().toList(), dependencies.stream().toList(), errors.stream().toList(), version, trace, left.failure() != null ? left.failure() : right.failure());
     }
 }

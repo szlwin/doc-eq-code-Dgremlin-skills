@@ -6,7 +6,6 @@ import com.dec.lite.action.ActionListenerRegistry;
 import com.dec.lite.action.DataSourceAdapterRegistry;
 import com.dec.lite.action.DataSourceSelection;
 import com.dec.lite.directory.DirectoryWorkflowException;
-import com.dec.lite.directory.DirectoryExecutionException;
 import jakarta.validation.Validator;
 import com.dec.lite.directory.DirectoryWorkflowRunner;
 import com.dec.lite.information.ModelContext;
@@ -148,8 +147,8 @@ public class OrderWorkflow {
             runtime.recognizeDirectory(bridge.toModel(persisted),
                     rules);
             return persisted;
-        } catch (DirectoryExecutionException failure) {
-            throw failure(HttpStatus.CONFLICT, failure.getMessage());
+        } catch (com.dec.lite.runtime.RuntimeFailure failure) {
+            throw new ResponseStatusException(statusFor(failure.code()), failure.getMessage(), failure);
         }
     }
 
@@ -171,9 +170,23 @@ public class OrderWorkflow {
                         runtime.assertDirectoryMatches(bridge.toModel(persisted), execution.currentDirectory(), rules);
                         return persisted;
                     });
-        } catch (DirectoryWorkflowException | DirectoryExecutionException failure) {
-            throw failure(HttpStatus.CONFLICT, failure.getMessage());
+        } catch (DirectoryWorkflowException failure) {
+            var detail = failure.execution().errorDetail();
+            throw new ResponseStatusException(statusFor(detail == null ? null : detail.code()), failure.getMessage(), failure);
+        } catch (com.dec.lite.runtime.RuntimeFailure failure) {
+            throw new ResponseStatusException(statusFor(failure.code()), failure.getMessage(), failure);
         }
+    }
+
+    private static HttpStatus statusFor(com.dec.lite.runtime.RuntimeErrorCode code) {
+        if (code == null) return HttpStatus.INTERNAL_SERVER_ERROR;
+        return switch (code) {
+            case CONFLICT, VALIDATION, DEPENDENCY, CLASSIFICATION -> HttpStatus.CONFLICT;
+            case ACCESS_DENIED -> HttpStatus.FORBIDDEN;
+            case INFRASTRUCTURE -> HttpStatus.SERVICE_UNAVAILABLE;
+            case TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT;
+            default -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
     }
 
     private void requireOrder(Long id) {

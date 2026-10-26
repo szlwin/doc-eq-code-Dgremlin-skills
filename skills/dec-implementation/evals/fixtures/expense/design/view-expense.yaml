@@ -1,0 +1,16 @@
+version: dec/v1
+kind: view
+views:
+- id: VIEW-EXPENSE
+  name: ExpenseInfo
+  system: expense
+  targetMain: expense
+  properties:
+    id:
+      ref: id
+    status:
+      ref: status
+    amount:
+      ref: amount
+    reviewerEnabled:
+      ref: reviewerEnabled

@@ -60,6 +60,9 @@ public final class ActionRuntime {
             for (var dependency : action.dependencies()) {
                 RecognitionResult result = context.informationEngine().evaluate(dependency, context.model());
                 if (result.status() != RecognitionResult.Status.TRUE) {
+                    if (result.failure() != null) throw result.failure();
+                    if (result.status() == RecognitionResult.Status.ERROR)
+                        throw new ActionExecutionException("Action dependency evaluation failed: " + dependency);
                     trace.add(new ActionTraceEvent(action.name(), "precondition", ActionStatus.SKIPPED, dependency + "=" + result.status()));
                     return ActionResult.skipped("Action dependency is not TRUE: " + dependency + " (" + result.status() + ")");
                 }
@@ -80,10 +83,11 @@ public final class ActionRuntime {
                 if (ruleResult.status() != RecognitionResult.Status.TRUE) {
                     trace.add(new ActionTraceEvent(action.name(), "invoke", ActionStatus.FAILED, ruleResult.status().name()));
                     RuntimeException rollbackFailure = rollback(context, action, trace);
-                    RuntimeErrorCode code = ruleResult.errors().stream().anyMatch(error -> error.startsWith("ACCESS_DENIED")) ? RuntimeErrorCode.ACCESS_DENIED : RuntimeErrorCode.ACTION;
+                    RuntimeErrorCode code = ruleResult.failure() != null ? ruleResult.failure().code() :
+                            ruleResult.status() == RecognitionResult.Status.FALSE ? RuntimeErrorCode.VALIDATION : RuntimeErrorCode.ACTION;
                     List<String> diagnostics = new ArrayList<>(ruleResult.errors());
                     if (rollbackFailure != null) diagnostics.add("rollback failed: " + rollbackFailure);
-                    return ActionResult.failed("RuleView Action failed: " + action.name() + " (" + ruleResult.status() + "): " + String.join("; ", diagnostics), mutations, diagnostics, trace, code);
+                    return ActionResult.failed("RuleView Action failed: " + action.name() + " (" + ruleResult.status() + "): " + String.join("; ", diagnostics), mutations, diagnostics, trace, code, ruleResult.failure());
                 }
             } else {
                 CustomAction custom = customActions.require(action);
@@ -122,7 +126,7 @@ public final class ActionRuntime {
             diagnostics.add(exception.toString());
             if (rollbackFailure != null) diagnostics.add("rollback failed: " + rollbackFailure);
             return ActionResult.failed(exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage(),
-                    mutations, diagnostics, trace, code);
+                    mutations, diagnostics, trace, code, exception);
         }
     }
 

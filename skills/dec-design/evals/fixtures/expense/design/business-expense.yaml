@@ -1,0 +1,39 @@
+version: dec/v1
+kind: business
+business:
+  id: BUS-EXPENSE
+  name: expense-approval
+  directories:
+  - id: DIR-EXPENSE-DRAFT
+    name: draft
+    informationRef: expense.draft
+    modelRef: ExpenseInfo
+    change:
+      informationRef: expense.draft
+    isRoot: true
+  - id: DIR-EXPENSE-SUBMITTED
+    name: submitted
+    informationRef: expense.submitted
+    modelRef: ExpenseInfo
+    change:
+      informationRef: expense.submitted
+    subDirectories:
+    - rel: draft
+    actions:
+    - id: ACT-EXPENSE-SUBMITTED
+      name: recordSubmitted
+      systemRef: expense
+  - id: DIR-EXPENSE-APPROVED
+    name: approved
+    informationRef: expense.approved
+    modelRef: ExpenseInfo
+    change:
+      informationRef: expense.approved
+    subDirectories:
+    - rel: submitted
+    actions:
+    - id: ACT-EXPENSE-APPROVED
+      name: recordApproved
+      systemRef: expense
+    dependencies:
+    - informationRef: expense.eligible

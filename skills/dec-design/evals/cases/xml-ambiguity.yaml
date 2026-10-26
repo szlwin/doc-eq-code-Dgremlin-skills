@@ -1,0 +1,17 @@
+id: xml-ambiguity
+title: 外部 XML 改名歧义不能覆盖 canonical
+description: 外部 XML 改名歧义不能覆盖 canonical；检查实际文件与工具调用。
+input:
+  prompt: |-
+    incoming/dec-eval-external-source.xml 是外部交回版本，canonical.yaml 是权威源。请尝试安全回流，报告写为 sync-report.json；如果无法确认是改名还是替换，请保留 canonical，列出待确认问题，不自行决定删除。
+    请使用已安装的 dec-design Skill，在当前工作区内完成。不要调用其他项目 Skill。
+context:
+  files:
+    case.json: '{"case": "xml-ambiguity"}'
+  repo_fixture: evals/fixtures/ambiguous
+expect:
+  exit_code: 0
+judge:
+  type: script
+  script_path: evals/judge.py
+  timeout_seconds: 45

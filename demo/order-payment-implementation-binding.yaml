@@ -182,7 +182,8 @@ bindings:
 - designId: ACT-START-PAY
   strategy: REUSE
   status: VERIFIED
-  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios.
+  notes: Executed by DEC Runtime and covered by local order-payment workflow scenarios. Payment DAO infrastructure failures
+    retain their cause and return HTTP 503; fault injection verifies rollback before and after partial payment writes.
   tests:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
@@ -190,6 +191,12 @@ bindings:
   - module: order-payment-app
     file: src/test/java/com/example/orderpayment/demo/OrderWorkflowTest.java
     symbol: OrderWorkflowTest#designDataSourcesDriveInheritedAndOverriddenRoutes
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
+    symbol: OrderApiTest#paymentConnectionFailureIsServiceUnavailableAndPreservesCause
+  - module: order-payment-app
+    file: src/test/java/com/example/orderpayment/demo/OrderApiTest.java
+    symbol: OrderApiTest#failureAfterPaymentWritesRollsBackBothPaymentRowsAndOrderState
   runtimeManaged: true
   runtimeCapability: Canonical RuleView/Information/Directory compilation and execution
 - designId: PROD-PAYMENT-INFO

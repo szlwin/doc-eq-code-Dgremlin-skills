@@ -17,8 +17,12 @@ These documents describe the current `doc-eq-code-Dgremlin-skills` repository, n
 | [Java framework in depth](java-framework.md) | Compilation and execution, DSL, transactions, listeners, data sources, queries, generators, and extension points |
 | [Order-payment example in depth](order-payment-demo.md) | Mapping design to code, the six APIs, success/failure branches, SMS, query examples, and limitations |
 | [Development and verification guide](development-and-verification.md) | Environment, generation, running, tests, Binding evidence, change checks, and troubleshooting |
+| [Production acceptance checklist](production-acceptance.md) | Pending acceptance requirements for payment and callback identity, idempotency, reliable delivery, real adapters, migrations, and load |
+| [Agent evaluation and quality improvement record (Chinese)](../cn/history/quality-improvements-2026-10-26.md) | Actual execution of seven scenarios, distinguishing direct passes, rescoring of saved artifacts, and execution errors |
 
 For snapshots of historical checks and fixes, see [History records](../cn/history/README.md).
+
+The Agent evaluations have been run. The [machine-readable results](../cn/history/quality-agent-evals-2026-10-26.json) retain the status of 11 case attempts and hashes of their original reports. Six cases passed directly; one passed when saved artifacts were rescored. The latest rerun stopped at a usage limit. This is neither an unexecuted harness nor a fresh run in which all seven cases passed.
 
 ## If this is your first encounter with this project
 

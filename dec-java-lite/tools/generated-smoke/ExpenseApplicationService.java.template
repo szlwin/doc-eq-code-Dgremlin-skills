@@ -1,0 +1,43 @@
+package com.example.expenses.app;
+
+import com.dec.lite.action.*;
+import com.dec.lite.directory.*;
+import com.dec.lite.information.ModelContext;
+import com.dec.lite.parser.DecXmlParser;
+import com.dec.lite.spring.SpringWorkflowTransactions;
+import com.example.expenses.expense.dao.ExpenseDao;
+import com.example.expenses.expense.entity.Expense;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import java.time.Instant;
+import java.util.Map;
+
+/** 手写接线：只负责加载、事务和持久化；资格判断和状态变化来自打包 XML。 */
+@Service
+public class ExpenseApplicationService @INTERFACE@ {
+    private final ExpenseDao dao;
+    private final DirectoryWorkflowRunner runner;
+    private final CustomActionRegistry actions;
+    private final PlatformTransactionManager transactions;
+    public ExpenseApplicationService(ExpenseDao dao, CustomActionRegistry actions, PlatformTransactionManager transactions) {
+        this.dao = dao; this.actions = actions; this.transactions = transactions;
+        this.runner = new DirectoryWorkflowRunner(new DecXmlParser().parseClasspath(
+                getClass().getClassLoader(), "dec/design-files.txt"), actions);
+    }
+    public void approve(Long id) {
+        var expense = dao.find(id);
+        var model = new ModelContext(Map.of("id", expense.getId(), "status", expense.getStatus(),
+                "amount", expense.getAmount(), "reviewerEnabled", expense.getReviewerEnabled()));
+        runner.advance(model, "draft", "approved", false, Map.of(),
+                (rule, invocation) -> { throw new AssertionError("费用场景没有 RuleView"); }, actions,
+                SpringWorkflowTransactions.runtimeManaged("approvalDb", transactions), Instant.MAX,
+                new DirectoryWorkflowRunner.ModelCodec<ModelContext>() {
+                    public ModelContext toModel(ModelContext value) { return value.copy(); }
+                    public ModelContext fromModel(ModelContext value) { return value.copy(); }
+                }, (result, execution, scope) -> {
+                    expense.setStatus(((Number) result.read("status")).intValue());
+                    dao.update(expense);
+                    return result;
+                });
+    }
+}

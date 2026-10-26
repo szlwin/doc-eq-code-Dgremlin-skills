@@ -1,0 +1,88 @@
+package com.example.expenses;
+
+import com.dec.lite.action.*;
+import com.dec.lite.directory.DirectoryWorkflowException;
+import com.dec.lite.parser.DecXmlParser;
+import com.example.expenses.app.ExpenseApplicationService;
+import com.example.expenses.expense.entity.Expense;
+import com.example.expenses.expense.mapper.ExpenseMapper;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.web.servlet.MockMvc;
+import java.math.BigDecimal;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest(classes = {GeneratedApplication.class, GeneratedWiringTest.Adapters.class}, properties = {
+    "spring.datasource.url=${DEC_MYSQL_JDBC_URL}", "spring.datasource.username=${DEC_MYSQL_USER:root}",
+    "spring.datasource.password=${DEC_MYSQL_PASSWORD:}",
+    "spring.autoconfigure.exclude=org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration"
+})
+@AutoConfigureMockMvc
+class GeneratedWiringTest {
+    @Autowired JdbcTemplate jdbc;
+    @Autowired ExpenseApplicationService service;
+    @Autowired ApplicationContext context;
+    @Autowired MockMvc mvc;
+
+    @BeforeEach void schema() {
+        jdbc.execute("CREATE TABLE IF NOT EXISTS generated_smoke_expense(id BIGINT PRIMARY KEY, status INT, amount DECIMAL(12,2), reviewer_enabled BOOLEAN)");
+        jdbc.execute("CREATE TABLE IF NOT EXISTS generated_smoke_audit(id BIGINT, stage VARCHAR(40), PRIMARY KEY(id,stage))");
+        jdbc.update("DELETE FROM generated_smoke_audit"); jdbc.update("DELETE FROM generated_smoke_expense");
+        jdbc.update("INSERT INTO generated_smoke_expense VALUES(1,0,800,true),(2,0,1200,true)");
+    }
+
+    @Test void startsLoadsPackagedDesignAndRunsGeneratedServiceWiring() throws Exception {
+        var design = new DecXmlParser().parseClasspath(getClass().getClassLoader(), "dec/design-files.txt");
+        assertEquals(@RESOURCE_COUNT@, design.getDocuments().size());
+        assertTrue(design.getDesignGaps().isEmpty());
+        assertEquals(1, context.getBeansOfType(ExpenseApplicationService.class).size());
+        @CALL@
+        assertEquals(2, jdbc.queryForObject("SELECT status FROM generated_smoke_expense WHERE id=1", Integer.class));
+        assertEquals(List.of("recordApproved", "recordSubmitted"), jdbc.queryForList(
+                "SELECT stage FROM generated_smoke_audit WHERE id=1 ORDER BY stage", String.class));
+        @GROUP_ASSERT@
+    }
+
+    @Test void failedEligibilityRollsBackTheEarlierCustomAction() {
+        assertThrows(DirectoryWorkflowException.class, () -> service.approve(2L));
+        assertEquals(0, jdbc.queryForObject("SELECT status FROM generated_smoke_expense WHERE id=2", Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM generated_smoke_audit WHERE id=2", Integer.class));
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class Adapters {
+        // 显式测试适配器实现生成的 Mapper 接口；SQL 表独立于 Demo，不冒充真实领域适配器。
+        @Bean ExpenseMapper expenseMapper(JdbcTemplate jdbc) {
+            return new ExpenseMapper() {
+                public Expense selectById(Long id) {
+                    return jdbc.queryForObject("SELECT * FROM generated_smoke_expense WHERE id=?", (rs, row) -> {
+                        var e = new Expense(); e.setId(rs.getInt("id")); e.setStatus(rs.getInt("status"));
+                        e.setAmount(rs.getBigDecimal("amount")); e.setReviewerEnabled(rs.getBoolean("reviewer_enabled")); return e;
+                    }, id);
+                }
+                public void insert(Expense e) { jdbc.update("INSERT INTO generated_smoke_expense VALUES(?,?,?,?)",
+                        e.getId(), e.getStatus(), e.getAmount(), e.getReviewerEnabled()); }
+                public void update(Expense e) { jdbc.update("UPDATE generated_smoke_expense SET status=? WHERE id=?", e.getStatus(), e.getId()); }
+            };
+        }
+        @Bean CustomAction submitted(JdbcTemplate jdbc) { return action("recordSubmitted", jdbc); }
+        @Bean CustomAction approved(JdbcTemplate jdbc) { return action("recordApproved", jdbc); }
+        private CustomAction action(String name, JdbcTemplate jdbc) {
+            return new CustomAction() {
+                public String name() { return name; }
+                public void execute(ActionExecutionContext context) {
+                    jdbc.update("INSERT INTO generated_smoke_audit VALUES(?,?)", context.model().read("id"), name);
+                }
+            };
+        }
+    }
+}

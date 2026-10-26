@@ -73,7 +73,7 @@ public final class DirectoryEngine {
             context.setCurrentDirectory(completedTarget);
             return new DirectoryExecutionResult(true, completedTarget, null, completedPlan, mutations, context.trace(), null);
         } catch (RuntimeException failure) {
-            RuntimeErrorCode code = failure instanceof RuntimeFailure typed ? typed.code() : RuntimeErrorCode.VALIDATION;
+            RuntimeErrorCode code = failure instanceof RuntimeFailure typed ? typed.code() : RuntimeErrorCode.ACTION;
             context.trace(start, DirectoryStage.TRANSACTION, "rollback state=" + context.session().transactions().state());
             context.trace(start, DirectoryStage.FAILED, failure.getMessage());
             SessionError error = context.recordError(code, target,
@@ -166,7 +166,7 @@ public final class DirectoryEngine {
                 if (result.status() != ActionStatus.SUCCESS) {
                     RuntimeErrorCode code = result.status() == ActionStatus.SKIPPED ? RuntimeErrorCode.DEPENDENCY :
                             result.failureCode() == null ? RuntimeErrorCode.ACTION : result.failureCode();
-                    throw new RuntimeFailure(code, action.id(), action.source(), "Action failed in " + directory + ": " + result.error() + " " + result.diagnostics(), null);
+                    throw new RuntimeFailure(code, action.id(), action.source(), "Action failed in " + directory + ": " + result.error() + " " + result.diagnostics(), result.cause());
                 }
                 context.session().afterAction(action, result);
                 context.actionCompleted();
@@ -182,6 +182,7 @@ public final class DirectoryEngine {
     private static void verify(InformationKey key, ModelContext model, DirectoryExecutionContext context, String directory) {
         RecognitionResult result = context.information().evaluate(key, model);
         context.trace(directory, DirectoryStage.VERIFYING_INFORMATION, key + "=" + result.status() + " evidence=" + result.evidence());
+        if (result.failure() != null) throw result.failure();
         if (result.status() != RecognitionResult.Status.TRUE) throw new RuntimeFailure(RuntimeErrorCode.VALIDATION, directory, null, "Directory Information is not TRUE: " + directory + " -> " + key + " (" + result.status() + ")", null);
     }
 
@@ -191,6 +192,7 @@ public final class DirectoryEngine {
             if (!edge.parent().equals(resultDirectory)) continue;
             RecognitionResult result = context.information().evaluate(edge.informationRef(), model);
             context.trace(resultDirectory, DirectoryStage.CLASSIFYING, edge.target() + "=" + result.status());
+            if (result.failure() != null) throw result.failure();
             if (result.status() == RecognitionResult.Status.TRUE) matches.add(edge.target());
             else if (result.status() == RecognitionResult.Status.ERROR || result.status() == RecognitionResult.Status.UNRESOLVED)
                 throw new RuntimeFailure(RuntimeErrorCode.CLASSIFICATION, resultDirectory, "case Information is " + result.status() + ": " + edge.informationRef());

@@ -43,7 +43,7 @@ public class SubmitOrderRequest {
     }
     @AssertTrue(message = "status 与 type 组合不满足接口约束")
     public boolean isDecExpressionValid0() {
-        return (Objects.equals(this.status == null ? null : this.status.getValue(), 1) && Objects.equals(this.type == null ? null : this.type.getValue(), 1));
+        return (com.dec.lite.data.DecValueEquality.equal(this.status == null ? null : this.status.getValue(), new java.math.BigDecimal("1")) && com.dec.lite.data.DecValueEquality.equal(this.type == null ? null : this.type.getValue(), new java.math.BigDecimal("1")));
     }
 
 }

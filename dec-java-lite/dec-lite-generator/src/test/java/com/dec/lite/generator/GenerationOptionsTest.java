@@ -16,6 +16,24 @@ import static org.junit.jupiter.api.Assertions.*;
 class GenerationOptionsTest {
     @TempDir Path temp;
 
+    @Test void previewShowsRegroupingChangesAndLeavesAllOutputUntouched() throws Exception {
+        var generator = new GeneratorPipeline(); var project = design(); var output = temp.resolve("preview");
+        generator.generate(project, output, "example.app");
+        Files.writeString(output.resolve("handwritten.txt"), "keep");
+        var before = snapshot(output);
+        var options = new GenerationOptions(Map.of("API-LIST", "Queries", "API-START", "Payments"));
+        var plan = generator.preview(project, output, "example.app", options);
+        assertTrue(plan.deleted().contains("src/main/java/example/app/order/service/OrdersService.java"));
+        assertTrue(plan.created().contains("src/main/java/example/app/order/service/PaymentsService.java"));
+        assertTrue(plan.updated().contains("DEC-DESIGN-INDEX.md"));
+        assertTrue(plan.unchanged().contains("pom.xml"));
+        assertEquals(List.of("handwritten.txt"), plan.preserved());
+        assertTrue(plan.conflicts().isEmpty());
+        assertEquals(before, snapshot(output));
+        generator.generate(project, output, "example.app", options);
+        assertTrue(generator.preview(project, output, "example.app", options).updated().isEmpty());
+    }
+
     @Test void demoSubresourceOverridePreservesAllDtosAndDesignProjections() throws Exception {
         Path demo = Path.of("..", "..", "demo");
         var project = new DecYamlParser().parse(demo.resolve("order-payment-yaml"));
@@ -91,6 +109,46 @@ class GenerationOptionsTest {
         }
         // Intentional merge requires every member of the colliding class to opt in.
         generator.generate(project, output, "example.app", new GenerationOptions(Map.of("API-LIST", "Orders", "API-START", "Orders")));
+    }
+
+    @Test void regroupingRejectsEveryUnmanagedCollisionWithoutChangingAnyOutput() throws Exception {
+        Path demo = Path.of("..", "..", "demo");
+        var project = new DecYamlParser().parse(demo.resolve("order-payment-yaml"));
+        var generator = new GeneratorPipeline();
+        Path output = temp.resolve("collision");
+        generator.generate(project, output, "com.example.orderpayment");
+        String service = "src/main/java/com/example/orderpayment/order/service/OrderPaymentsService.java";
+        String controller = "src/main/java/com/example/orderpayment/order/controller/OrderPaymentsController.java";
+        Files.writeString(output.resolve(service), "handwritten service");
+        Files.writeString(output.resolve(controller), "handwritten controller");
+        var before = snapshot(output);
+        var options = GenerationOptions.load(demo.resolve("order-payment-generation.properties"));
+        var failure = assertThrows(GenerationException.class,
+                () -> generator.generate(project, output, "com.example.orderpayment", options));
+        assertTrue(failure.getMessage().contains(service));
+        assertTrue(failure.getMessage().contains(controller));
+        assertEquals(before, snapshot(output));
+    }
+
+    @Test void lateOutputObstructionLeavesOldGenerationAndManifestIntact() throws Exception {
+        var project = design(); var generator = new GeneratorPipeline(); Path output = temp.resolve("obstructed");
+        generator.generate(project, output, "example.app");
+        // This path is emitted after the Java templates, so eager cleanup/writes lose old output.
+        Files.createDirectory(output.resolve("dec-generation-options.properties"));
+        Files.writeString(output.resolve("dec-generation-options.properties/keep.txt"), "keep");
+        var before = snapshot(output);
+        assertThrows(GenerationException.class, () -> generator.generate(project, output, "example.app",
+                new GenerationOptions(Map.of("API-START", "Payments"))));
+        assertEquals(before, snapshot(output));
+    }
+
+    private Map<String, String> snapshot(Path output) throws Exception {
+        Map<String, String> result = new java.util.TreeMap<>();
+        try (var paths = Files.walk(output)) {
+            for (Path file : paths.filter(Files::isRegularFile).toList())
+                result.put(output.relativize(file).toString(), Files.readString(file));
+        }
+        return result;
     }
 
     @Test void rejectsMethodCollisionInsideConfiguredGroup() throws Exception {

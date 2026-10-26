@@ -5,7 +5,8 @@ public final class DirectoryWorkflowException extends RuntimeException {
     private final DirectoryExecutionResult execution;
 
     public DirectoryWorkflowException(String target, DirectoryExecutionResult execution) {
-        super("DEC workflow " + target + " failed: " + execution.error());
+        super("DEC workflow " + target + " failed: " + execution.error(),
+                execution.errorDetail() == null ? null : execution.errorDetail().cause());
         this.execution = execution;
     }
 

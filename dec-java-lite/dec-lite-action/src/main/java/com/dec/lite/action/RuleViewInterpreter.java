@@ -17,12 +17,12 @@ public final class RuleViewInterpreter {
                 result = evaluate(rule, invocation, variables);
                 if (result == null) result = RecognitionResult.error(invocation.context().version(), "Rule returned null: " + rule.name());
             } catch (SecurityException denied) {
-                result = RecognitionResult.error(invocation.context().version(), "ACCESS_DENIED " + rule.id() + ": " + denied.getMessage());
+                result = RecognitionResult.error(invocation.context().version(), "ACCESS_DENIED " + rule.id() + ": " + denied.getMessage(), denied);
             } catch (RuleExpression.MissingValue missing) {
                 result = RecognitionResult.unresolved(invocation.context().version(), missing.getMessage());
             } catch (RuntimeException failure) {
                 result = RecognitionResult.error(invocation.context().version(), "Rule " + rule.id() + " failed: "
-                        + failure.getClass().getSimpleName() + ": " + Objects.toString(failure.getMessage(), "no detail"));
+                        + failure.getClass().getSimpleName() + ": " + Objects.toString(failure.getMessage(), "no detail"), failure);
             }
             if (result.status() != RecognitionResult.Status.TRUE) return withError(rule, result);
         }
@@ -84,6 +84,6 @@ public final class RuleViewInterpreter {
         var error = rule.error();
         errors.add("Rule " + rule.id() + " [" + error.code() + "] " + error.message()
                 + (error.level() == null ? "" : " (level=" + error.level() + ")"));
-        return new RecognitionResult(result.status(), result.evidence(), result.dependencies(), errors, result.modelVersion(), result.trace());
+        return new RecognitionResult(result.status(), result.evidence(), result.dependencies(), errors, result.modelVersion(), result.trace(), result.failure());
     }
 }

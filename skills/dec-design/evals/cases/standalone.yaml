@@ -1,0 +1,16 @@
+id: standalone
+title: 独立安装后可完成最小设计闭环
+description: 独立安装后可完成最小设计闭环；检查实际文件与工具调用。
+input:
+  prompt: |-
+    仅使用当前安装的 Skill，为公共枚举 expenseStatus 建立 design/enum.yaml：id=ENUM-EXPENSE-STATUS，值0名称draft、值1名称submitted、值2名称approved，均为整数值。请校验并导出到 export/；不要依赖主仓库路径或另一 Skill。
+    请使用已安装的 dec-design Skill，在当前工作区内完成。不要调用其他项目 Skill。
+context:
+  files:
+    case.json: '{"case": "standalone"}'
+expect:
+  exit_code: 0
+judge:
+  type: script
+  script_path: evals/judge.py
+  timeout_seconds: 45

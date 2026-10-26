@@ -32,6 +32,10 @@ jobs:
         python skills/dec-implementation/scripts/check_manifest.py
         python -m unittest discover -s skills/dec-design/tests -p 'test_*.py'
         python -m unittest discover -s skills/dec-implementation/tests -p 'test_*.py'
+        python skills/dec-design/evals/check_manifest.py
+        python skills/dec-implementation/evals/check_manifest.py
+        python -m unittest discover -s skills/dec-design/evals -p 'test_*.py'
+        python -m unittest discover -s skills/dec-implementation/evals -p 'test_*.py'
     - name: Validate canonical demo and binding
       run: |-
         python skills/dec-design/scripts/validate_dec_yaml.py demo/order-payment-yaml
@@ -68,6 +72,18 @@ jobs:
         )
         java -jar "$dec_cli_jar" generate --yaml demo/order-payment-yaml --output /tmp/dec-configured-demo --base-package com.example.orderpayment --generation-config demo/order-payment-generation.properties
         ./dec-java-lite/mvnw -B -f /tmp/dec-configured-demo/pom.xml test
+    - name: Verify generated Spring wiring, API regrouping and packaged XML
+      env:
+        DEC_MYSQL_JDBC_URL: jdbc:mysql://127.0.0.1:3306/dec_test?allowPublicKeyRetrieval=true&useSSL=false
+        DEC_MYSQL_USER: root
+        DEC_MYSQL_PASSWORD: dec_ci_local
+      run: python3 dec-java-lite/tools/verify_generated_projects.py
+    - name: Archive generated project smoke evidence
+      uses: actions/upload-artifact@v4
+      with:
+        name: dec-generated-project-smoke
+        path: dec-java-lite/target/generated-project-smoke
+        if-no-files-found: error
     - name: Test demo and verify current Binding evidence
       env:
         DEC_DB_URL: jdbc:mysql://127.0.0.1:3306/dec_test?allowPublicKeyRetrieval=true&useSSL=false
@@ -75,7 +91,7 @@ jobs:
         DEC_DB_PASSWORD: dec_ci_local
       run: |-
         python skills/dec-implementation/scripts/run_binding_verification.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --input ../../dec-java-lite --input ../../skills/dec-implementation --input ../order-payment-generation.properties -- ../../dec-java-lite/mvnw -B clean test
-        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-complete --require-evidence
+        python skills/dec-implementation/scripts/validate_binding.py --design demo/order-payment-yaml --binding demo/order-payment-implementation-binding.yaml --project-root demo/order-payment-app --require-ready
     - name: Archive Binding verification evidence
       uses: actions/upload-artifact@v4
       with:
@@ -84,3 +100,16 @@ jobs:
           demo/order-payment-app/target/dec-binding-evidence.json
           demo/order-payment-app/target/surefire-reports/TEST-*.xml
         if-no-files-found: error
+  generator-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: maven
+    - name: Verify Windows manifest regeneration and ownership protection
+      shell: pwsh
+      run: .\dec-java-lite\mvnw.cmd -B -f dec-java-lite/pom.xml -pl dec-lite-generator -am test "-Dtest=GeneratedProjectWriterTest,GenerationOptionsTest"
+        "-Dsurefire.failIfNoSpecifiedTests=false"

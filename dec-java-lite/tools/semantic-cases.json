@@ -1,0 +1,13 @@
+[
+  {"name":"spaces","expression":"user.name = 'a  b'","yes":{"user":{"name":"a  b"}},"no":{"user":{"name":"a b"}},"coverage":"FULL"},
+  {"name":"keywords","expression":"user.name = 'a and b or not c'","yes":{"user":{"name":"a and b or not c"}},"no":{"user":{"name":"c"}},"coverage":"FULL"},
+  {"name":"decimal","expression":"totalAmount = 12.50","yes":{"totalAmount":12.5},"no":{"totalAmount":12.51},"coverage":"FULL"},
+  {"name":"negative","expression":"status = -1","yes":{"status":-1},"no":{"status":1},"coverage":"FULL"},
+  {"name":"null","expression":"user.name = null","yes":{"user":{"name":null}},"no":{"user":{"name":"null"}},"coverage":"FULL"},
+  {"name":"enum-value","expression":"status = 3","yes":{"status":3},"no":{"status":"3"},"coverage":"FULL"},
+  {"name":"every","expression":"every(orderDetailList, status = 2)","yes":{"orderDetailList":[{"status":2},{"status":2}]},"no":{"orderDetailList":[{"status":2},{"status":1}]},"coverage":"RUNTIME_ONLY"},
+  {"name":"any","expression":"any(orderDetailList, status = 2)","yes":{"orderDetailList":[{"status":1},{"status":2}]},"no":{"orderDetailList":[]},"coverage":"RUNTIME_ONLY"},
+  {"name":"empty-every","expression":"every(orderDetailList, status = 2)","yes":{"orderDetailList":[]},"no":{"orderDetailList":[{"status":1}]},"coverage":"RUNTIME_ONLY"},
+  {"name":"or","expression":"status = 2 or user.name = 'a  b'","yes":{"status":1,"user":{"name":"a  b"}},"no":{"status":1,"user":{"name":"a b"}},"coverage":"RUNTIME_ONLY"},
+  {"name":"partial","expression":"status = 2 and every(orderDetailList, status = 2)","yes":{"status":2,"orderDetailList":[{"status":2}]},"no":{"status":2,"orderDetailList":[{"status":1}]},"coverage":"PARTIAL"}
+]

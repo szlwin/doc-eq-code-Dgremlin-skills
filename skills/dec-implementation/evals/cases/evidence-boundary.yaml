@@ -1,0 +1,17 @@
+id: evidence-boundary
+title: 独立消费设计并区分映射与验证
+description: 独立消费设计并区分映射与验证；检查实际文件与工具调用。
+input:
+  prompt: |-
+    独立读取 design/，为 ACT-EXPENSE-SUBMITTED 和 ACT-EXPENSE-APPROVED 创建 implementation-binding.yaml 草稿并校验。本次没有 Runtime、实现类和真实测试，仅建立计划；不能创建假测试报告或标记 VERIFIED。请实际调用 --require-ready 验证发布就绪门禁会拒绝此草稿，保留校验结果，不要通过放宽门禁交付。
+    请使用已安装的 dec-implementation Skill，在当前工作区内完成。不要调用其他项目 Skill。
+context:
+  files:
+    case.json: '{"case": "evidence-boundary"}'
+  repo_fixture: evals/fixtures/expense
+expect:
+  exit_code: 0
+judge:
+  type: script
+  script_path: evals/judge.py
+  timeout_seconds: 45

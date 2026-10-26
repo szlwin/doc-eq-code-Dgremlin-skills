@@ -25,6 +25,16 @@ public final class GeneratorPipeline {
     }
 
     public GenerationResult generate(DecProject project, Path output, String basePackage, GenerationOptions options) {
+        var plan = render(project, output, basePackage, options, false);
+        return new GenerationResult(plan.output(), plan.files());
+    }
+
+    /** Render and validate without creating, deleting or modifying anything in output. */
+    public GenerationPlan preview(DecProject project, Path output, String basePackage, GenerationOptions options) {
+        return render(project, output, basePackage, options, true);
+    }
+
+    private GenerationPlan render(DecProject project, Path output, String basePackage, GenerationOptions options, boolean dryRun) {
         java.util.Objects.requireNonNull(options, "options");
         if (project == null) throw new IllegalArgumentException("project is required");
         if (output == null) throw new IllegalArgumentException("output is required");
@@ -41,8 +51,10 @@ public final class GeneratorPipeline {
         GeneratedProjectWriter writer = new GeneratedProjectWriter();
         List<String> designResources = GeneratedProjectWriter.designResources(project);
         GeneratedProjectWriter.prepareOutput(target);
+        Path destination = target;
         List<String> generated = new ArrayList<>();
-        try {
+        try (var staging = GeneratedProjectWriter.staging()) {
+            target = staging.path();
             writer.writeTemplate(target, "pom.xml.ftl", context.projectModel(), "pom.xml", generated);
             writer.writeTemplate(target, "datasources.properties.ftl", Map.of("dataSources", context.dataSources()),
                     "src/main/resources/dec/datasources.properties", generated);
@@ -89,11 +101,16 @@ public final class GeneratorPipeline {
             GeneratedProjectWriter.writeDesignManifest(target, designResources, generated);
             GeneratedProjectWriter.writeOptions(target, options, generated);
             GeneratedProjectWriter.writeManifest(target, generated);
+            var plan = GeneratedProjectWriter.plan(target, destination, generated);
+            if (!dryRun) GeneratedProjectWriter.commit(target, destination, generated);
+            return plan;
         } catch (IOException | TemplateException e) {
-            throw new GenerationException("cannot generate Java project in " + target, e);
+            throw new GenerationException("cannot generate Java project in " + destination, e);
         }
-        return new GenerationResult(target, List.copyOf(generated));
     }
 
     public record GenerationResult(Path output, List<String> files) { }
+    public record GenerationPlan(Path output, List<String> files, List<String> created, List<String> updated,
+                                 List<String> unchanged, List<String> deleted, List<String> preserved,
+                                 List<String> conflicts) { }
 }

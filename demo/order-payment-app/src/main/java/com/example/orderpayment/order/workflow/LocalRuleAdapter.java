@@ -30,6 +30,18 @@ final class LocalRuleAdapter implements DataOperationAdapter {
     }
 
     @Override public RecognitionResult execute(CompiledRule rule, RuleViewRegistry.Invocation invocation) {
+        try {
+            return executeRule(rule, invocation);
+        } catch (org.springframework.dao.DuplicateKeyException | org.springframework.dao.ConcurrencyFailureException conflict) {
+            throw new com.dec.lite.runtime.RuntimeFailure(com.dec.lite.runtime.RuntimeErrorCode.CONFLICT,
+                    rule.id(), null, "Data conflict in " + rule.id(), conflict);
+        } catch (org.springframework.dao.DataAccessException unavailable) {
+            throw new com.dec.lite.runtime.RuntimeFailure(com.dec.lite.runtime.RuntimeErrorCode.INFRASTRUCTURE,
+                    rule.id(), null, "DataSource failure in " + rule.id(), unavailable);
+        }
+    }
+
+    private RecognitionResult executeRule(CompiledRule rule, RuleViewRegistry.Invocation invocation) {
         String expected = switch (rule.id()) {
             case "RULE-INSERT-PAY" -> "paymentService";
             case "RULE-RECORD-PAY-ERROR" -> "mongo1";

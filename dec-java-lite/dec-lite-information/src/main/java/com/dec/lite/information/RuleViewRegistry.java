@@ -131,9 +131,9 @@ public final class RuleViewRegistry {
             RecognitionResult result = evaluator.evaluate(new Invocation(key, information, context, payload, mutations, produced, transaction, dataSourceOverride, businessDataSource));
             return result == null ? RecognitionResult.error(context.version(), "RuleView evaluator returned null for " + key) : result;
         } catch (SecurityException exception) {
-            return RecognitionResult.error(context.version(), "ACCESS_DENIED " + key + ": " + exception.getMessage());
+            return RecognitionResult.error(context.version(), "ACCESS_DENIED " + key + ": " + exception.getMessage(), exception);
         } catch (RuntimeException exception) {
-            return RecognitionResult.error(context.version(), "RuleView evaluator failed for " + key + ": " + exception.getMessage());
+            return RecognitionResult.error(context.version(), "RuleView evaluator failed for " + key + ": " + exception.getMessage(), exception);
         }
     }
 }

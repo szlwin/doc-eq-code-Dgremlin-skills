@@ -11,6 +11,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RuleViewRegistryTest {
+    @Test void typedFailuresAndCausesSurviveRecognitionCompositionAndTracing() {
+        var cause = new IllegalStateException("connection unavailable");
+        var failure = new com.dec.lite.runtime.RuntimeFailure(com.dec.lite.runtime.RuntimeErrorCode.INFRASTRUCTURE,
+                "RULE-READ", null, "read failed", cause);
+        var registry = new RuleViewRegistry().register("order", "OrderInfo", "read", ignored -> { throw failure; });
+        var context = new ModelContext(Map.of());
+        var result = registry.invoke("order", "read", context, Map.of(), new MutationSet());
+        var key = InformationKey.parse("order.available");
+        var combined = InformationExpression.not(InformationExpression.reference(key)).evaluate(ignored -> result, context.version())
+                .withTrace(new TraceEvent(key, "test", RecognitionResult.Status.ERROR, "test"));
+        assertEquals(RecognitionResult.Status.ERROR, combined.status());
+        assertSame(failure, combined.failure());
+        assertSame(cause, combined.failure().getCause());
+    }
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3})
     void resolvesWithinSystemAndForwardsInvocationState(int overload) {

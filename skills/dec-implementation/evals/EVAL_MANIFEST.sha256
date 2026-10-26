@@ -1,0 +1,15 @@
+8cf39bf58cf03e359b74d4c8238c79f8438ff787af513895661143d4bd7c4859  ./README.md
+4f0cbb3e439612c0c6b8193d4d18a5dad44a4066a6384c030e82dbf59224ce0b  ./cases/design-gap.yaml
+65fbba0259c325ce315de93802c45940c9d2ae3c70688ae1ed64d4f9d50f9e93  ./cases/evidence-boundary.yaml
+0e2bb12a3c7b48045398c6cc475a6c19f87c9c18cd3879fd950084a23d3e0caa  ./cases/runtime-gap.yaml
+ba1e9fc76ea7d98fcceb34c07d6502d51d716eb5fa5bacfc7333a30e4d7c717f  ./check_manifest.py
+fb6c73d01b0f88e58eebd3bde348415525f5d3f23db037ee49a0dae559990824  ./eval.yaml
+9544400789316613e8a8a42b39a98eb66fbfc5ab2a16e86d2e51459394d8f156  ./fixtures/expense/RUNTIME.md
+45ffb4cc002c24fdee13d6092e76faa0259f6b438e0bc5b5a05cc25c200e1278  ./fixtures/expense/design/business-expense.yaml
+bfae0a810d58903369a1df99d5db489b3aa485a881cb9428b8d8af4dda41a463  ./fixtures/expense/design/data-expense.yaml
+bcb1180e0f1e6a1b67ec1cc6e550918772c3994ad96ee301d492e888be5381be  ./fixtures/expense/design/orm-config.yaml
+2219dbd3ceb0552a79a1f8e1263dd224daa252403f1e3f5ba8626d2aea9514b8  ./fixtures/expense/design/systems-expense.yaml
+66468b46d503a1865d74d0bb25e851825dd474e75d4724729b0821bd75c7ec5a  ./fixtures/expense/design/view-expense.yaml
+67fa28a01463d55877193cb9fca74a909de9e081b3fb6aa9b23a0287b572486c  ./judge.py
+6258e30b9c055a17ce5449fdf630f3579ddfae81fae7fd771d7793a279527c4b  ./test_judge.py
+571a9074c2660996e173308d8fa32694f763562024156236e269f7d3c8144ac4  ./test_manifest.py

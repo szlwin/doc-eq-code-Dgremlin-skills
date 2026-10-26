@@ -136,7 +136,11 @@ public final class DirectoryWorkflowRunner {
         Map<String, RecognitionResult.Status> states = new LinkedHashMap<>();
         directory.graph().directories().values().stream().filter(node -> !node.result())
                 .sorted(java.util.Comparator.comparing(DirectoryDefinition::name))
-                .forEach(node -> states.put(node.name(), engine.evaluate(node.informationRef(), model).status()));
+                .forEach(node -> {
+                    RecognitionResult result = engine.evaluate(node.informationRef(), model);
+                    if (result.failure() != null) throw result.failure();
+                    states.put(node.name(), result.status());
+                });
         var matches = states.entrySet().stream()
                 .filter(entry -> entry.getValue() == RecognitionResult.Status.TRUE)
                 .map(Map.Entry::getKey).toList();

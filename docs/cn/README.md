@@ -18,8 +18,12 @@
 | [订单支付示例详解](order-payment-demo.md) | 设计到代码映射、六个 API、成功/失败分支、短信、查询示例及限制 |
 | [文档即编码(六)：与AI的结合](doc-eq-code-6-ai.md) | 设计文档与 AI 协作的优势、订单支付 Demo 讲解和 HTML 阅读图 |
 | [开发与验证手册](development-and-verification.md) | 环境、生成、运行、测试、Binding 证据、变更检查与故障定位 |
+| [生产验收清单](production-acceptance.md) | 支付尝试与回调身份、幂等、可靠投递、真实适配器、迁移及负载的待验收契约 |
+| [Agent 评测与质量增强记录](history/quality-improvements-2026-10-26.md) | 七个场景的实际执行记录，区分直接通过、历史产物重评及运行错误 |
 
 历史检查与修复快照见 [历史记录](history/README.md)。
+
+Agent 评测已经实际执行；[机器可读结果摘要](history/quality-agent-evals-2026-10-26.json)保留了 11 次用例尝试的状态及原始报告摘要。当前记录为 6 项直接通过、1 项历史产物重评通过，最新重跑因用量限制中止；它不是未执行的 harness，也不是七项全新运行全部通过。
 
 ## 如果第一次接触这个项目
 

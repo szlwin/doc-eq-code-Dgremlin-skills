@@ -4,7 +4,10 @@ DEC `dec/v1` 的 Java 21 实现，包含 YAML/XML 前端、Information/Action/Di
 
 ## 快速开始
 
+需要 JDK 21。跨实现语义回归还需要 Python 3 和设计 Skill 的依赖；以下命令在 `dec-java-lite/` 内执行。测试默认调用 `python3`，可用环境变量 `PYTHON` 指定其他 Python 可执行文件。
+
 ```sh
+python3 -m pip install -r ../skills/dec-design/requirements.txt
 ./mvnw clean verify
 ./mvnw install -DskipTests
 java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar inspect --yaml fixtures/mix
@@ -15,7 +18,7 @@ java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
 ./mvnw -f examples/order-service/generated/pom.xml test
 ```
 
-`inspect` 输出稳定 Design ID 与语义 digest。`information`、`action`、`directory`、`query` 命令也接受 `--yaml` 或 `--xml`。生成目录带 `.dec-generated` 和 manifest；不要手工修改生成文件，`GeneratorPipelineTest` 会检查漂移。
+`inspect` 输出稳定 Design ID 与语义 digest。`information`、`action`、`directory`、`query` 命令也接受 `--yaml` 或 `--xml`。生成目录带 `.dec-generated` 和 manifest；生成器先暂存渲染，再拒绝覆盖旧 manifest 之外的现存目标文件，并在提交失败时尝试恢复旧输出。不要并发生成到同一目录，也不要手工修改生成文件，`GeneratorPipelineTest` 会检查漂移。
 
 生成的 Java 注释和 `DEC-DESIGN-INDEX.md` 同时记录 `Design ID`、YAML 节点路径和派生 XML 节点路径，便于从设计反查代码。通用 CRUD DAO/Mapper 与 Directory Workflow Runner 位于 Runtime，应用只需实现类型绑定、DataSource 适配和业务模型转换。由 DAO/Mapper 组成的 DataSource Store 应由 Factory 组装，Store 保持普通对象，不作为 Spring `@Component`，也不在 Store 内使用对象锁。
 生成器按每个设计节点的 `system` 字段组织 Java 包：`<base-package>.<system>.<layer>`；缺少 `system` 的节点使用 `common`。Enum 根据其 Data 归属系统进入对应的 `<system>.enums`，被多个系统的 Data 共同拥有时才进入 `common.enums`。
@@ -35,3 +38,5 @@ java -jar dec-lite-cli/target/dec-lite-cli-0.1.0.jar generate \
 
 
 应用层事务接入通过 `DirectoryWorkflowRunner` 的显式 `WorkflowTransaction` 模式完成；`dec-lite-spring` 提供 Spring 外部托管与 Runtime 自管桥接。完成回调在提交前写回并校验，详见 [Directory Runtime](docs/directory-runtime.md)。
+
+生成器支持 `generate --dry-run` 预览变更与冲突；覆盖、拒绝、恢复及 API 分组迁移边界见[所有权契约](docs/generator-ownership.md)。生成工程启动与接线回归命令见[开发与验证](../docs/cn/development-and-verification.md)。

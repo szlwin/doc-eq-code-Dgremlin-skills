@@ -434,13 +434,15 @@ class OrderWorkflowTest {
     private void assertListenerFailureRollsBack(boolean before, long orderId) {
         workflow.submitOrder(request(1), orderId);
         workflow.startPayment(orderId);
+        var listenerFailure = new IllegalStateException("listener failed");
         org.mockito.stubbing.Answer<Object> failure = invocation -> {
-            jdbc.update("UPDATE dec_demo_order_info SET remark = ? WHERE id = ?", "listener update", orderId);
-            throw new IllegalStateException("listener failed");
+            assertEquals(1, jdbc.update("UPDATE dec_demo_order_info SET o_remark = ? WHERE o_id = ?", "listener update", orderId));
+            throw listenerFailure;
         };
         if (before) doAnswer(failure).when(flowListener).before(argThat(OrderWorkflowTest::smsEvent));
         else doAnswer(failure).when(flowListener).after(argThat(OrderWorkflowTest::smsEvent), any());
-        assertConflict(() -> workflow.receivePaymentResult(orderId, PayResultCode.ERROR));
+        var response = assertInternalFailure(() -> workflow.receivePaymentResult(orderId, PayResultCode.ERROR));
+        assertSame(listenerFailure, rootCause(response));
         var persisted = workflow.getOrder(orderId);
         assertEquals(OrderStatus.PAYING, persisted.getStatus());
         assertNull(persisted.getPayInfo().getResultCode());
@@ -518,7 +520,9 @@ class OrderWorkflowTest {
         workflow.submitOrder(request(1), 144L); workflow.startPayment(144L);
         var selected = new java.util.HashMap<>(OrderWorkflow.DEFAULT_DATA_SOURCES); selected.put("data1", "alternate");
         adapterProbe.fail = true;
-        assertConflict(() -> workflow.receivePaymentResult(144L, PayResultCode.ERROR, selected));
+        var response = assertInternalFailure(() -> workflow.receivePaymentResult(144L, PayResultCode.ERROR, selected));
+        assertInstanceOf(IllegalStateException.class, rootCause(response));
+        assertEquals("alternative adapter failed after write", rootCause(response).getMessage());
         assertEquals(List.of("RULE-RECEIVE-PAY-RESULT"), adapterProbe.rules);
         assertEquals(OrderStatus.PAYING, workflow.getOrder(144L).getStatus());
         assertNull(workflow.getOrder(144L).getPayInfo().getResultCode());
@@ -566,6 +570,17 @@ class OrderWorkflowTest {
 
     private static void assertConflict(org.junit.jupiter.api.function.Executable command) {
         assertEquals(409, assertThrows(ResponseStatusException.class, command).getStatusCode().value());
+    }
+
+    private static ResponseStatusException assertInternalFailure(org.junit.jupiter.api.function.Executable command) {
+        var failure = assertThrows(ResponseStatusException.class, command);
+        assertEquals(500, failure.getStatusCode().value());
+        return failure;
+    }
+
+    private static Throwable rootCause(Throwable failure) {
+        while (failure.getCause() != null) failure = failure.getCause();
+        return failure;
     }
 
     private int paymentErrorCount(int orderId) {

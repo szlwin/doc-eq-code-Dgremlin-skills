@@ -85,7 +85,7 @@ public final class InformationEngine {
     }
 
     private RecognitionResult withDependency(InformationKey key, RecognitionResult result) {
-        return new RecognitionResult(result.status(), result.evidence(), compilation().dependencies().getOrDefault(key, Set.of()).stream().sorted().toList(), result.errors(), result.modelVersion(), result.trace());
+        return new RecognitionResult(result.status(), result.evidence(), compilation().dependencies().getOrDefault(key, Set.of()).stream().sorted().toList(), result.errors(), result.modelVersion(), result.trace(), result.failure());
     }
 
     private static void applyChanges(String source, ModelContext context, MutationSet mutations) {

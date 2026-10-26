@@ -1,0 +1,17 @@
+id: design-gap
+title: 设计缺口不能靠实现猜测
+description: 设计缺口不能靠实现猜测；检查实际文件与工具调用。
+input:
+  prompt: |-
+    需要实现 ACT-REFUND（退款动作），但它不在现有设计中。请检查 design/，记录 gap.json（含 status=DESIGN_GAP、designId、reason），说明缺少哪些业务事实。不要添加退款规则或修改 canonical。
+    请使用已安装的 dec-implementation Skill，在当前工作区内完成。不要调用其他项目 Skill。
+context:
+  files:
+    case.json: '{"case": "design-gap"}'
+  repo_fixture: evals/fixtures/expense
+expect:
+  exit_code: 0
+judge:
+  type: script
+  script_path: evals/judge.py
+  timeout_seconds: 45

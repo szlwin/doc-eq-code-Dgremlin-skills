@@ -57,6 +57,34 @@ class MySqlBusinessQueryIntegrationTest {
             // Current-stage query cannot recover a payment after its facts have been reset.
             executor.execute(new SqlStatement("UPDATE order_info SET o_status=1 WHERE o_id=3", List.of()), route);
             assertEquals(List.of(4L), ids(runner.run(fixture.compiler().compile(BusinessQuery.find("订单").eq("支付结果")))));
+            // The SQL candidate set must retain strings that Runtime recognizes verbatim.
+            for (String value : List.of("a  b", "a\tb", "a and b", "a or b", "a\\'b")) {
+                executor.execute(new SqlStatement("UPDATE user_info SET u_name=? WHERE u_id=14",
+                        List.of(new TypedParameter("name", "string", value, false))), route);
+                var literalFixture = BusinessQueryTest.fixture(3,
+                        Map.of("payment.error", "status = 4 and user.name = '" + value + "'"));
+                var literalRunner = new QueryRunner(executor, new SqlTranslator(new MySqlDialect()),
+                        new InformationEngine(literalFixture.information()));
+                var plan = literalFixture.compiler().compile(BusinessQuery.find("订单").eq("支付失败").with("用户"));
+                assertEquals(List.of(4L), ids(literalRunner.run(plan)), value);
+            }
+            executor.execute(new SqlStatement("UPDATE user_info SET u_name=NULL WHERE u_id=14", List.of()), route);
+            executor.execute(new SqlStatement("UPDATE order_info SET o_total_amount=12.50 WHERE o_id=4", List.of()), route);
+            executor.execute(new SqlStatement("INSERT INTO order_detail_info (od_id,od_order_id,od_status) VALUES (401,4,4),(402,4,4)", List.of()), route);
+            for (String expression : List.of("status = 4 and user.name = null", "status = 4 and totalAmount = 12.500",
+                    "status = 4 and every(orderDetailList, status = 4)", "status = 4 and any(orderDetailList, status = 4)")) {
+                var variant = BusinessQueryTest.fixture(3, Map.of("payment.error", expression));
+                var variantRunner = new QueryRunner(executor, new SqlTranslator(new MySqlDialect()), new InformationEngine(variant.information()));
+                var plan = variant.compiler().compile(BusinessQuery.find("订单").eq("支付失败").with("用户").with("明细"));
+                assertEquals(List.of(4L), ids(variantRunner.run(plan)), expression);
+            }
+            for (String expression : List.of("status = 4 and user.name = 'null'", "status = 4 and totalAmount = 12.51",
+                    "status = 4 and every(orderDetailList, status = 2)", "status = 4 and any(orderDetailList, status = 2)")) {
+                var variant = BusinessQueryTest.fixture(3, Map.of("payment.error", expression));
+                var variantRunner = new QueryRunner(executor, new SqlTranslator(new MySqlDialect()), new InformationEngine(variant.information()));
+                assertTrue(variantRunner.run(variant.compiler().compile(BusinessQuery.find("订单").eq("支付失败")
+                        .with("用户").with("明细"))).models().isEmpty(), expression);
+            }
             scope.commit();
         }
     }

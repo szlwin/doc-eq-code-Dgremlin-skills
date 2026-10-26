@@ -50,6 +50,10 @@ final class ExpressionCompiler {
             String operator = consume().kind();
             Operand right = parseOperand(true);
             String rightCode = right.code();
+            if (right.literal() != null && right.literal().matches("-?\\d+(?:\\.\\d+)?")) {
+                return ("NE".equals(operator) ? "!" : "") + "com.dec.lite.data.DecValueEquality.equal(" + left.code()
+                        + ", new java.math.BigDecimal(" + javaString(right.literal()) + "))";
+            }
             return ("NE".equals(operator) ? "!" : "") + "Objects.equals(" + left.code() + ", " + rightCode + ")";
         }
         if (left.code().startsWith("this.")) return "Boolean.TRUE.equals(" + left.code() + ")";

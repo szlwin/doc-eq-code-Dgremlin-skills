@@ -1,0 +1,145 @@
+{
+  "date": "2026-10-26",
+  "skill_up": "0.14.0",
+  "engine": "codex",
+  "observed_cli": "0.163.0-alpha.10.2",
+  "observed_model": "gpt-6-astra",
+  "baseline_enabled": false,
+  "runs": [
+    {
+      "case_id": "standalone",
+      "status": "PASS",
+      "duration_ms": 62405,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "design",
+      "source_report": "design/iteration-1/result.json",
+      "source_sha256": "5c29bd357d3069033e16a2969e2e586fd69e9ff17a6b2410306f5000e03773c3",
+      "grading_evidence": []
+    },
+    {
+      "case_id": "chinese-design",
+      "status": "PASS",
+      "duration_ms": 155104,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "design",
+      "source_report": "design/iteration-2/result.json",
+      "source_sha256": "1a55a99215d2025e1bc7c56e2382a77da10c20fed88c629466a6df90304bae98",
+      "grading_evidence": []
+    },
+    {
+      "case_id": "incremental",
+      "status": "PASS",
+      "duration_ms": 92652,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "design",
+      "source_report": "design/iteration-2/result.json",
+      "source_sha256": "1a55a99215d2025e1bc7c56e2382a77da10c20fed88c629466a6df90304bae98",
+      "grading_evidence": []
+    },
+    {
+      "case_id": "xml-ambiguity",
+      "status": "ERROR",
+      "duration_ms": 5482,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "design",
+      "source_report": "design/iteration-2/result.json",
+      "source_sha256": "1a55a99215d2025e1bc7c56e2382a77da10c20fed88c629466a6df90304bae98",
+      "grading_evidence": [],
+      "engine_errors": [
+        "exceeded retry limit, last status: 429 Too Many Requests"
+      ]
+    },
+    {
+      "case_id": "xml-ambiguity",
+      "status": "PASS",
+      "duration_ms": 91239,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "design",
+      "source_report": "design/iteration-3/result.json",
+      "source_sha256": "81b5134609cedf1dd714d0848b92d55ffebb2108be0bd9d7a4e859036b7bd865",
+      "grading_evidence": []
+    },
+    {
+      "case_id": "design-gap",
+      "status": "PASS",
+      "duration_ms": 87454,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "implementation",
+      "source_report": "implementation/iteration-1/result.json",
+      "source_sha256": "63cd85947b3aa2462fbb865e64b6a398689dc84662dcb5984eb13704b3b1731a",
+      "grading_evidence": []
+    },
+    {
+      "case_id": "runtime-gap",
+      "status": "FAIL",
+      "duration_ms": 111497,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "implementation",
+      "source_report": "implementation/iteration-1/result.json",
+      "source_sha256": "63cd85947b3aa2462fbb865e64b6a398689dc84662dcb5984eb13704b3b1731a",
+      "grading_evidence": [
+        "FAIL：Binding 范围错误"
+      ]
+    },
+    {
+      "case_id": "evidence-boundary",
+      "status": "ERROR",
+      "duration_ms": 4886,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "implementation",
+      "source_report": "implementation/iteration-1/result.json",
+      "source_sha256": "63cd85947b3aa2462fbb865e64b6a398689dc84662dcb5984eb13704b3b1731a",
+      "grading_evidence": [],
+      "engine_errors": [
+        "exceeded retry limit, last status: 429 Too Many Requests"
+      ]
+    },
+    {
+      "case_id": "runtime-gap",
+      "status": "FAIL",
+      "duration_ms": 96798,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "implementation",
+      "source_report": "implementation/iteration-2/result.json",
+      "source_sha256": "799146e6af3fbb7138902a70bfc9e043758cf3227060f756c88462e7b62bdade",
+      "grading_evidence": [
+        "FAIL：unhashable type: 'dict'"
+      ]
+    },
+    {
+      "case_id": "evidence-boundary",
+      "status": "PASS",
+      "duration_ms": 135217,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "implementation",
+      "source_report": "implementation/iteration-2/result.json",
+      "source_sha256": "799146e6af3fbb7138902a70bfc9e043758cf3227060f756c88462e7b62bdade",
+      "grading_evidence": []
+    },
+    {
+      "case_id": "runtime-gap",
+      "status": "ERROR",
+      "duration_ms": 6081,
+      "observed_version": "0.163.0-alpha.10.2",
+      "suite": "implementation",
+      "source_report": "implementation/iteration-3/result.json",
+      "source_sha256": "c89c3a28b7285a5c1fc6c49aaf7d3fcbfc32ceae6cae2c797e0988441a3b0738",
+      "grading_evidence": [],
+      "engine_errors": [
+        "You’ve hit your usage limit. Try again later."
+      ]
+    }
+  ],
+  "rescore": {
+    "case_id": "runtime-gap",
+    "source_run": "implementation/iteration-2",
+    "status": "PASS",
+    "mode": "既有真实调用轨迹和产物重评；未重新调用模型",
+    "source_sha256": "a7735fc8eea8a2e561aad185862fba0949c84b20d26600d474e96e12281d6a8b"
+  },
+  "limitations": [
+    "六个用例直接运行通过；runtime-gap 因评分器问题未获得直接 PASS，修正后重评既有产物通过。",
+    "最新 runtime-gap 重跑因 CLI 用量限制失败；不视为 Skill 行为失败或成功。",
+    "未进行 without_skill 对照或稳定性重复抽样；宿主 CLI 配置未完全隔离。"
+  ]
+}
